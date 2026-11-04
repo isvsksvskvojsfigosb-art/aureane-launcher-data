@@ -48,6 +48,12 @@
       "strictMods": true,
       "files": [
         {
+          "path": "mods/Essential_1-3-10-4_fabric_1-21-11.jar",
+          "url": "https://cdn.modrinth.com/data/k2ZPuTBm/versions/A3GJ9ZTj/Essential_1-3-10-4_fabric_1-21-11.jar",
+          "sha1": "116a4203ec4bb4406ac6843aab57eee0286d1d3d",
+          "size": 55249815
+        },
+        {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
           "sha1": "80c9d32378a8a0e786d85d645469fefbadba7eb9",
@@ -79,12 +85,12 @@
         },
         {
           "path": "mods/fabric-api-0.141.6+1.21.11.jar",
-          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/fabric-api-0.141.6%2B1.21.11.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/6qAuTtLR/fabric-api-0.141.6%2B1.21.11.jar",
           "sha1": "c98467cbbaf4d197377266795ae015f4130d65b6",
           "size": 2426039
         }
       ]
     }
   ],
-  "updated": "2026-11-04T02:56:22.454Z"
+  "updated": "2026-11-04T03:12:41.675Z"
 }
