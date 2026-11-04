@@ -62,8 +62,8 @@
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-cosmetics-2.0.0.jar",
-          "sha1": "ecd0a34a558de27071d475597f0978e4bf4b8079",
-          "size": 344439
+          "sha1": "9216c19f37607ffe9623ac77b78d276449b0a9e9",
+          "size": 345067
         },
         {
           "path": "mods/aureane-factions-2.0.0.jar",
@@ -92,5 +92,5 @@
       ]
     }
   ],
-  "updated": "2026-11-04T03:12:41.675Z"
+  "updated": "2026-11-04T19:13:02.039Z"
 }
