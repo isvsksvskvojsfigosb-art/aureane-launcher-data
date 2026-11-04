@@ -1,0 +1,90 @@
+{
+  "studio": "Aureane Studio",
+  "socials": {
+    "discord": "",
+    "site": "",
+    "youtube": "",
+    "tiktok": ""
+  },
+  "news": [
+    {
+      "title": "Les outils staff arrivent",
+      "tag": "Mise à jour",
+      "image": "",
+      "url": ""
+    },
+    {
+      "title": "25 nouvelles ailes animées",
+      "tag": "Boutique",
+      "image": "",
+      "url": ""
+    },
+    {
+      "title": "Saison 1 des factions",
+      "tag": "Événement",
+      "image": "",
+      "url": ""
+    },
+    {
+      "title": "Rejoins notre Discord",
+      "tag": "Communauté",
+      "image": "",
+      "url": ""
+    }
+  ],
+  "servers": [
+    {
+      "id": "aureane",
+      "name": "Aureane",
+      "subtitle": "Faction",
+      "description": "Crée ta faction, conquiers des territoires, accomplis des quêtes et grimpe au palmarès. Cosmétiques exclusifs : ailes animées, ornements de pseudo, capes et chapeaux.",
+      "minecraft": "1.21.11",
+      "loader": {
+        "type": "fabric",
+        "version": "0.20.1"
+      },
+      "address": "",
+      "banner": "",
+      "strictMods": true,
+      "files": [
+        {
+          "path": "mods/aureane-core-2.0.0.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
+          "sha1": "80c9d32378a8a0e786d85d645469fefbadba7eb9",
+          "size": 125609
+        },
+        {
+          "path": "mods/aureane-cosmetics-2.0.0.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-cosmetics-2.0.0.jar",
+          "sha1": "ecd0a34a558de27071d475597f0978e4bf4b8079",
+          "size": 344439
+        },
+        {
+          "path": "mods/aureane-factions-2.0.0.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
+          "sha1": "2ad3752c74185bda2491014b2cf147f6f4b784ed",
+          "size": 150071
+        },
+        {
+          "path": "mods/aureane-perms-2.0.0.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-perms-2.0.0.jar",
+          "sha1": "dff45ec6ad9eb6c55f31a677ece2752a441e93a6",
+          "size": 45852
+        },
+        {
+          "path": "mods/aureane-staff-2.0.0.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-staff-2.0.0.jar",
+          "sha1": "dfe220e72df331d87287c2528581886b3d268f56",
+          "size": 84055
+        },
+        {
+          "path": "mods/fabric-api-0.141.6+1.21.11.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/fabric-api-0.141.6%2B1.21.11.jar",
+          "sha1": "c98467cbbaf4d197377266795ae015f4130d65b6",
+          "size": 2426039
+        }
+      ]
+    }
+  ],
+  "updated": "2026-11-04T02:56:22.454Z"
+}
