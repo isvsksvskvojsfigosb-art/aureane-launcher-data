@@ -86,8 +86,8 @@
         {
           "path": "mods/aureane-world-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-world-2.0.0.jar",
-          "sha1": "27a0120c664482b7ccf1fed530d6d2d7471b6c2d",
-          "size": 91100
+          "sha1": "f96dd480c2aae3f0088f06342f5a4c092d61f994",
+          "size": 91113
         },
         {
           "path": "mods/fabric-api-0.141.6+1.21.11.jar",
@@ -98,5 +98,5 @@
       ]
     }
   ],
-  "updated": "2026-11-05T21:16:58.139Z"
+  "updated": "2026-11-05T22:00:41.968Z"
 }
