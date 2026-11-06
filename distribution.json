@@ -68,8 +68,8 @@
         {
           "path": "mods/aureane-factions-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
-          "sha1": "439eb356dff1f5475d477bae38d306c29e27b95a",
-          "size": 240096
+          "sha1": "72ca3584a1bd6c981178fc7e69c0b002912752a0",
+          "size": 243870
         },
         {
           "path": "mods/aureane-perms-2.0.0.jar",
@@ -98,5 +98,5 @@
       ]
     }
   ],
-  "updated": "2026-11-06T19:12:59.697Z"
+  "updated": "2026-11-06T19:36:14.168Z"
 }
