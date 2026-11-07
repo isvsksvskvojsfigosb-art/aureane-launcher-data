@@ -56,20 +56,20 @@
         {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
-          "sha1": "189445487844e892078d9e4e3fb2eade51fc8d79",
-          "size": 274552
+          "sha1": "0e9e035b06cc6cdb0064e1d091b471c6e12ef849",
+          "size": 401398
         },
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-cosmetics-2.0.0.jar",
-          "sha1": "9216c19f37607ffe9623ac77b78d276449b0a9e9",
-          "size": 345067
+          "sha1": "ebac09d7084558493b8dfc434a0bc41238f90aa1",
+          "size": 618704
         },
         {
           "path": "mods/aureane-factions-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
-          "sha1": "b68e6650d4baa06dca1bab4dabe08c116002b19f",
-          "size": 243849
+          "sha1": "5c203896399508a27b19f4e5a7c1f92578bebcbd",
+          "size": 243963
         },
         {
           "path": "mods/aureane-perms-2.0.0.jar",
@@ -80,14 +80,14 @@
         {
           "path": "mods/aureane-staff-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-staff-2.0.0.jar",
-          "sha1": "dfe220e72df331d87287c2528581886b3d268f56",
-          "size": 84055
+          "sha1": "fbc77b9d540769f81745b2890649f11c6f44557d",
+          "size": 84806
         },
         {
           "path": "mods/aureane-world-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-world-2.0.0.jar",
-          "sha1": "516f636fc0d8ce4435a6ea1be9d580e8aec71ff2",
-          "size": 156356
+          "sha1": "b06de3d0aa6996c82be258113ba02eed576c596c",
+          "size": 146201
         },
         {
           "path": "mods/fabric-api-0.141.6+1.21.11.jar",
@@ -98,5 +98,5 @@
       ]
     }
   ],
-  "updated": "2026-11-06T22:19:56.848Z"
+  "updated": "2026-11-07T14:54:21.863Z"
 }
