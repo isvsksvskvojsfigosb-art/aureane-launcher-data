@@ -48,16 +48,10 @@
       "strictMods": true,
       "files": [
         {
-          "path": "mods/Essential_1-3-10-4_fabric_1-21-11.jar",
-          "url": "https://cdn.modrinth.com/data/k2ZPuTBm/versions/A3GJ9ZTj/Essential_1-3-10-4_fabric_1-21-11.jar",
-          "sha1": "116a4203ec4bb4406ac6843aab57eee0286d1d3d",
-          "size": 55249815
-        },
-        {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
-          "sha1": "5d11ae36380dbf59d097d8a3f3d86dea05c3bb57",
-          "size": 425523
+          "sha1": "8b46dce0b368e7238dc37182fde936308f453524",
+          "size": 430684
         },
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
@@ -68,8 +62,8 @@
         {
           "path": "mods/aureane-factions-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
-          "sha1": "3371ffab5005663710de98aa9a3eb5fad96908a3",
-          "size": 244073
+          "sha1": "2e317e786e50d43f4953abe8f9b0ff09b18b796b",
+          "size": 250445
         },
         {
           "path": "mods/aureane-perms-2.0.0.jar",
@@ -86,17 +80,11 @@
         {
           "path": "mods/aureane-world-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-world-2.0.0.jar",
-          "sha1": "aebc604496a46952013b3455d4297b67b2df3669",
-          "size": 172906
-        },
-        {
-          "path": "mods/fabric-api-0.141.6+1.21.11.jar",
-          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/6qAuTtLR/fabric-api-0.141.6%2B1.21.11.jar",
-          "sha1": "c98467cbbaf4d197377266795ae015f4130d65b6",
-          "size": 2426039
+          "sha1": "874ae3a0d6541137b9e782c9435184473aa2556c",
+          "size": 949774
         }
       ]
     }
   ],
-  "updated": "2026-11-11T13:42:53.088Z"
+  "updated": "2026-11-11T16:56:32.256Z"
 }
