@@ -58,30 +58,6 @@
         "- Toutes les fenêtres ont une croix pour se fermer, et l'animation qui se répétait dans les menus a disparu.",
         "La mise à jour s’installe toute seule au prochain lancement depuis le launcher."
       ]
-    },
-    {
-      "title": "Les outils staff arrivent",
-      "tag": "Mise à jour",
-      "image": "",
-      "url": ""
-    },
-    {
-      "title": "25 nouvelles ailes animées",
-      "tag": "Boutique",
-      "image": "",
-      "url": ""
-    },
-    {
-      "title": "Saison 1 des factions",
-      "tag": "Événement",
-      "image": "",
-      "url": ""
-    },
-    {
-      "title": "Rejoins notre Discord",
-      "tag": "Communauté",
-      "image": "",
-      "url": ""
     }
   ],
   "servers": [
@@ -145,7 +121,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-19T19:06:22.374Z",
+  "updated": "2026-11-19T19:15:45.921Z",
   "games": [
     {
       "id": "nerys",
