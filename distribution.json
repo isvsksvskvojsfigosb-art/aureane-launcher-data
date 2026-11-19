@@ -92,5 +92,103 @@
       ]
     }
   ],
-  "updated": "2026-11-15T21:08:13.663Z"
+  "updated": "2026-11-19T18:14:33.184Z",
+  "games": [
+    {
+      "id": "nerys",
+      "name": "Nérys",
+      "subtitle": "Jeu solo · Chill",
+      "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, construis ta base et terraforme la planète à ton rythme. Les machines continuent de travailler même quand le jeu est fermé.",
+      "version": "2.1.0",
+      "entry": "index.html",
+      "background": "#120d22",
+      "tags": [
+        "Pixel art",
+        "Terraformation",
+        "Hors-ligne"
+      ],
+      "banner": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/_banner.png",
+      "strictMods": false,
+      "files": [
+        {
+          "path": "index.html",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/index.html",
+          "sha1": "6adc2ee1f83c3dbd332c9ff4701600c226b04d04",
+          "size": 2922
+        },
+        {
+          "path": "style.css",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/style.css",
+          "sha1": "a3841808f408251e072f4766795c3128aac69fb0",
+          "size": 31998
+        },
+        {
+          "path": "js/art.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/art.js",
+          "sha1": "d9a8c251c4fb0b710c5134af022adc8ea5047da2",
+          "size": 49514
+        },
+        {
+          "path": "js/data.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/data.js",
+          "sha1": "a8ffa1d6ed258fd03daec58595e753a9cdbaab28",
+          "size": 36755
+        },
+        {
+          "path": "js/game.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/game.js",
+          "sha1": "3bd1bcdf30c4df1df15a3dd66707419aa2ac02bc",
+          "size": 44138
+        },
+        {
+          "path": "js/main.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/main.js",
+          "sha1": "6e554a54af58703abeda9592d3d3f36e548ed6f3",
+          "size": 19516
+        },
+        {
+          "path": "js/render.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/render.js",
+          "sha1": "8643a702382c759610955d6574c8618be6cc41d1",
+          "size": 25139
+        },
+        {
+          "path": "js/ui.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/ui.js",
+          "sha1": "8769f775c5ba0bc0a3104d31910d9bfc400967f1",
+          "size": 47514
+        },
+        {
+          "path": "js/util.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/util.js",
+          "sha1": "328f02fa46ada6770b858cd2f5d6e769fdeeab00",
+          "size": 11308
+        },
+        {
+          "path": "js/world.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/world.js",
+          "sha1": "685afb112c4e3667f898566d6c7a858bb20d9b09",
+          "size": 13670
+        },
+        {
+          "path": "assets/fonts/PressStart2P.ttf",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/fonts/PressStart2P.ttf",
+          "sha1": "53d0ade1ecbf01bb7237f435c6f524f62bd30b9f",
+          "size": 118204
+        },
+        {
+          "path": "assets/manifest.json",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/manifest.json",
+          "sha1": "97d170e1550eee4afc0af065b78cda302a97674c",
+          "size": 2
+        },
+        {
+          "path": "icon.png",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/icon.png",
+          "sha1": "cb81021a983e0b96f36b45a4a9c101b666b413bf",
+          "size": 27757
+        }
+      ]
+    }
+  ]
 }

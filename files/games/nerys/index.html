@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#120d22">
+<title>Nérys</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <button id="hStageW" class="card"><div id="hStage"></div><div id="hStats"></div></button>
+  <div id="hClock" class="pill"></div>
+  <div id="hRight"><span id="hCoins" class="pill"></span><span id="hSci" class="pill"></span><span id="hPow" class="pill"></span><button id="bMap" class="ib" aria-label="Carte"></button><button id="bMenu" class="ib" aria-label="Menu"></button></div>
+</div>
+<div id="fps"></div>
+<div id="toasts"></div>
+<div id="banner"></div>
+
+<div id="ctl">
+  <div id="joyZ"></div>
+  <div id="joy"><div id="knob"></div></div>
+  <button id="bBuild" class="gb" aria-label="Construire"></button>
+  <button id="bA" class="gb"><span>A</span><em id="bAL"></em></button>
+</div>
+<div id="buildBar"></div>
+<div id="keys"><span id="kAct"></span><span><b>ZQSD</b> bouger</span><span><b>Clic</b> aller / agir</span><span><b>E</b> agir</span><span><b>B</b> construire</span><span><b>C</b> défricher</span><span><b>Tab</b> menu</span><span><b>M</b> carte</span><span><b>Molette</b> zoom</span></div>
+<div id="fishUI"></div>
+
+<div id="dlg"><button class="x" id="dlgX" title="Passer (Échap)">✕</button><img id="dlgP" alt=""><div id="dlgN"></div><div id="dlgT"></div><span id="dlgA">▼</span></div>
+
+<div id="mapOv"><canvas id="mapC"></canvas><div class="mtop"><div id="mapInfo"></div><button data-m="h" class="home" title="Rentrer à l’épave">⌂ Maison</button><button data-m="-">−</button><button data-m="+">+</button><button data-m="x">✕</button></div><div id="mapLeg"></div></div>
+<div id="modal"></div>
+
+<div id="title" class="scr">
+  <div class="logo"><h1><span>N</span><span>É</span><span>R</span><span>Y</span><span>S</span></h1><p>une planète un peu bizarre</p></div>
+  <div id="tBtns"></div>
+  <div class="ver">v2.1 · © Aureane Studio</div>
+</div>
+<div id="pick" class="scr"><button class="x xScr" id="pickX" title="Retour (Échap)">✕</button><h2>Qui es-tu ?</h2><div id="pickRow"></div><button class="btn" id="pickBack">‹ Retour</button></div>
+
+<div id="fade"></div>
+<div id="splash"><div class="sp-in"><img id="spImg" src="assets/ui/aureane.png" alt="" onerror="this.remove()" onload="document.getElementById('spT').style.display='none'"><div class="sp-t" id="spT">AUREANE<span>STUDIO</span></div></div><div class="sp-bar"><i id="spB"></i></div></div>
+
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/art.js"></script>
+<script src="js/world.js"></script>
+<script src="js/game.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body></html>
