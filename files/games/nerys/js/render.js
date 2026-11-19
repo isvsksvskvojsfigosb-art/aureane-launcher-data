@@ -9,7 +9,7 @@ const NC = cnv(8, 8), nctx = NC.getContext('2d');
 function fit() {
   const d = Math.min(devicePixelRatio || 1, 3);
   cv.width = Math.round(innerWidth * d); cv.height = Math.round(innerHeight * d);
-  S = Math.max(2, Math.round(cv.height / (200 / CFG.zoom))); VW = cv.width / S; VH = cv.height / S;
+  S = Math.max(2, Math.round(Math.min(cv.height / 200, cv.width / 330) * CFG.zoom)); VW = cv.width / S; VH = cv.height / S;
   NC.width = Math.ceil(VW) + 2; NC.height = Math.ceil(VH) + 2; ctx.imageSmoothingEnabled = false;
 }
 addEventListener('resize', fit);
@@ -112,7 +112,8 @@ function draw(t, dt) {
   for (const m of MOBL) RL.push([oy(m.y), 4, m]);
   for (const m of PETL) RL.push([oy(m.y), 4, m]);
   for (const d of DROPS) RL.push([oy(d.y), 7, d]);
-  RL.push([oy(P.y), 6]); RL.push([G.y, 5]);
+  if (!G.mp) RL.push([oy(P.y), 6]); RL.push([G.y, 5]);
+  if (G.mp) for (const id in MP.players) { const p = MP.players[id]; RL.push([oy(p.y), 8, p]); }
   RL.sort((a, b) => a[0] - b[0]);
   for (const e of RL) {
     switch (e[1]) {
@@ -122,6 +123,7 @@ function draw(t, dt) {
       case 4: drawMob(e[2], ox(e[2].x), oy(e[2].y), t); break;
       case 5: drawPlayer(G.x, G.y, t); break;
       case 6: drawPartner(ox(P.x), oy(P.y), t); break;
+      case 8: { const p = e[2], X = ox(p.x), Y = oy(p.y); drawAstroAt(p.who || 'm', p.suit || 'orange', p.dir || 'd', astroFrame(p.mv, p.step || 0), X, Y - (p.j > 0 ? Math.sin(p.j / .6 * Math.PI) * 14 : 0), p.hat, t, p.hm !== 0); label(p.name || '?', X, Y - 27, '#ffd23f'); if (p.msg && p.msgT > 0) drawBubble(X, Y - 38, p.msg); break; }
       case 7: { const d = e[2], X = ox(d.x), Y = oy(d.y), a = ART[d.k === 'duck' ? 'duck' : 'i_' + d.k]; R(X - 3, Y - 1, 6, 2, 'rgba(0,0,0,.25)'); ctx.drawImage(a, Math.round(X - a.width / 2), Math.round(Y - a.height - d.z + Math.sin(t / 200 + d.x) * (d.z ? 0 : 1))); break; }
       case 9: { const a = ART.wreck; ctx.drawImage(a, e[2] + 8 - 26, e[3] + 16 - 40); const bl = Math.sin(t / 300) > 0; R(e[2] + 8 - 26 + 28, e[3] + 16 - 40 + 1, 2, 1, bl ? '#ff4d6d' : '#7a2a3a'); break; }
     }
@@ -134,6 +136,8 @@ function draw(t, dt) {
   if (MOVE && !MOVE.t) { const x = ox(MOVE.x), y = oy(MOVE.y), k = (t / 120) % 4 | 0; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1; ctx.strokeRect(Math.round(x) - 3 - (k & 1) + .5, Math.round(y) - 2 + .5, 6 + (k & 1) * 2, 3); }
   /* construction */
   if (BUILD) drawGhost(t);
+  if (BRK && BRK.delay <= 0 && !BRK.done) drawBreak(BRK, ox, oy);
+  if (G.mp && MP.me && MP.me.msgT > 0) drawBubble(G.x, G.y - 30, MP.me.msg);
   /* particules */
   ctx.font = '8px PS, monospace'; ctx.textAlign = 'center';
   for (const p of PARTS) {
@@ -151,6 +155,8 @@ function draw(t, dt) {
   nightFx(t, ox, oy);
   weather(t, dt);
   if (G.met) arrowTo(G.met, '#ffd23f', ox, oy);
+  if (!G.mp && G.pm === 'stay') arrowTo(tI(P.x / TS | 0, P.y / TS | 0), '#7ce86a', ox, oy);
+  if (G.mp) for (const id in MP.players) { const p = MP.players[id]; arrowTo(tI(p.x / TS | 0, p.y / TS | 0), '#5ab8ff', ox, oy); }
   if (BUILD && BUILD.err && BUILD.errT > 0) { BUILD.errT -= dt; }
 }
 function txt(s, x, y, c) { ctx.fillStyle = OL; ctx.fillText(s, x + 1, y + 1); ctx.fillText(s, x - 1, y); ctx.fillText(s, x, y + 1); ctx.fillStyle = c; ctx.fillText(s, x, y); }
@@ -210,14 +216,14 @@ function drawMob(m, x, y, t) {
   if (m.gold && Math.sin(t / 120 + m.at) > .7) R(Math.round(x + rand(-7, 7)), Math.round(y - rand(4, 16)), 1, 1, '#ffffff');
   const near = Math.hypot(wrapD(G.x - m.x), wrapD(G.y - m.y)) < 40;
   if (m.pet == null && m.love > 0 && near) for (let k = 0; k < 5; k++) R(Math.round(x - 7 + k * 3), Math.round(y - 22 + oy2), 2, 2, k < m.love ? '#ff4d6d' : 'rgba(255,255,255,.35)');
-  if (m.pet != null && near) { ctx.font = '8px PS, monospace'; ctx.textAlign = 'center'; txt(m.name, Math.round(x), Math.round(y - 20 + oy2), '#ffd23f'); }
+  if (m.pet != null && near) label(m.name, x, y - 19 + oy2, '#ffd23f');
 }
 function astroFrame(mv, step) { return mv ? [1, 0, 3, 0][Math.floor(step / 7) % 4] : 0; }
-function drawAstroAt(who, suit, dir, fr, x, y, hat, t) {
+function drawAstroAt(who, suit, dir, fr, x, y, hat, t, helm = G.helmet) {
   x = Math.round(x); y = Math.round(y);
   R(x - 5, y - 1, 10, 3, 'rgba(0,0,0,.25)');
-  const a = astro(who, suitColor(suit, t), dir, fr, G.helmet); ctx.drawImage(a, x - 8, y - 22);
-  if (hat && hat !== 'none' && ART['h_' + hat]) { const bob = fr === 1 || fr === 3 ? 1 : 0; ctx.drawImage(ART['h_' + hat], x - 8 + (dir === 'l' ? -1 : dir === 'r' ? 1 : 0), y - 22 - 8 + bob + (G.helmet ? 0 : 2)); }
+  const a = astro(who, suitColor(suit, t), dir, fr, helm); ctx.drawImage(a, x - 8, y - 22);
+  if (hat && hat !== 'none' && ART['h_' + hat]) { const bob = fr === 1 || fr === 3 ? 1 : 0; ctx.drawImage(ART['h_' + hat], x - 8 + (dir === 'l' ? -1 : dir === 'r' ? 1 : 0), y - 22 - 8 + bob + (helm ? 0 : 2)); }
   if (suit === 'arcenciel') ASTRO.forEach((v, k) => { if (k.startsWith(who + '#')) ASTRO.delete(k); });
 }
 function drawPlayer(x, y, t) {
@@ -225,8 +231,22 @@ function drawPlayer(x, y, t) {
   if (G.swing > 0) { const f = DIRS[G.dir], k = G.swing / .18; ctx.save(); ctx.translate(Math.round(x + f[0] * 7 + (G.dir === 'd' || G.dir === 'u' ? 6 : 0)), Math.round(y - 8 + f[1] * 4)); ctx.rotate((1 - k) * 2 - 1); ctx.drawImage(ART.u_pick, -7, -12, 12, 12); ctx.restore(); }
   drawAstroAt(G.who, G.suit, G.dir, astroFrame(G.mv, G.step || 0), x, y + jy, G.hat, t);
 }
-function drawPartner(x, y, t) { const w = G.who === 'm' ? 'f' : 'm'; drawAstroAt(w, w === 'm' ? 'orange' : 'teal', P.dir, astroFrame(P.mv, P.step), x, y, G.stage >= 6 ? 'fleur' : 'none', t); }
-function drawBubble(x, y, s) {
+function drawPartner(x, y, t) {
+  const w = G.who === 'm' ? 'f' : 'm', L = (G.looks && G.looks[w]) || {};
+  drawAstroAt(w, L.suit || (w === 'm' ? 'orange' : 'teal'), P.dir, astroFrame(P.mv, P.step), x, y, L.hat || 'none', t);
+  if (G.pm === 'stay') { const bx = Math.round(x) + 6, by = Math.round(y) - 30 + Math.round(Math.sin(t / 300)); R(bx, by, 1, 8, '#4a5068'); R(bx + 1, by, 5, 3, '#7ce86a'); R(bx + 1, by + 3, 3, 1, '#7ce86a'); }
+}
+/* anneau de progression quand on casse une construction (clic maintenu / appui long) */
+function drawBreak(B, ox, oy) {
+  const [x, y] = tpos(B.t), X = Math.round(ox(x)), Y = Math.round(oy(y)) - 4, p = clamp(B.p / B.dur, 0, 1);
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(29,21,48,.7)'; ctx.beginPath(); ctx.arc(X, Y, 9, 0, 6.283); ctx.stroke();
+  ctx.strokeStyle = '#ff6f91'; ctx.beginPath(); ctx.arc(X, Y, 9, -Math.PI / 2, -Math.PI / 2 + p * 6.283); ctx.stroke(); ctx.lineWidth = 1;
+  if (Math.random() < .3) chips(x, y - 4, '#ffffff');
+}
+/* petit texte toujours lisible, quelle que soit l'échelle du monde */
+function label(s, x, y, c) { const k = clamp(10 * Math.min(devicePixelRatio || 1, 3) / (8 * S), .3, 1); ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(k, k); ctx.font = '8px PS, monospace'; ctx.textAlign = 'center'; txt(s, 0, 0, c); ctx.restore(); }
+function drawBubble(x0, y0, s) {
+  const k = clamp(11 * Math.min(devicePixelRatio || 1, 3) / (8 * S), .3, 1); ctx.save(); ctx.translate(Math.round(x0), Math.round(y0)); ctx.scale(k, k); let x = 0, y = 0;
   ctx.font = '8px PS, monospace'; ctx.textAlign = 'left';
   const words = s.split(' '), lines = []; let cur = '';
   for (const w of words) { const tst = cur ? cur + ' ' + w : w; if (ctx.measureText(tst).width > 130 && cur) { lines.push(cur); cur = w; } else cur = tst; }
@@ -235,7 +255,7 @@ function drawBubble(x, y, s) {
   x = Math.round(x - w / 2); y = Math.round(y - h);
   R(x, y, w, h, '#fff8ec'); R(x, y - 1, w, 1, OL); R(x, y + h, w, 1, OL); R(x - 1, y, 1, h, OL); R(x + w, y, 1, h, OL);
   R(x + (w >> 1) - 2, y + h, 4, 2, '#fff8ec'); R(x + (w >> 1) - 1, y + h + 2, 2, 2, '#fff8ec');
-  ctx.fillStyle = OL; lines.forEach((l, k) => ctx.fillText(l, x + 5, y + 11 + k * 10));
+  ctx.fillStyle = OL; lines.forEach((l, n) => ctx.fillText(l, x + 5, y + 11 + n * 10)); ctx.restore();
 }
 function drawTarget(T, t, ox, oy) {
   let x, y, w = 16, h = 16;

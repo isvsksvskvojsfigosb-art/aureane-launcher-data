@@ -30,7 +30,7 @@ function fbm(x, y, p, s, o = 4) { let t = 0, amp = 1, n = 0; for (let i = 0; i <
 
 function fmt(n) {
   n = +n || 0; const a = Math.abs(n);
-  if (a < 1e3) return a < 10 && n % 1 ? (Math.floor(n * 10) / 10).toString().replace('.', ',') : String(Math.floor(n));
+  if (a < 1e3) return a < 1 && n % 1 ? (Math.floor(n * 100) / 100).toString().replace('.', ',') : a < 10 && n % 1 ? (Math.floor(n * 10) / 10).toString().replace('.', ',') : String(Math.floor(n));
   const u = ['k', 'M', 'G', 'T', 'P', 'E']; let i = -1;
   while (Math.abs(n) >= 1e3 && i < u.length - 1) { n /= 1e3; i++; }
   const s = Math.abs(n) < 10 ? n.toFixed(2) : Math.abs(n) < 100 ? n.toFixed(1) : String(Math.floor(n));
@@ -48,7 +48,7 @@ function shd(h, k) { let [r, g, b] = hexRgb(h); if (k > 0) { r += (255 - r) * k;
 function mix(a, b, t) { const A = hexRgb(a), B = hexRgb(b); return rgbHex(lerp(A[0], B[0], t), lerp(A[1], B[1], t), lerp(A[2], B[2], t)); }
 
 /* ---------- réglages (séparés de la sauvegarde) ---------- */
-const DEFC = { vm: 80, vs: 100, vx: 55, vib: true, zoom: 1, lefty: false, bs: 100, bo: 90, nd: 65, fps: false, intro: false, tips: true };
+const DEFC = { vm: 80, vs: 100, vx: 55, vib: true, zoom: 1, lefty: false, bs: 100, bo: 90, nd: 65, fps: false, intro: false, tips: true, ui: 100, keys: true };
 let CFG = { ...DEFC };
 try { const s = localStorage.getItem('nerys_cfg'); if (s) Object.assign(CFG, JSON.parse(s)); else if (PC) CFG.zoom = .8; } catch (e) { }
 function saveCfg() { try { localStorage.setItem('nerys_cfg', JSON.stringify(CFG)); } catch (e) { } }

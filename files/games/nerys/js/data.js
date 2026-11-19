@@ -45,11 +45,31 @@ const ITEMS = {
   pizza: { n: 'Pizza aux spores', c: '#ffb050', v: 25, food: { b: 'harvest', t: 180, d: 'Récolte ×2 (3 min)' } },
   sushi: { n: 'Sushi cosmique', c: '#ff8a8a', v: 25, food: { b: 'luck', t: 240, d: 'Chance ×3 : dorés, poissons rares (4 min)' } },
   soupe: { n: 'Soupe de glace chaude', c: '#ffcf8a', v: 40, food: { b: 'all', t: 300, d: 'Un peu de tout (5 min)' } },
+  // outils (obligatoires : pioche pour la roche et les minerais, hache pour le bois, canne pour pêcher)
+  pioche: { n: 'Pioche en ferraille', c: '#9aa3c0', v: 6, cr: 1, tool: 'pick', tier: 1 },
+  pioche_cu: { n: 'Pioche en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'pick', tier: 2 },
+  pioche_cr: { n: 'Pioche de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'pick', tier: 3 },
+  pioche_ba: { n: 'Pioche en bananium', c: '#fff04a', v: 200, cr: 1, tool: 'pick', tier: 4 },
+  hache: { n: 'Hache en ferraille', c: '#9aa3c0', v: 6, cr: 1, tool: 'axe', tier: 1 },
+  hache_cu: { n: 'Hache en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'axe', tier: 2 },
+  hache_cr: { n: 'Hache de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'axe', tier: 3 },
+  canne: { n: 'Canne à pêche', c: '#c98b5a', v: 10, cr: 1, tool: 'rod', tier: 1 },
 };
+const TOOLN = { pick: 'une pioche', axe: 'une hache', rod: 'une canne à pêche' };
+const STACK = 99, BAG = 20;
+const stackOf = k => (ITEMS[k] && ITEMS[k].tool ? 1 : STACK);
 const RAW = ['fer', 'cuivre', 'cristal', 'bois', 'fibre', 'gelee', 'glace', 'soufre', 'fruit', 'spore', 'graine', 'bananium', 'poisson'];
 
 /* ---------- recettes (st = station nécessaire, construite n'importe où) ---------- */
 const RECIPES = [
+  { o: 'pioche', n: 1, i: { fer: 4, fibre: 3 }, st: 'main' },
+  { o: 'hache', n: 1, i: { fer: 4, fibre: 3 }, st: 'main' },
+  { o: 'canne', n: 1, i: { fibre: 6, fer: 2 }, st: 'main', r: 'r_peche' },
+  { o: 'pioche_cu', n: 1, i: { cuivre: 8, planche: 2 }, st: 'etabli', r: 'r_outil1' },
+  { o: 'hache_cu', n: 1, i: { cuivre: 8, planche: 2 }, st: 'etabli', r: 'r_outil1' },
+  { o: 'pioche_cr', n: 1, i: { cristal: 8, plaque: 4 }, st: 'etabli', r: 'r_outil2' },
+  { o: 'hache_cr', n: 1, i: { cristal: 8, plaque: 4 }, st: 'etabli', r: 'r_outil2' },
+  { o: 'pioche_ba', n: 1, i: { bananium: 4, moteur: 1, pioche_cr: 1 }, st: 'atelier', r: 'r_outil3' },
   { o: 'plaque', n: 1, i: { fer: 3 }, st: 'etabli' },
   { o: 'cable', n: 3, i: { cuivre: 2 }, st: 'etabli' },
   { o: 'planche', n: 2, i: { bois: 2 }, st: 'etabli' },
@@ -66,7 +86,7 @@ const RECIPES = [
   { o: 'sushi', n: 1, i: { poisson: 2, fibre: 2 }, st: 'cuisine' },
   { o: 'soupe', n: 1, i: { glace: 4, soufre: 1, fruit: 2 }, st: 'cuisine' },
 ];
-const STATIONS = { etabli: 'Établi', fonderie: 'Fonderie', atelier: 'Atelier', cuisine: 'Cuisine' };
+const STATIONS = { main: 'À la main', etabli: 'Établi', fonderie: 'Fonderie', atelier: 'Atelier', cuisine: 'Cuisine' };
 
 /* ---------- objets du monde (couche O) ----------
    h: coups, it: ressource, y: quantité par coup, rg: repousse (s), seed: chance de graine */
@@ -96,13 +116,16 @@ const OBJ = {
   23: { k: 'wreck', n: 'Épave de l’Aurore-7', solid: 1, special: 'wreck' },
   24: { k: 'mono_done', n: 'Statue de canard (vénérée)', solid: 1, special: 'mono2' },
 };
+// outil obligatoire pour récolter (sinon : à la main)
+const TOOLREQ = { 1: 'pick', 6: 'axe', 9: 'pick', 10: 'pick', 13: 'pick', 14: 'pick', 15: 'pick', 16: 'pick', 17: 'axe', 20: 'pick', 22: 'axe' };
+for (const k in TOOLREQ) OBJ[k].tool = TOOLREQ[k];
 
 /* ---------- constructions ---------- */
 const BLD = {
   etabli: { n: 'Établi', cat: 'base', c: { fer: 10 }, st: 1, d: 'Plaques, câbles, planches, tissu, circuits.', eyes: [[5, 7], [10, 7]] },
-  caisse: { n: 'Caisse de rangement', cat: 'base', c: { planche: 4, fer: 6 }, r: 'r_stock', cap: 60, d: '+60 places pour chaque ressource.' },
+  caisse: { n: 'Caisse de rangement', cat: 'base', c: { planche: 4, fer: 6 }, r: 'r_stock', slots: 6, d: '+6 emplacements dans le sac.' },
   jardin: { n: 'Jardinière', cat: 'base', c: { planche: 4, fer: 4 }, r: 'r_jardin', solid: 0, d: 'Plante une graine, attends, récolte. Ça marche hors-ligne.' },
-  labo: { n: 'Labo', cat: 'base', c: { plaque: 8, circuit: 2, cristal: 4 }, pw: -4, r: 'r_labo', sci: .25, d: 'Produit 0,25 science/s, même quand tu dors.', eyes: [[5, 9], [10, 9]] },
+  labo: { n: 'Labo', cat: 'base', c: { plaque: 8, circuit: 2, cristal: 4 }, pw: -4, r: 'r_labo', sci: .15, d: 'Produit 0,15 science/s, même quand tu dors.', eyes: [[5, 9], [10, 9]] },
   fonderie: { n: 'Fonderie', cat: 'base', c: { plaque: 8, cuivre: 6, cristal: 2 }, pw: -3, r: 'r_fonderie', st: 1, d: 'Verre et batteries.', eyes: [[4, 10], [11, 10]] },
   cuisine: { n: 'Cuisine', cat: 'base', c: { plaque: 6, planche: 6, fruit: 5 }, r: 'r_cuisine', st: 1, d: 'Des plats qui donnent des super-pouvoirs (temporaires).', eyes: [[5, 10], [10, 10]] },
   atelier: { n: 'Atelier', cat: 'base', c: { plaque: 12, circuit: 4, planche: 6 }, pw: -4, r: 'r_atelier', st: 1, d: 'Moteurs et puces quantiques.', eyes: [[5, 8], [10, 8]] },
@@ -110,11 +133,11 @@ const BLD = {
   foreuse2: { n: 'Super-foreuse', cat: 'base', c: { moteur: 2, plaque: 10, batterie: 2 }, pw: -8, r: 'r_foreuse2', on: 'ore', rate: 1 / 5, buf: 80, d: 'Comme la foreuse, mais en colère. 4× plus rapide.', eyes: [[5, 9], [10, 9]] },
   niche: { n: 'Niche', cat: 'base', c: { planche: 6, tissu: 2 }, r: 'r_niche', d: 'Maison pour une créature adoptée. Elle y produit des ressources.' },
   ruche: { n: 'Ruche à drones', cat: 'base', c: { moteur: 2, circuit: 4, batterie: 2 }, pw: -6, r: 'r_drones', rad: 14, d: 'Ramène toute seule la production des machines à 14 cases autour.', eyes: [[5, 11], [10, 11]] },
-  silo: { n: 'Silo', cat: 'base', c: { plaque: 20, verre: 6, moteur: 1 }, r: 'r_stock2', cap: 300, d: '+300 places pour chaque ressource.' },
+  silo: { n: 'Silo', cat: 'base', c: { plaque: 20, verre: 6, moteur: 1 }, r: 'r_stock2', slots: 20, d: '+20 emplacements dans le sac.' },
   radar: { n: 'Radar', cat: 'base', c: { plaque: 6, circuit: 3, cable: 6 }, pw: -2, r: 'r_radar', d: 'Dévoile la carte sur 40 cases et repère toutes les capsules.' },
   tp: { n: 'Téléporteur', cat: 'base', c: { moteur: 1, circuit: 4, verre: 4 }, pw: -5, r: 'r_tp', solid: 0, d: 'Voyage instantané entre téléporteurs. Ne pas éternuer dedans.' },
   piste: { n: 'Piste de Zorg', cat: 'base', c: { plaque: 12, planche: 8, cable: 6 }, r: 'r_piste', max: 1, d: 'Zorg, marchand interstellaire, y gare sa théière volante.' },
-  superlabo: { n: 'Super-labo', cat: 'base', c: { moteur: 2, verre: 10, circuit: 6 }, pw: -15, r: 'r_labo2', sci: 2, d: '2 science/s. Sent légèrement le brûlé.', eyes: [[5, 9], [10, 9]] },
+  superlabo: { n: 'Super-labo', cat: 'base', c: { moteur: 2, verre: 10, circuit: 6 }, pw: -15, r: 'r_labo2', sci: 1.2, d: '1,2 science/s. Sent légèrement le brûlé.', eyes: [[5, 9], [10, 9]] },
   fusee: { n: 'Fusée de la Fête', cat: 'base', c: { puce: 20, moteur: 20, batterie: 20, bananium: 30, plaque: 100 }, r: 'r_fusee', max: 1, d: 'Pour célébrer la planète la plus goofy de la galaxie.' },
 
   solaire: { n: 'Panneau solaire', cat: 'energie', c: { plaque: 3, cristal: 2, cable: 2 }, pw: 4, solar: 1, r: 'r_energie', solid: 1, d: '+4 ⚡ le jour, rien la nuit.' },
@@ -218,13 +241,13 @@ const CATS = [['base', 'Base'], ['energie', 'Énergie'], ['terra', 'Terraformati
 const RES = [
   { id: 'r_energie', n: 'Électricité', d: 'Panneaux solaires et éoliennes.', c: 5 },
   { id: 'r_deco1', n: 'Déco maison', d: 'Meubles, sols et murs de base.', c: 6 },
-  { id: 'r_stock', n: 'Rangement', d: 'Caisse de rangement : +60 places.', c: 8 },
+  { id: 'r_stock', n: 'Rangement', d: 'Caisse de rangement : +6 emplacements de sac chacune.', c: 8 },
   { id: 'r_terra1', n: 'Terraformation I', d: 'Les 4 machines de base pour rendre la planète moins grognonne.', c: 10, req: ['r_energie'] },
   { id: 'r_labo', n: 'Laboratoire', d: 'Produit de la science en continu.', c: 15 },
   { id: 'r_jardin', n: 'Jardinage', d: 'Jardinière, engrais et pousses d’arbres.', c: 15, req: ['r_terra1'] },
-  { id: 'r_peche', n: 'Canne à pêche', d: 'Pêche dans les lacs (et dans la lave, si si).', c: 20 },
+  { id: 'r_peche', n: 'Pêche', d: 'Recette de la canne à pêche. Pêche dans les lacs (et dans la lave, si si).', c: 20 },
   { id: 'r_fonderie', n: 'Fonderie', d: 'Verre et batteries.', c: 20, req: ['r_labo'] },
-  { id: 'r_outil1', n: 'Multi-outil Mk2', d: '+1 ressource par coup.', c: 25 },
+  { id: 'r_outil1', n: 'Outils en cuivre', d: 'Pioche et hache en cuivre : +1 ressource par coup.', c: 25 },
   { id: 'r_roue', n: 'Roue à Blobo', d: 'De l’énergie verte (et gluante).', c: 30, req: ['r_energie'] },
   { id: 'r_cuisine', n: 'Cuisine', d: 'Des plats à super-pouvoirs.', c: 30, req: ['r_jardin'] },
   { id: 'r_foreuse', n: 'Forage', d: 'Foreuse automatique à poser sur les filons.', c: 40, req: ['r_fonderie'] },
@@ -236,25 +259,29 @@ const RES = [
   { id: 'r_deco2', n: 'Déco cosy', d: 'Canapé, télé, trampoline, lampadaire…', c: 100, req: ['r_deco1'] },
   { id: 'r_piste', n: 'Commerce', d: 'Zorg vient vendre, acheter et passer des commandes.', c: 100, req: ['r_atelier'] },
   { id: 'r_terra2', n: 'Terraformation II', d: 'Des machines 7× plus puissantes.', c: 120, req: ['r_terra1', 'r_fonderie'], st: 2 },
-  { id: 'r_stock2', n: 'Silo', d: '+300 places par ressource.', c: 150, req: ['r_stock', 'r_atelier'] },
-  { id: 'r_outil2', n: 'Multi-outil Mk3', d: '+2 ressources par coup.', c: 150, req: ['r_outil1'], st: 2 },
+  { id: 'r_stock2', n: 'Silo', d: 'Silo : +20 emplacements de sac.', c: 150, req: ['r_stock', 'r_atelier'] },
+  { id: 'r_outil2', n: 'Outils en cristal', d: 'Pioche et hache de cristal : +2 ressources par coup.', c: 150, req: ['r_outil1'], st: 2 },
   { id: 'r_drones', n: 'Drones', d: 'Ruche à drones : collecte automatique des machines.', c: 200, req: ['r_atelier', 'r_foreuse'] },
   { id: 'r_geo', n: 'Géothermie', d: '+35 ⚡ sur les volcans.', c: 250, req: ['r_atelier'], st: 3 },
   { id: 'r_tp', n: 'Téléportation', d: 'Voyage instantané entre téléporteurs.', c: 300, req: ['r_atelier'], st: 3 },
-  { id: 'r_labo2', n: 'Super-labo', d: '2 science/s.', c: 400, req: ['r_labo', 'r_atelier'], st: 3 },
+  { id: 'r_labo2', n: 'Super-labo', d: '1,2 science/s.', c: 400, req: ['r_labo', 'r_atelier'], st: 3 },
   { id: 'r_foreuse2', n: 'Super-foreuse', d: 'Fore 4× plus vite.', c: 400, req: ['r_foreuse', 'r_atelier'], st: 3 },
   { id: 'r_trotti', n: 'Trottinette à réaction', d: 'Encore +40 % de vitesse.', c: 500, req: ['r_bottes'], st: 3 },
   { id: 'r_terra3', n: 'Terraformation III', d: 'Des machines géantes.', c: 600, req: ['r_terra2', 'r_atelier'], st: 4 },
   { id: 'r_boost1', n: 'Optimisation planétaire', d: 'Terraformation +25 %.', c: 800, req: ['r_terra2'], st: 4 },
   { id: 'r_deco3', n: 'Déco de luxe', d: 'Boule disco, toilettes en or, juke-box…', c: 1000, req: ['r_deco2'], st: 4 },
   { id: 'r_bananium', n: 'Bananium', d: 'Puces quantiques et réacteur au bananium.', c: 1000, req: ['r_atelier'], st: 5 },
-  { id: 'r_outil3', n: 'Multi-outil Mk4', d: '+4 ressources par coup.', c: 1200, req: ['r_outil2'], st: 4 },
+  { id: 'r_outil3', n: 'Pioche en bananium', d: 'La pioche ultime : +4 ressources par coup.', c: 1200, req: ['r_outil2'], st: 4 },
   { id: 'r_absence', n: 'Machines autonomes', d: 'Production hors-ligne jusqu’à 24 h (au lieu de 8 h).', c: 1500, req: ['r_drones'], st: 4 },
   { id: 'r_boost2', n: 'Optimisation II', d: 'Terraformation +50 %.', c: 4000, req: ['r_boost1'], st: 6 },
   { id: 'r_terra4', n: 'Terraformation IV', d: 'Des machines cosmiques.', c: 6000, req: ['r_terra3', 'r_bananium'], st: 7 },
   { id: 'r_boost3', n: 'Optimisation III', d: 'Terraformation +100 %.', c: 15000, req: ['r_boost2'], st: 8 },
   { id: 'r_fusee', n: 'Fusée de la Fête', d: 'La fête ultime. Tu l’as méritée.', c: 30000, req: ['r_terra4'], st: 10 },
 ];
+// catégories (onglets de la recherche) + coûts revus à la hausse : la science se mérite
+const RESCATS = [['base', 'Base'], ['energie', 'Énergie'], ['terra', 'Terraformation'], ['outils', 'Outils & exploration'], ['vie', 'Vie & cuisine'], ['deco', 'Déco']];
+const RESCAT = { r_energie: 'energie', r_roue: 'energie', r_soufre: 'energie', r_geo: 'energie', r_bananium: 'energie', r_terra1: 'terra', r_terra2: 'terra', r_terra3: 'terra', r_terra4: 'terra', r_boost1: 'terra', r_boost2: 'terra', r_boost3: 'terra', r_fusee: 'terra', r_outil1: 'outils', r_outil2: 'outils', r_outil3: 'outils', r_peche: 'outils', r_bottes: 'outils', r_trotti: 'outils', r_radar: 'outils', r_tp: 'outils', r_jardin: 'vie', r_cuisine: 'vie', r_niche: 'vie', r_deco1: 'deco', r_deco2: 'deco', r_deco3: 'deco' };
+for (const r of RES) { r.c = Math.round(r.c * 3); r.cat = RESCAT[r.id] || 'base'; }
 const RESI = Object.fromEntries(RES.map(r => [r.id, r]));
 
 /* ---------- stades de la planète ---------- */
@@ -382,7 +409,8 @@ const INTRO = [
   ['{p}', 'Plan : on récupère des trucs, on construit des machines et on rend cette planète vivable. Sans se presser.'],
   ['{me}', 'Et on commence par quoi ?'],
   ['{p}', 'Par ce que tu veux. C’est toi le·la chef. Moi je te suis et je dis des bêtises.'],
-  ['', 'Joystick : bouger. Bouton A : récolter et interagir. Marteau : construire. Sac : menu.'],
+  ['{p}', 'Premier truc à faire : une pioche et une hache. Les débris gris se ramassent à la main, et avec ça on bricole nos outils : Sac > Fabriquer.'],
+  ['', 'CONTROLES'],
 ];
 const SAY_IDLE = [
   'J’ai léché un cristal. Ne fais pas ça.', 'Tu crois que les rochers ont des sentiments ?', 'J’ai nommé ce caillou Gérard.', 'Ma combinaison sent la soupe. Je ne sais pas pourquoi.',

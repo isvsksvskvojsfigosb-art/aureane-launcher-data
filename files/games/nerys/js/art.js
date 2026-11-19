@@ -107,6 +107,12 @@ function genItems() {
   I('pizza', d => { d.poly([[2, 3], [12, 3], [7, 12]], '#ffcf6a'); d.r(2, 2, 11, 2, '#c97a3a'); d.p(6, 5, '#e0402a'); d.p(9, 5, '#e0402a'); d.p(7, 8, '#b78cff'); });
   I('sushi', d => { d.box(2, 6, 10, 6, '#ffffff'); d.box(3, 3, 8, 4, '#ff8a6a'); d.r(2, 8, 10, 1, '#1d4a2a'); d.r(4, 4, 3, 1, '#ffb090'); });
   I('soupe', d => { d.el(7, 9, 5, 3, '#c97a3a'); d.r(3, 7, 9, 2, '#ffcf8a'); d.ln(5, 2, 5, 5, '#ffffff'); d.ln(8, 1, 9, 5, '#ffffff'); });
+  // outils : tête de la couleur du matériau
+  const PK = (k, c) => I(k, d => { d.ln(3, 12, 10, 5, '#8a5a34'); d.ln(4, 12, 11, 5, '#c98b5a'); d.poly([[3, 4], [7, 1], [12, 2], [13, 6], [11, 4], [7, 3], [4, 6]], c); d.p(7, 2, shd(c, .5)); });
+  const AX = (k, c) => I(k, d => { d.ln(3, 12, 10, 3, '#8a5a34'); d.ln(4, 12, 11, 3, '#c98b5a'); d.poly([[8, 2], [12, 1], [13, 6], [10, 7], [8, 5]], c); d.p(11, 2, shd(c, .5)); });
+  PK('pioche', '#9aa3c0'); PK('pioche_cu', '#e08a3c'); PK('pioche_cr', '#4fe3e0'); PK('pioche_ba', '#fff04a');
+  AX('hache', '#9aa3c0'); AX('hache_cu', '#e08a3c'); AX('hache_cr', '#4fe3e0');
+  I('canne', d => { d.ln(2, 12, 11, 2, '#c98b5a'); d.ln(11, 2, 12, 9, '#e8e8f0'); d.ball(12, 10, 1.5, 1.5, '#ff4d6d'); d.r(3, 10, 2, 2, '#4a5068'); });
 }
 
 /* ================= ICÔNES D'INTERFACE ================= */

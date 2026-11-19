@@ -42,7 +42,7 @@ function dlgNext() {
   const [w, t] = DLG.q.shift(); DLG.cur = [fm(w), fm(t), w]; DLG.ti = 0; DLG.tm = 0;
   const who = w === '{me}' ? G.who : w === '{p}' ? (G.who === 'm' ? 'f' : 'm') : null;
   $('#dlgN').textContent = DLG.cur[0]; $('#dlgN').style.display = DLG.cur[0] ? '' : 'none';
-  const p = $('#dlgP'); if (who) { p.src = portrait(who, G.helmet, suitColor(who === G.who ? G.suit : who === 'm' ? 'orange' : 'teal', 0)); p.style.display = ''; } else p.style.display = 'none';
+  const p = $('#dlgP'); if (who) { p.src = portrait(who, G.helmet, suitColor(who === G.who ? G.suit : (G.looks && G.looks[who] && G.looks[who].suit) || (who === 'm' ? 'orange' : 'teal'), 0)); p.style.display = ''; } else p.style.display = 'none';
   dlgShow();
 }
 function dlgShow() { $('#dlgT').textContent = DLG.cur ? DLG.cur[1].slice(0, DLG.ti) : ''; $('#dlgA').style.visibility = DLG.cur && DLG.ti >= DLG.cur[1].length ? 'visible' : 'hidden'; }
@@ -80,47 +80,54 @@ const MENUA = {
   eat: k => eat(k),
   craft: (a) => { const [i, n] = a.split(','); craftN(+i, n === 'max' ? 999 : +n); refresh(); },
   res: id => { research(id); refresh(); },
+  rcat: k => { UI.rcat = k; SFX.tab(); refresh(); const r = $('.rbody'); if (r) r.scrollTop = 0; },
+  drop: a => { const [k, n] = a.split(','); dropItem(k, n); },
+  save: () => { saveNow(); refresh(); }, swap: () => { closeModal(); switchChar(); }, stay: () => { partnerToggle(); refresh(); },
   coll: k => { UI.coll = k; SFX.tab(); refresh(); },
-  hat: k => { if (!G.hats.includes(k)) return SFX.bad(); G.hat = k; SFX.ok(); refresh(); },
-  suit: k => { if (!G.suits.includes(k)) return SFX.bad(); G.suit = k; ASTRO.clear(); SFX.ok(); refresh(); },
+  hat: k => { if (!G.hats.includes(k)) return SFX.bad(); G.hat = k; G.looks[G.who] = { hat: G.hat, suit: G.suit }; SFX.ok(); refresh(); },
+  suit: k => { if (!G.suits.includes(k)) return SFX.bad(); G.suit = k; G.looks[G.who] = { hat: G.hat, suit: G.suit }; ASTRO.clear(); SFX.ok(); refresh(); },
   helm: () => { G.helmet = !G.helmet; ASTRO.clear(); SFX.ok(); refresh(); },
   tog: k => { CFG[k] = !CFG[k]; saveCfg(); applyCfg(); SFX.tab(); refresh(); },
   zoom: z => { CFG.zoom = +z; saveCfg(); fit(); SFX.tab(); refresh(); },
   fs: () => toggleFS(), quitApp: () => { save(); window.close(); },
-  exp: () => exportSave(), imp: () => importSave(), quit: () => { save(); closeModal(); toTitle(); }, cred: () => credits(),
+  exp: () => G.mp ? null : (save(), exportSlot(SLOT)), quit: () => { save(); closeModal(); toTitle(); }, cred: () => credits(),
 };
 const TABV = {};
 TABV.sac = () => {
-  const keys = Object.keys(ITEMS).filter(k => inv(k) > 0 || G.disc['i_' + k]);
-  let det = '';
-  if (UI.sel && ITEMS[UI.sel]) {
+  const stacks = []; for (const k of Object.keys(ITEMS)) { let n = inv(k); const st = stackOf(k); while (n > 0) { const q = Math.min(st, n); stacks.push([k, q]); n -= q; } }
+  const tot = AG.slots, cells = stacks.map(([k, q]) => `<button class="slotc ${UI.sel === k ? 'on' : ''}" data-a="sel:${k}" title="${esc(ITEMS[k].n)}">${ic('i_' + k, 28)}${q > 1 ? `<b>${q}</b>` : ''}</button>`);
+  for (let n = stacks.length; n < tot; n++) cells.push('<span class="slotc empty"></span>');
+  let det = `<div class="det hint0">${ic('u_bag', 30)}<div><b>${PC ? 'Clique' : 'Touche'} un objet</b><small>pour voir où le trouver, le manger ou le jeter.</small></div></div>`;
+  if (UI.sel && ITEMS[UI.sel] && inv(UI.sel) > 0) {
     const k = UI.sel, it = ITEMS[k], src = itemSource(k);
-    det = `<div class="det">${ic('i_' + k, 34)}<div><b>${it.n}</b><small>${inv(k)} / ${AG.cap}${src ? ' · ' + esc(src) : ''}</small>${it.food ? `<small class="good">${it.food.d}</small>` : ''}</div>${it.food && inv(k) ? `<button class="btn pri sm" data-a="eat:${k}">Manger</button>` : ''}</div>`;
+    const info = it.tool ? `Outil : ${it.tool === 'pick' ? 'roche, minerais, cristaux, glace' : it.tool === 'axe' ? 'champignons géants, arbres, cactus' : 'pêche dans les lacs'}${it.tool !== 'rod' ? ' · +' + [0, 0, 1, 2, 4][it.tier] + ' par coup' : ''}. Utilisé tout seul.` : it.food ? it.food.d : src;
+    det = `<div class="det">${ic('i_' + k, 34)}<div><b>${it.n} <small>×${inv(k)}</small></b><small>${esc(info || '')}</small></div><div class="det-bt">${it.food ? `<button class="btn pri sm" data-a="eat:${k}">Manger</button>` : ''}<button class="btn sm" data-a="drop:${k},1">Jeter 1</button>${inv(k) > 1 ? `<button class="btn sm" data-a="drop:${k},all">Jeter tout</button>` : ''}</div></div>`;
   }
+  const tl = ['pick', 'axe', 'rod'].map(t => { const tier = toolTier(t), k = Object.keys(ITEMS).find(x => ITEMS[x].tool === t && ITEMS[x].tier === tier && inv(x) > 0); return `<span class="chip ${k ? '' : 'miss'}">${ic(k ? 'i_' + k : t === 'pick' ? 'i_pioche' : t === 'axe' ? 'i_hache' : 'i_canne', 16)} ${k ? ITEMS[k].n : 'Pas de ' + (t === 'pick' ? 'pioche' : t === 'axe' ? 'hache' : 'canne')}</span>`; }).join('');
   const buffs = Object.entries(G.buffs).filter(([k, v]) => v > 0 && k !== 'rainbow').map(([k, v]) => `<span class="chip">${{ speed: 'Vitesse', harvest: 'Récolte ×2', luck: 'Chance', all: 'Super-forme' }[k]} · ${fmtT(v)}</span>`).join('');
-  return `<h3>Sac <small>· ${AG.cap} places par ressource</small></h3>${buffs ? `<div class="chips">${buffs}</div>` : ''}${det}
-  <div class="igrid">${keys.map(k => `<button class="it ${UI.sel === k ? 'on' : ''} ${inv(k) >= AG.cap ? 'full' : ''}" data-a="sel:${k}">${ic('i_' + k, 26)}<b>${fmt(inv(k))}</b><i style="width:${inv(k) / AG.cap * 100}%"></i></button>`).join('')}</div>
-  ${keys.length ? `<p class="hint">${PC ? 'Clique sur' : 'Touche'} une ressource pour savoir où la trouver.</p>` : '<p class="hint">Ton sac est vide. Va récolter des trucs !</p>'}`;
-};
+  return `<h3>Sac <small>· ${stacks.length} / ${tot} emplacements</small></h3>${det}<div class="sgrid2">${cells.join('')}</div><div class="chips">${tl}${buffs}</div>`;
+};const stationOk = st => st === 'main' || nb(st) > 0;
 function recipeRows(st) {
   return RECIPES.map((r, i) => [r, i]).filter(([r]) => r.st === st && hasR(r.r)).map(([r, i]) => {
-    const can = nb(r.st) > 0 && canPay(r.i), mx = maxCraft(r);
-    return `<div class="rrow ${can ? '' : 'off'}">${ic('i_' + r.o, 28)}<div class="rn"><b>${ITEMS[r.o].n}${r.n > 1 ? ' ×' + r.n : ''}</b><div>${costHTML(r.i)}</div></div><small>${inv(r.o)}</small><button class="btn sm" data-a="craft:${i},1">×1</button><button class="btn sm" data-a="craft:${i},5">×5</button><button class="btn sm pri" data-a="craft:${i},max">Max${mx ? ' ' + mx : ''}</button></div>`;
+    const can = stationOk(r.st) && canPay(r.i) && room(r.o) >= r.n, mx = maxCraft(r), tool = ITEMS[r.o].tool;
+    return `<div class="rrow ${can ? '' : 'off'}">${ic('i_' + r.o, 28)}<div class="rn"><b>${ITEMS[r.o].n}${r.n > 1 ? ' ×' + r.n : ''}</b><div>${costHTML(r.i)}</div></div><small>${inv(r.o) || ''}</small><button class="btn sm ${tool ? 'pri' : ''}" data-a="craft:${i},1">×1</button>${tool ? '' : `<button class="btn sm" data-a="craft:${i},5">×5</button><button class="btn sm pri" data-a="craft:${i},max">Max${mx ? ' ' + mx : ''}</button>`}</div>`;
   }).join('');
 }
-function maxCraft(r) { if (!nb(r.st)) return 0; let m = Math.floor((AG.cap - inv(r.o)) / r.n); for (const k in r.i) m = Math.min(m, Math.floor(inv(k) / r.i[k])); return Math.max(0, m); }
+function maxCraft(r) { if (!stationOk(r.st)) return 0; let m = Math.floor(room(r.o) / r.n); for (const k in r.i) m = Math.min(m, Math.floor(inv(k) / r.i[k])); return Math.max(0, m); }
 TABV.craft = () => Object.keys(STATIONS).map(st => {
+  if (st === 'main') return `<h3>${ic('u_hammer', 22)} À la main <small>· pas besoin d’atelier</small></h3>${recipeRows('main')}`;
   const built = nb(st) > 0, unlocked = hasR(BLD[st].r);
   if (!unlocked) return `<h3 class="lock">${ic('u_lock', 16)} ${STATIONS[st]} <small>· recherche « ${RESI[BLD[st].r].n} »</small></h3>`;
-  return `<h3>${ic('b_' + st, 22)} ${STATIONS[st]} ${built ? '' : '<small class="no">· à construire (marteau)</small>'}</h3>${recipeRows(st)}`;
-}).join('') + '<p class="hint">Les stations marchent de partout : pas besoin d’être à côté.</p>';
+  return `<h3>${ic('b_' + st, 22)} ${STATIONS[st]} ${built ? '' : '<small class="no">· à construire (' + (PC ? keyLabel('KeyB') : 'marteau') + ')</small>'}</h3>${recipeRows(st)}`;
+}).join('') + '<p class="hint">Les stations marchent de partout : pas besoin d’être à côté. Les outils servent tout seuls quand ils sont dans le sac.</p>';
 function craftN(i, n) {
-  const r = RECIPES[i]; if (!nb(r.st)) { toast('Construis d’abord : ' + STATIONS[r.st], 'b_' + r.st, '', 'bad'); SFX.bad(); return 0; }
-  let d = 0; for (; d < n; d++) { if (!canPay(r.i) || inv(r.o) + r.n > AG.cap) break; pay(r.i); add(r.o, r.n, d > 0); }
-  if (d) { inc('craft', d); SFX.ok(); vib(10); } else { SFX.bad(); if (inv(r.o) + r.n > AG.cap) fullWarn(r.o); }
+  const r = RECIPES[i]; if (!stationOk(r.st)) { toast('Construis d’abord : ' + STATIONS[r.st], 'b_' + r.st, '', 'bad'); SFX.bad(); return 0; }
+  let d = 0; for (; d < n; d++) { if (!canPay(r.i) || room(r.o) < r.n) break; pay(r.i); add(r.o, r.n, d > 0); }
+  if (d) { inc('craft', d); SFX.ok(); vib(10); if (ITEMS[r.o].tool) toast(ITEMS[r.o].n + ' fabriquée !', 'i_' + r.o, 'Elle sert toute seule, garde-la dans le sac'); }
+  else { SFX.bad(); if (room(r.o) < r.n) fullWarn(r.o); }
   return d;
 }
-function eat(k) {
+function dropItem(k, n) { n = n === 'all' ? inv(k) : Math.min(inv(k), +n); if (n <= 0) return; G.inv[k] -= n; if (G.inv[k] <= 0) { delete G.inv[k]; UI.sel = null; } SFX.pickup(); refresh(); }function eat(k) {
   const f = ITEMS[k].food; if (!f || inv(k) < 1) return; G.inv[k]--; G.buffs[f.b] = Math.max(G.buffs[f.b] || 0, f.t); inc('eat');
   SFX.ok(); toast('Miam : ' + ITEMS[k].n, 'i_' + k, f.d); refresh();
 }
@@ -132,15 +139,20 @@ function resState(r) {
 }
 function unlocksOf(id) { return Object.keys(BLD).filter(k => BLD[k].r === id && !BLD[k].shop).slice(0, 8); }
 TABV.res = () => {
-  const order = { ok: 0, poor: 1, stage: 2, req: 3, done: 4 }, L = RES.map(r => [r, resState(r)]).sort((a, b) => order[a[1]] - order[b[1]] || a[0].c - b[0].c);
-  const done = L.filter(x => x[1] === 'done');
-  return `<h3>Recherche <small>· ${ic('u_sci', 14)} ${fmt(G.sci)} science (+${fmt(AG.sciRate)}/s)</small></h3>` + L.filter(x => x[1] !== 'done').map(([r, s]) => {
+  const cat = UI.rcat || 'all', order = { ok: 0, poor: 1, stage: 2, req: 3, done: 4 };
+  const all = RES.map(r => [r, resState(r)]);
+  const chips = [['all', 'Tout'], ['dispo', 'Disponibles'], ...RESCATS, ['done', 'Terminées']].map(([k, n]) => { const c = k === 'dispo' ? all.filter(x => x[1] === 'ok').length : 0; return `<button class="tab ${cat === k ? 'on' : ''}" data-a="rcat:${k}">${n}${c ? ` <i class="cnt">${c}</i>` : ''}</button>`; }).join('');
+  let L = all.filter(([r, s]) => cat === 'done' ? s === 'done' : s !== 'done' && (cat === 'all' || (cat === 'dispo' ? s === 'ok' : r.cat === cat)));
+  L.sort((a, b) => order[a[1]] - order[b[1]] || a[0].c - b[0].c);
+  const cards = L.map(([r, s]) => {
+    if (s === 'done') return `<div class="rcard done"><div class="rt2"><b>✔ ${r.n}</b></div><small>${r.d}</small></div>`;
     const why = s === 'req' ? 'Nécessite : ' + r.req.filter(x => !hasR(x)).map(x => RESI[x].n).join(', ') : s === 'stage' ? 'Nécessite le stade ' + r.st + ' de la planète' : '';
     const un = unlocksOf(r.id);
-    return `<div class="rcard ${s}"><div class="rt2"><b>${r.n}</b><span class="price">${ic('u_sci', 14)} ${fmt(r.c)}</span></div><small>${r.d}</small>${un.length ? `<div class="unl">${un.map(k => ic('b_' + k, 22)).join('')}</div>` : ''}${why ? `<small class="no">${why}</small>` : `<button class="btn ${s === 'ok' ? 'pri' : 'off'} sm" data-a="res:${r.id}">${s === 'ok' ? 'Rechercher' : 'Pas assez de science'}</button>`}</div>`;
-  }).join('') + (done.length ? `<h3>Terminées (${done.length}/${RES.length})</h3><div class="chips">${done.map(([r]) => `<span class="chip">✔ ${r.n}</span>`).join('')}</div>` : '');
-};
-function research(id) {
+    return `<div class="rcard ${s}"><div class="rt2"><b>${r.n}</b><span class="price">${ic('u_sci', 14)} ${fmt(r.c)}</span></div><small>${r.d}</small>${un.length ? `<div class="unl">${un.map(k => ic('b_' + k, 22)).join('')}</div>` : ''}${why ? `<small class="no">${why}</small>` : `<button class="btn ${s === 'ok' ? 'pri' : 'off'} sm" data-a="res:${r.id}">${s === 'ok' ? 'Rechercher' : 'Il manque ' + fmt(r.c - G.sci) + ' science'}</button>`}</div>`;
+  }).join('');
+  return `<h3>Recherche <small>· ${ic('u_sci', 14)} ${fmt(G.sci)} science (+${fmt(AG.sciRate)}/s) · ${all.filter(x => x[1] === 'done').length}/${RES.length}</small></h3><div class="tabs rtabs">${chips}</div><div class="rgrid">${cards || '<p class="hint">Rien ici pour le moment.</p>'}</div>
+  <p class="hint">La science vient de l’épave (un peu), des labos, des découvertes, des commandes de Zorg, des capsules et de chaque nouveau stade de la planète.</p>`;
+};function research(id) {
   const r = RESI[id]; if (resState(r) !== 'ok') { SFX.bad(); return; }
   G.sci -= r.c; G.res.push(id); recount(); SFX.level(); vib(20);
   const un = unlocksOf(id).map(k => BLD[k].n);
@@ -188,15 +200,27 @@ function srcTxt(s) { return s === 'cap' ? 'Capsules de fret' : s.startsWith('sho
 TABV.opt = () => {
   const sl = (k, l, min, max) => `<div class="sl"><label><span>${l}</span><b id="v_${k}">${CFG[k]}%</b></label><input type="range" data-k="${k}" min="${min}" max="${max}" value="${CFG[k]}" style="--v:${(CFG[k] - min) / (max - min) * 100}%"></div>`;
   const tg = (k, l, s) => `<button class="tg" data-a="tog:${k}"><span>${l}${s ? `<small>${s}</small>` : ''}</span><i class="sw ${CFG[k] ? 'on' : ''}"></i></button>`;
-  const pcs = PC ? `<h3>Ordinateur</h3><div class="row2"><button class="btn sm" data-a="fs">Plein écran (F11)</button>${ELECTRON ? '<button class="btn sm" data-a="quitApp">Quitter le jeu</button>' : ''}</div>
-  <p class="hint">ZQSD ou flèches : bouger · Clic : aller / agir (maintenir pour récolter) · E ou Espace : agir · B : construire · C : défricher · Clic droit : annuler · Tab : menu · M : carte · Molette ou +/- : zoom · Échap : fermer</p>` : '';
-  return pcs + `<h3>Son</h3>${sl('vm', 'Volume général', 0, 100)}${sl('vs', 'Effets', 0, 100)}${sl('vx', 'Musique', 0, 100)}${tg('vib', 'Vibrations')}
-  <h3>Affichage</h3><div class="zoom"><span>Zoom</span>${[[.75, 'Loin'], [1, 'Normal'], [1.3, 'Près']].map(([z, n]) => `<button class="btn sm ${CFG.zoom === z ? 'pri' : ''}" data-a="zoom:${z}">${n}</button>`).join('')}</div>${sl('nd', 'Obscurité de la nuit', 0, 100)}${tg('fps', 'Afficher les FPS')}
-  <h3>Commandes</h3>${tg('lefty', 'Mode gaucher', 'Joystick à droite, boutons à gauche')}${sl('bs', 'Taille des boutons', 70, 140)}${sl('bo', 'Opacité des boutons', 30, 100)}${tg('tips', 'Astuces', 'Petits conseils au début')}
-  <h3>Sauvegarde</h3><p class="hint">La partie se sauvegarde toute seule. Tu peux copier ta sauvegarde pour la transférer sur un autre appareil.</p><div class="row2"><button class="btn sm" data-a="exp">Copier la sauvegarde</button><button class="btn sm" data-a="imp">Coller une sauvegarde</button></div>
-  <div class="row2"><button class="btn sm" data-a="cred">Crédits</button><button class="btn sm" data-a="quit">Menu principal</button></div><p class="ver">Nérys v2.1 · © Aureane Studio</p>`;
-};
-$('#modal').addEventListener('input', e => {
+  const K = keyLabel, other = NM[G && G.who === 'm' ? 'f' : 'm'];
+  const game = G && !G.demo ? `<h3>Partie</h3><div class="row2"><button class="btn pri sm" data-a="save">${ic('u_star', 14)} ${G.mp ? 'Envoyer ma progression' : 'Sauvegarder'}${PC ? ' (Ctrl+S)' : ''}</button>${G.mp ? '' : '<button class="btn sm" data-a="exp">Exporter en fichier</button>'}</div>
+  ${G.mp ? `<p class="hint">Partie en ligne sur « ${esc(MP.info ? MP.info.name : MP.addr)} ». Tout est enregistré sur le serveur.</p>` : `<p class="hint">Sauvegarde automatique toutes les 20 secondes · emplacement ${SLOT + 1}.</p>
+  <h3>Équipe</h3><div class="row2"><button class="btn sm" data-a="swap">⇄ Jouer ${other}${PC ? ' (' + K('KeyG') + ')' : ''}</button><button class="btn sm" data-a="stay">${G.pm === 'stay' ? 'Dire à ' + other + ' de te suivre' : 'Dire à ' + other + ' de rester ici'}${PC ? ' (' + K('KeyF') + ')' : ''}</button></div>`}
+  <div class="row2"><button class="btn sm" data-a="quit">${G.mp ? 'Quitter le serveur' : 'Menu principal'}</button></div>` : '';
+  const pcs = PC ? `<h3>Commandes</h3><div class="keys2">
+    <span><b>${K('KeyW')} ${K('KeyA')} ${K('KeyS')} ${K('KeyD')}</b> ou flèches</span><i>Bouger</i>
+    <span><b>Clic gauche</b></span><i>Casser, récolter, caresser (maintenir : continuer / casser une construction)</i>
+    <span><b>Clic droit</b></span><i>Poser (en construction), utiliser, ouvrir, parler</i>
+    <span><b>${K('KeyE')}</b> ou Espace</span><i>Agir sur ce qui est devant toi</i>
+    <span><b>${K('KeyQ')}</b></span><i>Sac</i><span><b>Tab</b></span><i>Menu</i>
+    <span><b>${K('KeyB')}</b></span><i>Construire</i><span><b>${K('KeyC')}</b></span><i>Défricher (enlève pour de bon)</i>
+    <span><b>${K('KeyF')}</b></span><i>Compagnon : reste ici / suis-moi</i><span><b>${K('KeyG')}</b></span><i>Changer de personnage</i>
+    <span><b>${K('KeyM')}</b></span><i>Carte</i><span><b>Entrée</b></span><i>Chat (multijoueur)</i>
+    <span><b>Molette</b> · + / −</span><i>Zoom</i><span><b>Ctrl+S</b></span><i>Sauvegarder</i><span><b>F11</b></span><i>Plein écran</i></div>
+    ${tg('keys', 'Aide des touches à l’écran')}<div class="row2"><button class="btn sm" data-a="fs">Plein écran (F11)</button>${ELECTRON ? '<button class="btn sm" data-a="quitApp">Quitter le jeu</button>' : ''}</div>` : '';
+  return game + `<h3>Son</h3>${sl('vm', 'Volume général', 0, 100)}${sl('vs', 'Effets', 0, 100)}${sl('vx', 'Musique', 0, 100)}${PC ? '' : tg('vib', 'Vibrations')}
+  <h3>Affichage</h3><div class="zoom"><span>Zoom</span>${[[.75, 'Loin'], [1, 'Normal'], [1.3, 'Près']].map(([z, n]) => `<button class="btn sm ${CFG.zoom === z ? 'pri' : ''}" data-a="zoom:${z}">${n}</button>`).join('')}</div>${sl('nd', 'Obscurité de la nuit', 0, 100)}${sl('ui', 'Taille de l’interface', 70, 130)}${tg('fps', 'Afficher les FPS')}
+  ${pcs}${PC ? '' : `<h3>Commandes</h3>${tg('lefty', 'Mode gaucher', 'Joystick à droite, boutons à gauche')}${sl('bs', 'Taille des boutons', 70, 140)}${sl('bo', 'Opacité des boutons', 30, 100)}`}${tg('tips', 'Astuces', 'Petits conseils au début')}
+  <div class="row2"><button class="btn sm" data-a="cred">Crédits</button></div><p class="ver">Nérys v2.2 · © Aureane Studio</p>`;
+};$('#modal').addEventListener('input', e => {
   const t = e.target, k = t.dataset.k; if (!k) return; CFG[k] = +t.value;
   t.style.setProperty('--v', (t.value - t.min) / (t.max - t.min) * 100 + '%'); const l = $('#v_' + k); if (l) l.textContent = t.value + '%';
   applyCfg(); setVol(); saveCfg();
@@ -204,7 +228,8 @@ $('#modal').addEventListener('input', e => {
 $('#modal').addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.k; if (k === 'vs' || k === 'vm') SFX.ok(); });
 function applyCfg() {
   const s = document.documentElement.style; s.setProperty('--bs', CFG.bs / 100); s.setProperty('--bo', CFG.bo / 100);
-  document.body.classList.toggle('lefty', !!CFG.lefty); $('#fps').style.display = CFG.fps ? 'block' : 'none';
+  document.body.classList.toggle('lefty', !!CFG.lefty); document.body.classList.toggle('nokeys', CFG.keys === false); $('#fps').style.display = CFG.fps ? 'block' : 'none';
+  s.setProperty('--ui', (CFG.ui || 100) / 100);
 }
 function exportSave() {
   save(); const s = localStorage.getItem(SAVE_KEY) || '', code = btoa(unescape(encodeURIComponent(s)));
@@ -282,7 +307,7 @@ function openBuildingPanel(i) {
       if (nb('ruche')) body += '<p class="hint">Si une ruche à drones est à moins de 14 cases, c’est collecté tout seul.</p>';
     }
     if (d.sci) body += `<div class="kv"><span>${ic('u_sci', 16)} Science</span><b>+${fmt(d.sci * AG.eff)}/s</b></div>`;
-    if (d.cap) body += `<div class="kv"><span>${ic('u_bag', 16)} Capacité totale</span><b>${AG.cap} par ressource</b></div>`;
+    if (d.slots) body += `<div class="kv"><span>${ic('u_bag', 16)} Sac</span><b>+${d.slots} emplacements (total : ${AG.slots})</b></div>`;
     if (d.ch) body += `<div class="kv"><span>${ic('u_heart', 16)} Confort</span><b>+${d.ch} (base : ${AG.comfort})</b></div>`;
     if (b.id === 'jardin') body += gardenUI(b);
     if (b.id === 'tp') body += tpUI(i);
@@ -324,11 +349,11 @@ function teleport(j, free) {
   closeModal(); SFX.boing();
   fadeOut(() => {
     if (j < 0) { G.x = W.spawn.x * TS + 8; G.y = (W.spawn.y + 2) * TS + 8; } else { G.x = (j % WW) * TS + 8; G.y = (j / WW | 0) * TS + 22; }
-    unstick(); P.x = G.x + 14; P.y = G.y; MOBL = []; reveal(G.x / TS | 0, G.y / TS | 0, 9); bubble('Bzzzt ! J’ai encore tous mes doigts ? 1, 2, 3… 11 ?');
+    unstick(); if (G.pm !== 'stay') { P.x = G.x + 14; P.y = G.y; } MOBL = []; reveal(G.x / TS | 0, G.y / TS | 0, 9); bubble('Bzzzt ! J’ai encore tous mes doigts ? 1, 2, 3… 11 ?');
   });
 }
 function zorgUI() {
-  shopRefresh(); ordersTick();
+  shopRefresh(); if (isHost()) ordersTick();
   const tabs = [['shop', 'Boutique'], ['ord', 'Commandes'], ['sell', 'Vendre']].map(([k, n]) => `<button class="tab ${UI.zorg === k ? 'on' : ''}" data-a="ztab:${k}">${n}</button>`).join('');
   let b = `<div class="zorg">${ic('zorg', 52)}<p>« ${esc(ZORG[Math.floor(now() / 20000) % ZORG.length])} »</p><span class="pill">${ic('u_coin', 16)} ${fmt(G.coins)}</span></div><div class="tabs">${tabs}</div>`;
   if (UI.zorg === 'shop') {
@@ -378,7 +403,8 @@ function drawMapOv() {
   for (const k in G.bl) if (G.bl[k].id === 'tp' || G.bl[k].id === 'piste' || G.bl[k].id === 'niche') mk(k % WW, k / WW | 0, 'b_' + G.bl[k].id, 14);
   if (G.met) mk(G.met % WW, G.met / WW | 0, 'meteor', 14);
   mk(W.spawn.x, W.spawn.y, 'u_home', 18);
-  mk(P.x / TS, P.y / TS, 'u_heart', 10);
+  if (!G.mp) mk(P.x / TS, P.y / TS, 'u_heart', G.pm === 'stay' ? 14 : 10);
+  if (G.mp) for (const id in MP.players) { const p = MP.players[id]; mk(p.x / TS, p.y / TS, 'u_heart', 12); }
   x.fillStyle = '#ffffff'; x.beginPath(); x.arc(cx, cy, 5 * d, 0, 7); x.fill(); x.fillStyle = '#ff4d6d'; x.beginPath(); x.arc(cx, cy, 3.5 * d, 0, 7); x.fill();
   const b = W.b[tI(px | 0, py | 0)];
   $('#mapInfo').innerHTML = `<b>${BIOMES[b].n}</b> · exploré ${(explored() * 100).toFixed(1).replace('.', ',')} % · capsules ${cnt('cap')}/${W.caps.length} · statues ${cnt('mono')}/8`;
@@ -393,7 +419,7 @@ let FISH_ST = null;
 function startFishing(i) {
   if (FISH_ST) return;
   FISH_ST = { i, ph: 'wait', t: rand(1.4, 3.6), fish: rollFish(i), pos: 0, dir: 1, hits: 0, miss: 0 };
-  const f = FISH_ST.fish, rare = f.r < 6 ? 2 : f.r < 16 ? 1 : 0, rod = toolBonus() * .012;
+  const f = FISH_ST.fish, rare = f.r < 6 ? 2 : f.r < 16 ? 1 : 0, rod = toolBonus('rod') * .012;
   FISH_ST.zone = clamp(.3 - rare * .07 + rod, .12, .4); FISH_ST.sp = .9 + rare * .45; FISH_ST.zp = Math.random() * (1 - FISH_ST.zone); FISH_ST.zv = (rare + 1) * .12;
   SFX.splash(); fishDraw();
   $('#fishUI').classList.add('on');
@@ -428,7 +454,7 @@ function fishEnd(ok, msg) {
   const F = FISH_ST; FISH_ST = null; $('#fishUI').classList.remove('on');
   if (!ok) { toast(msg, 'i_poisson', '', 'bad'); return; }
   const f = F.fish, first = catchFish(f); SFX.fanfare(); const [x, y] = tileCenter(F.i); puff(x, y, '#bff0ff', 10);
-  modal(first ? 'Nouveau poisson !' : 'Belle prise !', `<div class="catch">${ic('fi_' + f.id, 72)}<b>${f.n}</b><small>${f.r < 6 ? '★ Très rare ★' : f.r < 16 ? 'Rare' : 'Commun'} · pêché ${G.fish[f.id]}×</small>${first ? `<small class="good">+${8 + f.v} science</small>` : ''}<small>+1 poisson dans le sac</small></div><button class="btn pri wide" data-a="close">Hop, dans le sac</button>`, {}, { cls: 'small', id: 'catch' });
+  modal(first ? 'Nouveau poisson !' : 'Belle prise !', `<div class="catch">${ic('fi_' + f.id, 72)}<b>${f.n}</b><small>${f.r < 6 ? '★ Très rare ★' : f.r < 16 ? 'Rare' : 'Commun'} · pêché ${G.fish[f.id]}×</small>${first ? `<small class="good">+${4 + Math.round(f.v / 2)} science</small>` : ''}<small>+1 poisson dans le sac</small></div><button class="btn pri wide" data-a="close">Hop, dans le sac</button>`, {}, { cls: 'small', id: 'catch' });
 }
 $('#fishUI').addEventListener('pointerdown', e => { e.preventDefault(); if (e.target.closest('.fx')) { fishEnd(false, 'Tu as rangé la canne.'); return; } fishTap(); });
 function dlgSkip() { DLG.q = []; DLG.cur = null; dlgNext(); }
@@ -446,7 +472,9 @@ function hud(force) {
   $('#hPow').innerHTML = ic('u_bolt', 16) + fmt(AG.prod) + '/' + fmt(AG.cons); $('#hPow').classList.toggle('warn', AG.eff < 1);
   $('#hClock').textContent = clockTxt();
   const al = targetLabel(TGT), A = $('#bAL'); if (A.textContent !== al) A.textContent = al;
-  if (PC) { const k = $('#kAct'), h = HOVT ? 'Clic : ' + targetLabel(HOVT) : al ? 'E : ' + al : ''; if (k.textContent !== h) k.textContent = h; }
+  if (PC) { const k = $('#kAct'); let h = ''; if (HOVT && HOVT.far) h = 'Trop loin'; else if (HOVT) { const a = primaryLabel(HOVT), u = useLabel(HOVT); h = (a ? 'Clic G : ' + a : '') + (u && u !== a && HOVT.k !== 'flr' ? '   ·   Clic D : ' + u : ''); } else if (BUILD && !BUILD.clear && !BUILD.pick) h = 'Clic D : poser   ·   Clic G (maintenir) : casser   ·   ' + keyLabel('KeyB') + ' / Échap : terminer'; else if (al) h = keyLabel('KeyE') + ' : ' + al; if (k.textContent !== h) k.textContent = h; }
+  $('#bStay').classList.toggle('stay', G.pm === 'stay'); $('#bStay').title = G.pm === 'stay' ? 'Compagnon : reste ici (appuie pour qu’il te suive)' : 'Compagnon : te suit (appuie pour qu’il t’attende ici)';
+  if (G.mp) $('#hNet').innerHTML = ic('u_planet', 16) + (Object.keys(MP.players).length + 1) + ' en ligne';
   $('#bA').classList.toggle('dim', !TGT && !BUILD && !DLG.on && !FISH_ST);
   if (UI.live && UI.modal) { if (UI.modal === 'menu' && UI.tab === 'planet') drawPlanetC(); if (++UI.lv % 4 === 0) refreshLive(); }
 }

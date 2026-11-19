@@ -8,7 +8,7 @@ let G = null;
 const P = { x: 0, y: 0, dir: 'd', step: 0, mv: false, bub: null, bt: 30, stuck: 0, lr: 'r' };
 let MOBL = [], PETL = [], DROPS = [], PARTS = [], DRONES = [];
 const SHAKE = {};
-const AG = { cap: 60, prodBase: 0, solar: 0, prod: 0, cons: 0, eff: 1, rate: { o: 0, h: 0, w: 0, b: 0 }, sciRate: .1, nb: {}, comfort: 0, lights: [], mult: 1 };
+const AG = { slots: BAG, prodBase: 0, solar: 0, prod: 0, cons: 0, eff: 1, rate: { o: 0, h: 0, w: 0, b: 0 }, sciRate: .1, nb: {}, comfort: 0, lights: [], mult: 1 };
 const DIRS = { d: [0, 1], u: [0, -1], l: [-1, 0], r: [1, 0] };
 const now = () => Date.now();
 
@@ -24,7 +24,12 @@ const dayN = () => Math.floor(G.tm / DAY) + 1;
 const hasR = id => !id || (G && G.res.includes(id));
 const nb = id => AG.nb[id] || 0;
 const inv = k => G.inv[k] || 0;
-const toolBonus = () => (hasR('r_outil1') ? 1 : 0) + (hasR('r_outil2') ? 1 : 0) + (hasR('r_outil3') ? 2 : 0);
+/* outils : le meilleur que tu possèdes dans le sac est utilisé tout seul */
+const toolTier = kind => { let t = 0; for (const k in G.inv) { const it = ITEMS[k]; if (it && it.tool === kind && G.inv[k] > 0 && it.tier > t) t = it.tier; } return t; };
+const toolBonus = (kind = 'pick') => [0, 0, 1, 2, 4][toolTier(kind)] || 0;
+let needT = 0;
+function needTool(kind) { if (performance.now() - needT < 2500) return; needT = performance.now(); SFX.bad(); toast('Il te faut ' + TOOLN[kind], kind === 'rod' ? 'i_canne' : kind === 'axe' ? 'i_hache' : 'i_pioche', 'Sac > Fabriquer > À la main', 'bad'); floatTxt(G.x, G.y - 28, 'Il faut ' + TOOLN[kind] + ' !', '#ff8a9a'); }
+const isHost = () => !G || !G.mp || (typeof MP !== 'undefined' && MP.host);
 const buff = k => (G.buffs[k] || 0) > 0 || (G.buffs.all || 0) > 0;
 function daylight() { return clamp(.5 + .65 * Math.cos(2 * Math.PI * (G.tm % DAY) / DAY), 0, 1); }
 function nightness() { return G ? 1 - daylight() : 0; }
@@ -33,9 +38,10 @@ function clockTxt() { const p = (G.tm % DAY) / DAY, h = (p * 24 + 12) % 24, hh =
 /* ================= NOUVELLE PARTIE / SAUVEGARDE ================= */
 function blankState(who, seed) {
   return {
-    v: 2, seed, who, t: now(), tm: DAY * .86, x: 0, y: 0, dir: 'd',
+    v: 3, seed, who, t: now(), tm: DAY * .86, x: 0, y: 0, dir: 'd',
     inv: {}, coins: 0, sci: 0, st: { o: 0, h: 0, w: 0, b: 0 }, stage: 0, res: [], bl: {}, fl: {}, od: {}, rg: {}, pets: [],
-    hats: ['none', 'casquette'], suits: ['orange', 'teal', 'blanc'], hat: 'casquette', suit: who === 'm' ? 'orange' : 'teal', helmet: true,
+    hats: ['none', 'casquette'], suits: ['orange', 'teal', 'blanc'], hat: 'casquette', suit: who === 'm' ? 'orange' : 'teal', helmet: true, pm: 'follow', pt: 0, px: null, py: null,
+    looks: { m: { hat: who === 'm' ? 'casquette' : 'none', suit: 'orange' }, f: { hat: who === 'f' ? 'casquette' : 'none', suit: 'teal' } },
     fish: {}, mobs: {}, cnt: {}, tro: {}, disc: {}, tok: {}, shop: null, orders: [], buffs: {}, said: {}, tips: {}, radar: false, met: null, tpN: 0, clr: {},
   };
 }
@@ -47,9 +53,20 @@ function newGame(who) {
 }
 function fogPack() { const b = new Uint8Array(WW * WH / 8); for (let i = 0; i < WW * WH; i++) if (W.fog[i]) b[i >> 3] |= 1 << (i & 7); let s = ''; for (let i = 0; i < b.length; i += 4096) s += String.fromCharCode.apply(null, b.subarray(i, i + 4096)); return btoa(s); }
 function fogUnpack(s) { try { const t = atob(s); W.fogN = 0; for (let i = 0; i < WW * WH; i++) if ((t.charCodeAt(i >> 3) >> (i & 7)) & 1) { W.fog[i] = 1; W.fogN++; } } catch (e) { } }
-function saveData() { return JSON.stringify({ ...G, t: now(), fogS: fogPack() }); }
-function save() { if (!G || G.demo) return; G.t = now(); try { localStorage.setItem(SAVE_KEY, saveData()); } catch (e) { } }
-function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+/* 3 emplacements de sauvegarde (le 1er garde la clé historique) */
+let SLOT = 0;
+const slotKey = n => n ? 'nerys_save_s' + n : SAVE_KEY;
+function saveData() { return JSON.stringify({ ...G, t: now(), px: P.x, py: P.y, fogS: fogPack() }); }
+function save() {
+  if (!G || G.demo) return; G.t = now(); G.px = P.x; G.py = P.y;
+  if (G.mp) { if (typeof MP !== 'undefined') MP.saveMe(); return; }
+  try { localStorage.setItem(slotKey(SLOT), saveData()); } catch (e) { }
+}
+function saveNow() { if (!G || G.demo) return; save(); SFX.ok(); toast(G.mp ? 'Progression envoyée au serveur' : 'Partie sauvegardée', 'u_star', G.mp ? '' : 'Emplacement ' + (SLOT + 1)); }
+function slotRaw(n) { try { return localStorage.getItem(slotKey(n)); } catch (e) { return null; } }
+function hasSave() { return [0, 1, 2].some(n => !!slotRaw(n)); }
+function slotInfo(n) { const r = slotRaw(n); if (!r) return null; try { const s = JSON.parse(r); return { who: s.who, stage: s.stage || 0, day: Math.floor((s.tm || 0) / DAY) + 1, t: s.t, pt: s.pt || 0, hat: s.hat, suit: s.suit, size: r.length }; } catch (e) { return { bad: true }; } }
+function deleteSlot(n) { try { localStorage.removeItem(slotKey(n)); } catch (e) { } }
 function loadFrom(str) {
   let s; try { s = JSON.parse(str); } catch (e) { return false; }
   if (!s || !s.seed || !s.who) return false;
@@ -58,12 +75,17 @@ function loadFrom(str) {
   for (const i in G.od) W.o[i] = G.od[i];
   for (const i in G.bl) if (G.bl[i].ore) W.o[i] = 0;
   fogUnpack(G.fogS || ''); delete G.fogS;
+  if (!s.v || s.v < 3) { // v2 -> v3 : les outils deviennent des objets à fabriquer ; on offre ceux déjà « recherchés »
+    G.v = 3; const T = hasR('r_outil3') ? ['pioche_ba', 'hache_cr'] : hasR('r_outil2') ? ['pioche_cr', 'hache_cr'] : hasR('r_outil1') ? ['pioche_cu', 'hache_cu'] : ['pioche', 'hache'];
+    for (const k of T) G.inv[k] = 1; if (hasR('r_peche')) G.inv.canne = 1;
+  }
   initRuntime(); return true;
 }
-function load() { try { return loadFrom(localStorage.getItem(SAVE_KEY)); } catch (e) { return false; } }
+function load(n = SLOT) { SLOT = n; try { return loadFrom(slotRaw(n)); } catch (e) { return false; } }
 
 function initRuntime() {
-  MOBL = []; DROPS = []; PARTS = []; DRONES = []; P.x = G.x + 16; P.y = G.y + 2; P.bt = 25;
+  MOBL = []; DROPS = []; PARTS = []; DRONES = []; P.x = G.px != null ? G.px : G.x + 16; P.y = G.py != null ? G.py : G.y + 2; P.bt = 25; P.mv = false;
+  if (!G.looks) G.looks = { m: { hat: 'none', suit: 'orange' }, f: { hat: 'none', suit: 'teal' } };
   recount(); updateV(G.st); unstick(); spawnPets(); reveal(G.x / TS | 0, G.y / TS | 0, 10);
   if (!G.orders.length) ordersTick();
 }
@@ -71,18 +93,21 @@ function initRuntime() {
 /* ================= INVENTAIRE ================= */
 function add(k, n, quiet) {
   if (n <= 0) return 0;
-  const cur = G.inv[k] || 0, a = Math.max(0, Math.min(AG.cap - cur, n));
+  const cur = G.inv[k] || 0, a = Math.max(0, Math.min(room(k), n));
   if (a > 0) {
     G.inv[k] = cur + a; inc('got_' + k, a);
-    if (!G.disc['i_' + k]) { G.disc['i_' + k] = 1; G.sci += 3; if (!quiet) toast(`Nouveau : ${ITEMS[k].n}`, 'i_' + k, '+3 science'); }
+    if (!G.disc['i_' + k]) { G.disc['i_' + k] = 1; G.sci += 2; if (!quiet) toast(`Nouveau : ${ITEMS[k].n}`, 'i_' + k, '+2 science'); }
   }
   if (a < n && !quiet) fullWarn(k);
   return a;
 }
 let fullT = 0;
-function fullWarn(k) { if (performance.now() - fullT < 4000) return; fullT = performance.now(); toast(`Plus de place pour : ${ITEMS[k].n}`, 'i_' + k, 'Construis des caisses de rangement', 'bad'); }
+function fullWarn(k) { if (performance.now() - fullT < 4000) return; fullT = performance.now(); SFX.bad(); toast('Sac plein ! (' + ITEMS[k].n + ')', 'u_bag', 'Jette ou vends des objets, ou construis des caisses de rangement', 'bad'); }
+/* sac à emplacements : 99 par emplacement (outils : 1) */
+function slotsUsed() { let s = 0; for (const k in G.inv) if (G.inv[k] > 0) s += Math.ceil(G.inv[k] / stackOf(k)); return s; }
+function room(k) { const st = stackOf(k), c = inv(k), free = Math.max(0, AG.slots - slotsUsed()); return free * st + (c % st ? st - c % st : 0); }
 const canPay = c => Object.entries(c || {}).every(([k, v]) => inv(k) >= v);
-const pay = c => Object.entries(c || {}).forEach(([k, v]) => { G.inv[k] = inv(k) - v; });
+const pay = c => Object.entries(c || {}).forEach(([k, v]) => { G.inv[k] = inv(k) - v; if (G.inv[k] <= 0) delete G.inv[k]; });
 const refund = c => Object.entries(c || {}).forEach(([k, v]) => { G.inv[k] = inv(k) + v; });
 function itemSource(k) {
   const where = { fer: [0, 4], cuivre: [3], cristal: [2], bois: [1], fibre: [0, 3, 2], gelee: [3], glace: [4], soufre: [5], fruit: [0, 1], spore: [1], graine: [0, 3, 1], bananium: [5, 2] }[k];
@@ -96,22 +121,22 @@ function itemSource(k) {
 
 /* ================= AGRÉGATS (constructions) ================= */
 function recount() {
-  const nbm = {}; let cap = 60, prod = 0, solar = 0, cons = 0, com = 0; const lights = [];
+  const nbm = {}; let slots = BAG, prod = 0, solar = 0, cons = 0, com = 0; const lights = [];
   for (const i in G.bl) {
     const b = G.bl[i], d = BLD[b.id]; if (!d) continue; nbm[b.id] = (nbm[b.id] || 0) + 1;
-    if (d.cap) cap += d.cap;
+    if (d.slots) slots += d.slots;
     if (d.pw > 0) { if (d.solar) solar += d.pw; else prod += d.pw; } else if (d.pw < 0) cons -= d.pw;
     if (d.ch) com += d.ch;
     if (d.light || d.pw || d.tf) lights.push(+i);
   }
-  AG.nb = nbm; AG.cap = cap; AG.prodBase = prod; AG.solar = solar; AG.cons = cons; AG.comfort = com; AG.lights = lights;
+  AG.nb = nbm; AG.slots = slots; AG.prodBase = prod; AG.solar = solar; AG.cons = cons; AG.comfort = com; AG.lights = lights;
   AG.mult = 1 + (hasR('r_boost1') ? .25 : 0) + (hasR('r_boost2') ? .5 : 0) + (hasR('r_boost3') ? 1 : 0);
   power(daylight()); rates();
 }
 function power(dl) { AG.prod = AG.prodBase + AG.solar * (dl > .3 ? 1 : dl / .3); AG.eff = AG.cons > 0 ? Math.min(1, AG.prod / AG.cons) : 1; return AG.eff; }
 function treeGrown(b) { return now() - b.t >= BLD.arbre.grow * 1000; }
 function rates() {
-  const r = { o: 0, h: 0, w: 0, b: 0 }; let sci = .1;
+  const r = { o: 0, h: 0, w: 0, b: 0 }; let sci = .05;
   for (const i in G.bl) {
     const b = G.bl[i], d = BLD[b.id];
     if (d.tf) { const k = d.grow ? (treeGrown(b) ? 1 : 0) : AG.eff; for (const s in d.tf) r[s] += d.tf[s] * k; }
@@ -137,7 +162,7 @@ function stageProgress() {
 function checkStage(quiet) {
   const n = calcStage(); if (n <= G.stage) return;
   while (G.stage < n) {
-    G.stage++; const st = G.stage, sci = Math.round(20 * Math.pow(2.2, st)), coins = 25 * st;
+    G.stage++; const st = G.stage, sci = Math.round(10 * Math.pow(2, st)), coins = 25 * st;
     G.sci += sci; G.coins += coins;
     if (!quiet) { stageUp(st, sci, coins); }
   }
@@ -147,11 +172,11 @@ function checkStage(quiet) {
 /* ================= TICK PRINCIPAL ================= */
 let tAcc = 0, tAcc2 = 0, tAcc3 = 0, droneAcc = 0;
 function gameTick(dt) {
-  G.tm += dt;
+  G.tm += dt; G.pt = (G.pt || 0) + dt;
   for (const k in G.buffs) { G.buffs[k] -= dt; if (G.buffs[k] <= 0) delete G.buffs[k]; }
-  tAcc += dt; if (tAcc >= .25) { machines(tAcc, false); tAcc = 0; }
+  tAcc += dt; if (tAcc >= .25) { if (isHost()) machines(tAcc, false); else { power(daylight()); rates(); } tAcc = 0; }
   tAcc2 += dt; if (tAcc2 >= 1) { tAcc2 = 0; if (updateV(G.st)) { unstick(); renderMap(); } }
-  tAcc3 += dt; if (tAcc3 >= 2) { tAcc3 = 0; respawnTick(); natureTick(); trophyCheck(); eventsTick(2); tipsTick(); ordersTick(); }
+  tAcc3 += dt; if (tAcc3 >= 2) { tAcc3 = 0; if (isHost()) { respawnTick(); natureTick(); ordersTick(); } trophyCheck(); eventsTick(2); tipsTick(); }
 }
 function machines(dt, off) {
   power(off ? .5 : daylight()); rates();
@@ -175,7 +200,7 @@ const CROPS = { fruit: [180, 6], fibre: [180, 8], bois: [300, 6], spore: [300, 6
 function cropReady(b) { return b.crop && now() >= b.crop.t0 + b.crop.d * 1000; }
 function harvestCrop(i, auto) {
   const b = G.bl[i]; if (!cropReady(b)) return 0;
-  const k = b.crop.k, n = CROPS[k][1] + (auto ? 0 : toolBonus()), a = add(k, n, auto);
+  const k = b.crop.k, n = CROPS[k][1] + (auto ? 0 : toolBonus('axe')), a = add(k, n, auto);
   if (Math.random() < .5) add('graine', 1, true);
   inc('crop'); b.crop = null;
   if (auto && inv('graine') > 0) { G.inv.graine--; plantCrop(i, k); }
@@ -246,6 +271,8 @@ function playerMove(dt, ix, iy) {
 
 /* ================= COMPAGNON ================= */
 function partnerUpdate(dt) {
+  if (G.mp) return;
+  if (G.pm === 'stay') { P.mv = false; if (P.bub) { P.bub.t -= dt; if (P.bub.t <= 0) P.bub = null; } return; }
   const dx = wrapD(G.x - P.x), dy = wrapD(G.y - P.y), d = Math.hypot(dx, dy);
   if (d > 220) { P.x = G.x - 14; P.y = G.y + 2; P.mv = false; }
   else if (d > 28) {
@@ -265,7 +292,27 @@ function partnerUpdate(dt) {
     bubble(pick(pool));
   }
 }
-function bubble(txt, t = 5) { P.bub = { txt, t }; }
+function bubble(txt, t = 5) { if (G && G.mp) return; P.bub = { txt, t }; }
+/* le compagnon : « reste ici » / « suis-moi » */
+function partnerToggle() {
+  if (!G || G.mp || G.demo) return;
+  G.pm = G.pm === 'stay' ? 'follow' : 'stay'; SFX.tab();
+  const near = Math.hypot(wrapD(G.x - P.x), wrapD(G.y - P.y)) < 200;
+  if (near) bubble(G.pm === 'stay' ? pick(['OK, je reste là. Je compte les cailloux.', 'Je t’attends ici. Ramène-moi un truc !', 'Je garde la base. Personne ne passera. Sauf les canards.']) : pick(['J’arrive !', 'On y va ! Attends-moi !', 'Je te suis, chef.']));
+  toast(NM[G.who === 'm' ? 'f' : 'm'] + (G.pm === 'stay' ? ' reste ici' : ' te suit'), 'u_heart', G.pm === 'stay' ? 'Tu peux la·le retrouver sur la carte' : '');
+  if (G.pm === 'follow' && !near) { P.x = G.x - 14; P.y = G.y + 2; }
+  hud(true);
+}
+/* changer de personnage : on prend le contrôle de l'autre astronaute (là où il est) */
+function switchChar() {
+  if (!G || G.mp || G.demo || blocking()) return;
+  const o = G.who === 'm' ? 'f' : 'm';
+  G.looks[G.who] = { hat: G.hat, suit: G.suit };
+  const x = G.x, y = G.y, d = G.dir; G.x = P.x; G.y = P.y; G.dir = P.dir || 'd'; P.x = x; P.y = y; P.dir = d; P.mv = false;
+  G.who = o; const L = G.looks[o] || {}; G.hat = L.hat || 'none'; G.suit = L.suit || (o === 'm' ? 'orange' : 'teal');
+  unstick(); lastTile = -1; reveal(G.x / TS | 0, G.y / TS | 0, 9); BUILD = null; buildBar();
+  SFX.pop(); puff(G.x, G.y - 10, '#ffffff', 8); toast('Tu joues ' + NM[o], 'u_heart', NM[G.who === 'm' ? 'f' : 'm'] + (G.pm === 'stay' ? ' reste sur place' : ' te suit')); hud(true);
+}
 
 /* ================= CRÉATURES ================= */
 let spawnAcc = 0;
@@ -322,8 +369,8 @@ function petMob(m) {
   m.hop = .35; m.vx = m.vy = 0; m.t = 1.5; inc('pet');
   hearts(m.x, m.y - 12);
   const key = m.sp + (m.gold ? '_g' : '');
-  if (!G.mobs[m.sp]) { G.mobs[m.sp] = 1; G.sci += 15; toast(`Nouvelle créature : ${MOBS[m.sp].n}`, 'm_' + m.sp + '_0', '+15 science'); }
-  if (m.gold && !G.mobs[key]) { G.mobs[key] = 1; G.sci += 50; toast(`${MOBS[m.sp].n} doré ajouté au bestiaire !`, 'u_star', '+50 science', 'gold'); }
+  if (!G.mobs[m.sp]) { G.mobs[m.sp] = 1; G.sci += 10; toast(`Nouvelle créature : ${MOBS[m.sp].n}`, 'm_' + m.sp + '_0', '+10 science'); }
+  if (m.gold && !G.mobs[key]) { G.mobs[key] = 1; G.sci += 30; toast(`${MOBS[m.sp].n} doré ajouté au bestiaire !`, 'u_star', '+30 science', 'gold'); }
   if (m.pet == null) m.love = Math.min(5, m.love + 1);
   if (m.cd <= 0 && Math.random() < .4) { m.cd = 5; drop(m.x, m.y - 6, MOBS[m.sp].drop, m.gold ? 3 : 1); }
 }
@@ -363,14 +410,14 @@ function findTarget() {
   const con = (t, x, y, r) => { const dx = wrapD(x - px), dy = wrapD(y - py), d = Math.hypot(dx, dy); if (d > r) return; const s = d - (dx * f[0] + dy * f[1]) / (d || 1) * 9; if (s < bs) { bs = s; best = t; } };
   for (const m of MOBL) con({ k: 'mob', m }, m.x, m.y - 5, 24);
   for (const m of PETL) con({ k: 'mob', m }, m.x, m.y - 5, 22);
-  { const dx = wrapD(P.x - px), dy = wrapD(P.y - 5 - py), d = Math.hypot(dx, dy); if (d < 18 && d + 12 < bs) { bs = d + 12; best = { k: 'partner' }; } }
+  if (!G.mp) { const dx = wrapD(P.x - px), dy = wrapD(P.y - 5 - py), d = Math.hypot(dx, dy); if (d < 18 && d + 12 < bs) { bs = d + 12; best = { k: 'partner' }; } }
   const tx = Math.floor(G.x / TS), ty = Math.floor((G.y - 4) / TS);
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
     const i = tI(tx + dx, ty + dy), [cx, cy] = tileCenter(i), X = (tx + dx) * TS + 8, Y = (ty + dy) * TS + 10;
     const b = G.bl[i]; if (b && !BLD[b.id].floor && !BLD[b.id].wall) { con({ k: 'bld', i }, X, Y, 24); continue; }
     const o = W.o[i]; if (o && (OBJ[o].h || OBJ[o].special)) con({ k: 'obj', i }, X, Y, o === 23 ? 34 : 24);
   }
-  if (!best && hasR('r_peche')) {
+  if (!best && toolTier('rod')) {
     for (const r of [14, 22]) { const i = tI(Math.floor((G.x + f[0] * r) / TS), Math.floor((G.y - 3 + f[1] * r) / TS)); if (isWaterK(tkind(i))) { best = { k: 'fish', i }; break; } }
   }
   return best;
@@ -398,7 +445,7 @@ function act(t) {
   if (!t) return false;
   if (t.k === 'mob') { if (t.m.pet == null && t.m.love >= 5 && hasR('r_niche')) adopt(t.m); else petMob(t.m); return true; }
   if (t.k === 'partner') { talkPartner(); return true; }
-  if (t.k === 'fish') { startFishing(t.i); return true; }
+  if (t.k === 'fish') { if (!toolTier('rod')) { needTool('rod'); return true; } startFishing(t.i); return true; }
   if (t.k === 'bld') { useBuilding(t.i); return true; }
   if (t.k === 'obj') { hit(t.i); return true; }
   return false;
@@ -409,17 +456,18 @@ function hit(i) {
   if (d.special === 'wreck') { openWreck(); return; }
   if (d.special === 'cap') { openCapsule(i); return; }
   if (d.special === 'mono' || d.special === 'mono2') { monolith(i); return; }
+  if (d.tool && !toolTier(d.tool)) { needTool(d.tool); SHAKE[i] = .12; return; }
   SHAKE[i] = .25; inc('hits'); vib(8);
   W.hp[i]++;
   if (d.it) {
-    let n = d.y + toolBonus(); if (buff('harvest') || G.buffs.rainbow > 0) n *= 2;
+    let n = d.y + (d.tool ? toolBonus(d.tool) : 0); if (buff('harvest') || G.buffs.rainbow > 0) n *= 2;
     const a = add(d.it, n); if (a) floatTxt(x, y - 18, '+' + a, ITEMS[d.it].c, 'i_' + d.it);
     SFX.hit(d.it); chips(x, y - 6, ITEMS[d.it].c);
     if (d.seed && Math.random() < d.seed) { add('graine', 1, true); }
   } else { SFX.hit('rock'); chips(x, y - 6, '#9a90b8'); }
   if (W.hp[i] >= (d.h || 1)) {
     W.hp[i] = 0;
-    if (d.loot) for (const [k, p] of d.loot) if (Math.random() < p) drop(x, y - 4, k, 1 + toolBonus());
+    if (d.loot) for (const [k, p] of d.loot) if (Math.random() < p) drop(x, y - 4, k, 1 + toolBonus(d.tool || 'pick'));
     if (d.special === 'meteor') { const got = loot(1.5, 'meteor'); lootToast('Météorite', got); G.met = null; }
     const nw = d.left || 0; W.o[i] = nw; G.od[i] = nw;
     if (d.rg) G.rg[i] = now() + d.rg * 1000 * rand(.8, 1.2);
@@ -453,7 +501,7 @@ function loot(scale, src) {
   const st = G.stage, got = [], pool = ['fer', 'cuivre', 'cristal', 'bois', 'fibre', 'gelee', 'glace', 'soufre', 'fruit', 'spore', 'graine'];
   for (let n = ri(2, 3); n > 0; n--) { const k = pick(pool), q = Math.round(rand(5, 11) * (1 + st * .5) * scale); got.push(['i_' + k, add(k, q, true), ITEMS[k].n]); }
   if (st >= 4 && Math.random() < .35) { const q = ri(1, 3); got.push(['i_bananium', add('bananium', q, true), 'Bananium']); }
-  const c = Math.round(ri(10, 30) * (1 + st * .3) * scale), s = Math.round(ri(8, 20) * (1 + st * .6) * scale);
+  const c = Math.round(ri(10, 30) * (1 + st * .3) * scale), s = Math.round(ri(5, 12) * (1 + st * .6) * scale);
   G.coins += c; inc('coins', c); G.sci += s; got.push(['u_coin', c, 'pièces'], ['u_sci', s, 'science']);
   if (src === 'cap' && Math.random() < .3) { const h = HATS.filter(h => h[2] === 'cap' && !G.hats.includes(h[0])); if (h.length) { const k = pick(h); G.hats.push(k[0]); got.push(['h_' + k[0], 1, 'Chapeau : ' + k[1]]); } }
   if (Math.random() < .12) { const d = pick(DECO.filter(d => d[5] && d[5].shop)); G.tok[d[0]] = (G.tok[d[0]] || 0) + 1; got.push(['b_' + d[0], 1, d[1]]); }
@@ -468,7 +516,7 @@ function monolith(i) {
   const [x, y] = tileCenter(i);
   if (W.o[i] === 24) { SFX.quack(); floatTxt(x, y - 30, 'Coin.', '#ffd23f'); return; }
   W.o[i] = 24; G.od[i] = 24; inc('mono'); SFX.quack(); setTimeout(SFX.fanfare, 400);
-  const s = Math.round(60 * (1 + G.stage)); G.sci += s; G.coins += 40;
+  const s = Math.round(40 * (1 + G.stage)); G.sci += s; G.coins += 40;
   confettiAt(x, y - 20);
   const n = cnt('mono');
   dialog([['', `La statue de canard s’illumine. Un « coin » profond résonne dans ta poitrine. (${n}/8)`], ['{p}', pick(['Je crois qu’on vient de rejoindre une secte. Une secte sympa.', 'Elle m’a fait un clin d’œil. Je te jure.', 'Coin. Coin coin. … Désolé, c’est sorti tout seul.', 'Qui a construit ça ? Des canards géants ? DES CANARDS GÉANTS ?'])], ['', `+${s} science, +40 pièces.`]]);
@@ -508,7 +556,7 @@ function place(id, tx, ty) {
   if (d.on === 'ore') { b.ore = W.o[i]; b.b = 0; delete G.rg[i]; }
   if (W.o[i]) { W.o[i] = 0; G.od[i] = 0; delete G.rg[i]; }
   if (id === 'tp') b.n = 'Téléporteur ' + (++G.tpN);
-  G.bl[i] = b; inc('build'); if (!G.disc['b_' + id]) { G.disc['b_' + id] = 1; G.sci += 3; }
+  G.bl[i] = b; inc('build'); if (!G.disc['b_' + id]) { G.disc['b_' + id] = 1; G.sci += 1; }
   recount(); SFX.place(); vib(15);
   const [x, y] = tileCenter(i); puff(x, y, '#ffffff', 8);
   if (id === 'radar') radarReveal(i);
@@ -538,6 +586,7 @@ function clearAt(tx, ty) {
   if (d.special === 'cap') return 'C’est une capsule : ouvre-la avec A !';
   if (d.special === 'meteor') return 'Une météorite : tape dessus avec A !';
   if (d.special) return 'Impossible à déplacer';
+  if (d.tool && !toolTier(d.tool)) return 'Il faut ' + TOOLN[d.tool];
   const [x, y] = tileCenter(i);
   if (d.it) { const a = add(d.it, d.y * Math.max(1, (d.h || 1) - W.hp[i])); if (a) floatTxt(x, y - 18, '+' + a, ITEMS[d.it].c, 'i_' + d.it); }
   if (d.loot) for (const [k, p] of d.loot) if (Math.random() < p) add(k, 1, true);
@@ -553,6 +602,7 @@ function radarReveal(i) { reveal(i % WW, i / WW | 0, 40); G.radar = true; render
 function collect(i) {
   const b = G.bl[i], it = bufItem(b); if (!it || b.b < 1) return 0;
   const n = Math.floor(b.b), a = add(it, n); b.b -= a;
+  if (a && G.mp && !MP.host) MP.op({ k: 'take', i, n: a });
   if (a) { const [x, y] = tileCenter(i); floatTxt(x, y - 22, '+' + a, ITEMS[it].c, 'i_' + it); SFX.pickup(); }
   return a;
 }
@@ -594,7 +644,7 @@ function idea() {
   if (G.pets.length === 0 && hasR('r_niche') && !nb('niche')) I.push('Une niche, et on pourrait adopter une bestiole ! Caresse-la 5 fois, puis donne-lui un fruit.');
   if (!hasR('r_peche') && G.res.length > 4) I.push('Je rêve d’une canne à pêche. Il paraît qu’il y a des poissons-chaussettes.');
   if (G.met) { const [x, y] = [G.met % WW, G.met / WW | 0]; I.push(`La météorite est tombée ${compass(G.x / TS, G.y / TS, x, y)}. Allons voir !`); }
-  if (Object.values(G.inv).some(v => v >= AG.cap)) I.push('Le sac déborde ! Des caisses de rangement, vite.');
+  if (slotsUsed() >= AG.slots) I.push('Le sac déborde ! Des caisses de rangement, vite.');
   if (hasR('r_piste') && !nb('piste')) I.push('Zorg n’attend qu’une piste pour venir faire du commerce.');
   if (W.caps.some(i => W.o[i] === 18 && W.fog[i])) I.push('On a repéré une capsule de fret sur la carte. Il y a peut-être des chapeaux dedans !');
   const r = Math.random();
@@ -619,7 +669,7 @@ function rollFish(i) {
 function catchFish(f) {
   inc('fish'); add('poisson', 1, true);
   const first = !G.fish[f.id]; G.fish[f.id] = (G.fish[f.id] || 0) + 1;
-  if (first) G.sci += 8 + f.v;
+  if (first) G.sci += 4 + Math.round(f.v / 2);
   return first;
 }
 
@@ -639,7 +689,7 @@ function shopRefresh() {
 function buyShop(n) {
   const it = G.shop.items[n]; if (!it || G.shop.bought.includes(n)) return false;
   if (G.coins < it.p) { SFX.bad(); return false; }
-  if (it.k === 'res' && inv(it.id) + it.n > AG.cap) { toast('Pas assez de place dans le sac', 'u_bag', '', 'bad'); SFX.bad(); return false; }
+  if (it.k === 'res' && room(it.id) < it.n) { toast('Pas assez de place dans le sac', 'u_bag', '', 'bad'); SFX.bad(); return false; }
   G.coins -= it.p;
   if (it.k === 'hat') G.hats.push(it.id); else if (it.k === 'suit') G.suits.push(it.id);
   else if (it.k === 'deco') G.tok[it.id] = (G.tok[it.id] || 0) + 1; else add(it.id, it.n);
@@ -661,10 +711,10 @@ function genOrder() {
   const st = G.stage, pool = orderPool(), it = {};
   for (let n = Math.random() < .55 ? 1 : 2; n > 0; n--) {
     const k = pick(pool), v = ITEMS[k].v, q = Math.max(1, Math.round(rand(10, 22) * (1 + st * .45) / Math.sqrt(v)));
-    it[k] = Math.min(AG.cap, (it[k] || 0) + q);
+    it[k] = Math.min(60, (it[k] || 0) + q);
   }
   const val = Object.entries(it).reduce((s, [k, q]) => s + ITEMS[k].v * q, 0);
-  return { it, c: Math.round(val * 1.9 + 15), s: Math.round(val * .6 + 8 * (st + 1)) };
+  return { it, c: Math.round(val * 1.9 + 15), s: Math.round(val * .35 + 5 * (st + 1)) };
 }
 function ordersTick() {
   if (!G) return; const t = now();
@@ -709,12 +759,14 @@ let tipT = -20000;
 function tipsTick() {
   if (!CFG.tips || blocking() || performance.now() - tipT < 25000) return;
   const T = (k, txt, c) => { if (!G.tips[k] && c) { G.tips[k] = 1; tipT = performance.now(); tip(txt); return true; } return false; };
-  T('a', PC ? 'Clique sur un débris gris pour aller le récolter. Garde le clic appuyé pour taper en continu.' : 'Touche un débris (ou approche-toi et appuie sur A) pour le récolter. Tu peux garder A appuyé.', cnt('hits') === 0 && cnt('walk') > 15) ||
-    T('etabli', 'Tu as 10 ferrailles : ' + (PC ? 'touche B' : 'bouton marteau') + ' > Établi pour le construire où tu veux.', inv('fer') >= 10 && !nb('etabli')) ||
-    T('craft', (PC ? 'Clique sur l’établi' : 'Touche l’établi') + ' pour fabriquer des plaques (3 ferrailles).', nb('etabli') && !cnt('craft')) ||
-    T('sci', 'Tu as de la science ! Sac > Recherche pour débloquer de nouvelles machines.', G.sci >= 5 && !G.res.length && nb('etabli')) ||
-    T('map', 'La carte (en haut à droite) montre ce que tu as exploré. La planète boucle : marche tout droit et tu en feras le tour !', cnt('walk') > 400) ||
+  const K = typeof keyLabel === 'function' ? keyLabel : (c => c);
+  T('a', PC ? 'Approche-toi d’un débris gris et fais un clic gauche dessus pour le ramasser (maintiens pour continuer).' : 'Approche-toi d’un débris gris et appuie sur A (ou touche-le) pour le ramasser.', cnt('hits') === 0 && cnt('walk') > 15) ||
+    T('tools', 'Avec 8 ferrailles et 6 fibres, fabrique une pioche et une hache : ' + (PC ? K('KeyQ') + ' (sac)' : 'Sac') + ' > Fabriquer > À la main.', inv('fer') >= 4 && !toolTier('pick')) ||
+    T('etabli', 'Tu as 10 ferrailles : ' + (PC ? 'touche ' + K('KeyB') : 'bouton marteau') + ' > Établi pour le construire où tu veux.', inv('fer') >= 10 && !nb('etabli') && toolTier('pick')) ||
+    T('craft', (PC ? 'Clic droit sur l’établi' : 'Touche l’établi') + ' pour fabriquer des plaques (3 ferrailles).', nb('etabli') && !cnt('craft')) ||
+    T('sci', 'Tu as de la science ! Menu > Recherche pour débloquer de nouvelles machines.', G.sci >= 15 && !G.res.length && nb('etabli')) ||
+    T('map', 'La carte (' + (PC ? K('KeyM') : 'en haut à droite') + ') montre ce que tu as exploré. La planète boucle : marche tout droit et tu en feras le tour !', cnt('walk') > 400) ||
     T('night', 'La nuit tombe. Pas de danger ici : les machines s’allument et les Flottigelées sortent.', nightness() > .6) ||
-    T('partner', `Parle à ${NM[G.who === 'm' ? 'f' : 'm']} (${PC ? 'clique dessus' : 'touche-le·la'}) si tu manques d’idées.`, cnt('build') >= 3 && !G.tips.p2) ||
-    T('pick', 'Pour déplacer une construction : ' + (PC ? 'B' : 'marteau') + ' > « Ramasser ». Pour faire place nette : « Défricher » (rien ne repousse).', cnt('build') >= 6);
+    T('partner', G.mp ? '' : `${NM[G.who === 'm' ? 'f' : 'm']} peut t’attendre quelque part (${PC ? K('KeyF') : 'bouton 📍'}) et tu peux jouer l’un ou l’autre (${PC ? K('KeyG') : 'bouton ⇄'}).`, !G.mp && cnt('build') >= 3) ||
+    T('pick', PC ? 'Pour enlever une construction : maintiens le clic gauche dessus (tout est remboursé). Pour faire place nette : ' + K('KeyC') + ' (défricher).' : 'Pour enlever une construction : appui long dessus (tout est remboursé). Pour faire place nette : marteau > Défricher.', cnt('build') >= 6);
 }
