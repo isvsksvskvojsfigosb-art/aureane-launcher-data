@@ -144,12 +144,12 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-19T22:38:20.758Z",
+  "updated": "2026-11-19T22:39:42.342Z",
   "games": [
     {
       "id": "nerys",
       "name": "Nérys",
-      "subtitle": "Jeu · Solo & multijoueur",
+      "subtitle": "Solo & multijoueur",
       "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, fabrique tes outils, construis ta base et terraforme la planète à ton rythme, seul ou avec tes amis. Les machines continuent de travailler même quand le jeu est fermé.",
       "version": "2.2.0",
       "order": 20,
