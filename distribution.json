@@ -121,7 +121,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-19T19:15:45.921Z",
+  "updated": "2026-11-19T19:40:47.132Z",
   "games": [
     {
       "id": "nerys",
@@ -220,5 +220,10 @@
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "provider": "supabase",
+    "url": "https://wzpwpwzkbanmqguwzwvc.supabase.co",
+    "anonKey": "sb_publishable_WGv5v0VFmVMBj5_QyTS8cA_r8OAktuU"
+  }
 }
