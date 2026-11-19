@@ -46,34 +46,41 @@ const ITEMS = {
   sushi: { n: 'Sushi cosmique', c: '#ff8a8a', v: 25, food: { b: 'luck', t: 240, d: 'Chance ×3 : dorés, poissons rares (4 min)' } },
   soupe: { n: 'Soupe de glace chaude', c: '#ffcf8a', v: 40, food: { b: 'all', t: 300, d: 'Un peu de tout (5 min)' } },
   // outils (obligatoires : pioche pour la roche et les minerais, hache pour le bois, canne pour pêcher)
-  pioche: { n: 'Pioche en ferraille', c: '#9aa3c0', v: 6, cr: 1, tool: 'pick', tier: 1 },
-  pioche_cu: { n: 'Pioche en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'pick', tier: 2 },
-  pioche_cr: { n: 'Pioche de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'pick', tier: 3 },
-  pioche_ba: { n: 'Pioche en bananium', c: '#fff04a', v: 200, cr: 1, tool: 'pick', tier: 4 },
-  hache: { n: 'Hache en ferraille', c: '#9aa3c0', v: 6, cr: 1, tool: 'axe', tier: 1 },
-  hache_cu: { n: 'Hache en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'axe', tier: 2 },
-  hache_cr: { n: 'Hache de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'axe', tier: 3 },
+  baton: { n: 'Bâton', c: '#a0703a', v: 1 },
+  pioche_bois: { n: 'Pioche en bois', c: '#c98b5a', v: 3, cr: 1, tool: 'pick', tier: 1 },
+  pioche: { n: 'Pioche en ferraille', c: '#9aa3c0', v: 6, cr: 1, tool: 'pick', tier: 2 },
+  pioche_cu: { n: 'Pioche en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'pick', tier: 3 },
+  pioche_cr: { n: 'Pioche de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'pick', tier: 4 },
+  pioche_ba: { n: 'Pioche en bananium', c: '#fff04a', v: 200, cr: 1, tool: 'pick', tier: 5 },
+  hache_bois: { n: 'Hache en bois', c: '#c98b5a', v: 3, cr: 1, tool: 'axe', tier: 1 },
+  hache: { n: 'Hache en ferraille', c: '#9aa3c0', v: 6, cr: 1, tool: 'axe', tier: 2 },
+  hache_cu: { n: 'Hache en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'axe', tier: 3 },
+  hache_cr: { n: 'Hache de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'axe', tier: 4 },
   canne: { n: 'Canne à pêche', c: '#c98b5a', v: 10, cr: 1, tool: 'rod', tier: 1 },
 };
 const TOOLN = { pick: 'une pioche', axe: 'une hache', rod: 'une canne à pêche' };
+const TIERN = ['', 'en bois', 'en ferraille', 'en cuivre', 'de cristal', 'en bananium'];
 const STACK = 99, BAG = 20;
-const stackOf = k => (ITEMS[k] && ITEMS[k].tool ? 1 : STACK);
+const stackOf = k => (ITEMS[k] && ITEMS[k].tool ? 1 : ITEMS[k] && ITEMS[k].bld && !ITEMS[k].flat ? 20 : STACK);
 const RAW = ['fer', 'cuivre', 'cristal', 'bois', 'fibre', 'gelee', 'glace', 'soufre', 'fruit', 'spore', 'graine', 'bananium', 'poisson'];
 
 /* ---------- recettes (st = station nécessaire, construite n'importe où) ---------- */
 const RECIPES = [
-  { o: 'pioche', n: 1, i: { fer: 4, fibre: 3 }, st: 'main' },
-  { o: 'hache', n: 1, i: { fer: 4, fibre: 3 }, st: 'main' },
-  { o: 'canne', n: 1, i: { fibre: 6, fer: 2 }, st: 'main', r: 'r_peche' },
-  { o: 'pioche_cu', n: 1, i: { cuivre: 8, planche: 2 }, st: 'etabli', r: 'r_outil1' },
-  { o: 'hache_cu', n: 1, i: { cuivre: 8, planche: 2 }, st: 'etabli', r: 'r_outil1' },
-  { o: 'pioche_cr', n: 1, i: { cristal: 8, plaque: 4 }, st: 'etabli', r: 'r_outil2' },
-  { o: 'hache_cr', n: 1, i: { cristal: 8, plaque: 4 }, st: 'etabli', r: 'r_outil2' },
+  { o: 'pioche_bois', n: 1, i: { baton: 2, fibre: 3 }, st: 'main' },
+  { o: 'hache_bois', n: 1, i: { baton: 2, fibre: 3 }, st: 'main' },
+  { o: 'baton', n: 4, i: { bois: 1 }, st: 'main' },
+  { o: 'canne', n: 1, i: { baton: 3, fibre: 4 }, st: 'main', r: 'r_peche' },
+  { o: 'pioche', n: 1, i: { fer: 5, baton: 2 }, st: 'etabli' },
+  { o: 'hache', n: 1, i: { fer: 5, baton: 2 }, st: 'etabli' },
+  { o: 'pioche_cu', n: 1, i: { cuivre: 6, baton: 2 }, st: 'etabli', r: 'r_outil1' },
+  { o: 'hache_cu', n: 1, i: { cuivre: 6, baton: 2 }, st: 'etabli', r: 'r_outil1' },
+  { o: 'pioche_cr', n: 1, i: { cristal: 6, baton: 2, plaque: 2 }, st: 'etabli', r: 'r_outil2' },
+  { o: 'hache_cr', n: 1, i: { cristal: 6, baton: 2, plaque: 2 }, st: 'etabli', r: 'r_outil2' },
   { o: 'pioche_ba', n: 1, i: { bananium: 4, moteur: 1, pioche_cr: 1 }, st: 'atelier', r: 'r_outil3' },
   { o: 'plaque', n: 1, i: { fer: 3 }, st: 'etabli' },
   { o: 'cable', n: 3, i: { cuivre: 2 }, st: 'etabli' },
-  { o: 'planche', n: 2, i: { bois: 2 }, st: 'etabli' },
-  { o: 'tissu', n: 1, i: { fibre: 4 }, st: 'etabli' },
+  { o: 'planche', n: 2, i: { bois: 2 }, st: 'main' },
+  { o: 'tissu', n: 1, i: { fibre: 4 }, st: 'main' },
   { o: 'circuit', n: 1, i: { cristal: 1, cable: 2 }, st: 'etabli' },
   { o: 'engrais', n: 2, i: { spore: 2, gelee: 1 }, st: 'etabli', r: 'r_jardin' },
   { o: 'pousse', n: 1, i: { graine: 2, engrais: 1 }, st: 'etabli', r: 'r_jardin' },
@@ -115,15 +122,17 @@ const OBJ = {
   22: { k: 'tree', n: 'Arbre-bulle', h: 4, it: 'bois', y: 3, solid: 1, rg: 420, seed: .3, left: 7 },
   23: { k: 'wreck', n: 'Épave de l’Aurore-7', solid: 1, special: 'wreck' },
   24: { k: 'mono_done', n: 'Statue de canard (vénérée)', solid: 1, special: 'mono2' },
+  25: { k: 'stick', n: 'Bâtons', h: 1, it: 'baton', y: 2, rg: 240 },
 };
 // outil obligatoire pour récolter (sinon : à la main)
-const TOOLREQ = { 1: 'pick', 6: 'axe', 9: 'pick', 10: 'pick', 13: 'pick', 14: 'pick', 15: 'pick', 16: 'pick', 17: 'axe', 20: 'pick', 22: 'axe' };
-for (const k in TOOLREQ) OBJ[k].tool = TOOLREQ[k];
+// [outil, palier minimum] : bois 1 · ferraille 2 · cuivre 3 · cristal 4 · bananium 5
+const TOOLREQ = { 1: ['pick', 1], 13: ['pick', 1], 14: ['pick', 1], 6: ['axe', 1], 17: ['axe', 1], 22: ['axe', 1], 10: ['pick', 2], 15: ['pick', 2], 20: ['pick', 2], 9: ['pick', 3], 16: ['pick', 4] };
+for (const k in TOOLREQ) { OBJ[k].tool = TOOLREQ[k][0]; OBJ[k].mt = TOOLREQ[k][1]; }
 
 /* ---------- constructions ---------- */
 const BLD = {
-  etabli: { n: 'Établi', cat: 'base', c: { fer: 10 }, st: 1, d: 'Plaques, câbles, planches, tissu, circuits.', eyes: [[5, 7], [10, 7]] },
-  caisse: { n: 'Caisse de rangement', cat: 'base', c: { planche: 4, fer: 6 }, r: 'r_stock', slots: 6, d: '+6 emplacements dans le sac.' },
+  etabli: { n: 'Établi', cat: 'base', c: { planche: 4, fer: 4 }, st: 1, d: 'Plaques, câbles, planches, tissu, circuits.', eyes: [[5, 7], [10, 7]] },
+  caisse: { n: 'Caisse de rangement', cat: 'base', c: { planche: 4, fer: 6 }, chest: 18, d: 'Un coffre de 18 emplacements. Clic droit pour l’ouvrir et y ranger tes affaires.' },
   jardin: { n: 'Jardinière', cat: 'base', c: { planche: 4, fer: 4 }, r: 'r_jardin', solid: 0, d: 'Plante une graine, attends, récolte. Ça marche hors-ligne.' },
   labo: { n: 'Labo', cat: 'base', c: { plaque: 8, circuit: 2, cristal: 4 }, pw: -4, r: 'r_labo', sci: .15, d: 'Produit 0,15 science/s, même quand tu dors.', eyes: [[5, 9], [10, 9]] },
   fonderie: { n: 'Fonderie', cat: 'base', c: { plaque: 8, cuivre: 6, cristal: 2 }, pw: -3, r: 'r_fonderie', st: 1, d: 'Verre et batteries.', eyes: [[4, 10], [11, 10]] },
@@ -133,7 +142,7 @@ const BLD = {
   foreuse2: { n: 'Super-foreuse', cat: 'base', c: { moteur: 2, plaque: 10, batterie: 2 }, pw: -8, r: 'r_foreuse2', on: 'ore', rate: 1 / 5, buf: 80, d: 'Comme la foreuse, mais en colère. 4× plus rapide.', eyes: [[5, 9], [10, 9]] },
   niche: { n: 'Niche', cat: 'base', c: { planche: 6, tissu: 2 }, r: 'r_niche', d: 'Maison pour une créature adoptée. Elle y produit des ressources.' },
   ruche: { n: 'Ruche à drones', cat: 'base', c: { moteur: 2, circuit: 4, batterie: 2 }, pw: -6, r: 'r_drones', rad: 14, d: 'Ramène toute seule la production des machines à 14 cases autour.', eyes: [[5, 11], [10, 11]] },
-  silo: { n: 'Silo', cat: 'base', c: { plaque: 20, verre: 6, moteur: 1 }, r: 'r_stock2', slots: 20, d: '+20 emplacements dans le sac.' },
+  silo: { n: 'Silo', cat: 'base', c: { plaque: 20, verre: 6, moteur: 1 }, r: 'r_stock2', chest: 36, d: 'Un énorme coffre de 36 emplacements.' },
   radar: { n: 'Radar', cat: 'base', c: { plaque: 6, circuit: 3, cable: 6 }, pw: -2, r: 'r_radar', d: 'Dévoile la carte sur 40 cases et repère toutes les capsules.' },
   tp: { n: 'Téléporteur', cat: 'base', c: { moteur: 1, circuit: 4, verre: 4 }, pw: -5, r: 'r_tp', solid: 0, d: 'Voyage instantané entre téléporteurs. Ne pas éternuer dedans.' },
   piste: { n: 'Piste de Zorg', cat: 'base', c: { plaque: 12, planche: 8, cable: 6 }, r: 'r_piste', max: 1, d: 'Zorg, marchand interstellaire, y gare sa théière volante.' },
@@ -241,7 +250,6 @@ const CATS = [['base', 'Base'], ['energie', 'Énergie'], ['terra', 'Terraformati
 const RES = [
   { id: 'r_energie', n: 'Électricité', d: 'Panneaux solaires et éoliennes.', c: 5 },
   { id: 'r_deco1', n: 'Déco maison', d: 'Meubles, sols et murs de base.', c: 6 },
-  { id: 'r_stock', n: 'Rangement', d: 'Caisse de rangement : +6 emplacements de sac chacune.', c: 8 },
   { id: 'r_terra1', n: 'Terraformation I', d: 'Les 4 machines de base pour rendre la planète moins grognonne.', c: 10, req: ['r_energie'] },
   { id: 'r_labo', n: 'Laboratoire', d: 'Produit de la science en continu.', c: 15 },
   { id: 'r_jardin', n: 'Jardinage', d: 'Jardinière, engrais et pousses d’arbres.', c: 15, req: ['r_terra1'] },
@@ -259,7 +267,7 @@ const RES = [
   { id: 'r_deco2', n: 'Déco cosy', d: 'Canapé, télé, trampoline, lampadaire…', c: 100, req: ['r_deco1'] },
   { id: 'r_piste', n: 'Commerce', d: 'Zorg vient vendre, acheter et passer des commandes.', c: 100, req: ['r_atelier'] },
   { id: 'r_terra2', n: 'Terraformation II', d: 'Des machines 7× plus puissantes.', c: 120, req: ['r_terra1', 'r_fonderie'], st: 2 },
-  { id: 'r_stock2', n: 'Silo', d: 'Silo : +20 emplacements de sac.', c: 150, req: ['r_stock', 'r_atelier'] },
+  { id: 'r_stock2', n: 'Silo', d: 'Silo : un coffre géant de 36 emplacements.', c: 150, req: ['r_atelier'] },
   { id: 'r_outil2', n: 'Outils en cristal', d: 'Pioche et hache de cristal : +2 ressources par coup.', c: 150, req: ['r_outil1'], st: 2 },
   { id: 'r_drones', n: 'Drones', d: 'Ruche à drones : collecte automatique des machines.', c: 200, req: ['r_atelier', 'r_foreuse'] },
   { id: 'r_geo', n: 'Géothermie', d: '+35 ⚡ sur les volcans.', c: 250, req: ['r_atelier'], st: 3 },
@@ -409,7 +417,7 @@ const INTRO = [
   ['{p}', 'Plan : on récupère des trucs, on construit des machines et on rend cette planète vivable. Sans se presser.'],
   ['{me}', 'Et on commence par quoi ?'],
   ['{p}', 'Par ce que tu veux. C’est toi le·la chef. Moi je te suis et je dis des bêtises.'],
-  ['{p}', 'Premier truc à faire : une pioche et une hache. Les débris gris se ramassent à la main, et avec ça on bricole nos outils : Sac > Fabriquer.'],
+  ['{p}', 'Premier truc à faire : une pioche en bois. Ramasse des bâtons par terre et de l’herbe-spaghetti, puis bricole-la dans ton inventaire.'],
   ['', 'CONTROLES'],
 ];
 const SAY_IDLE = [
@@ -438,3 +446,15 @@ const ENDING = [
   ['{p}', 'Évidemment qu’on reste. Il y a encore des poissons à pêcher et des canards à caresser.'],
   ['', '★ Merci d’avoir joué à Nérys ★  La planète continue de vivre : tu peux continuer aussi longtemps que tu veux.'],
 ];
+
+/* ================= CONSTRUCTIONS = OBJETS =================
+   Chaque construction est un objet « @id » : fabriqué à une station (en l'utilisant),
+   rangé dans le sac, posé avec la barre rapide (clic droit), récupéré en le cassant.
+   À la main : l'établi, les outils, les planches, le tissu (+ l'arbre à planter). */
+const ST_OF = { r_terra2: 'fonderie', r_foreuse: 'fonderie', r_foreuse2: 'atelier', r_drones: 'atelier', r_tp: 'atelier', r_piste: 'atelier', r_labo2: 'atelier', r_geo: 'atelier', r_bananium: 'atelier', r_terra3: 'atelier', r_terra4: 'atelier', r_fusee: 'atelier', r_stock2: 'atelier' };
+function bStation(id) { const d = BLD[id]; if (id === 'etabli' || id === 'arbre') return 'main'; if (d.st) return 'etabli'; return ST_OF[d.r] || 'etabli'; }
+for (const id in BLD) {
+  const d = BLD[id], val = Object.entries(d.c || {}).reduce((s, [k, n]) => s + ((ITEMS[k] && ITEMS[k].v) || 1) * n, 0);
+  ITEMS['@' + id] = { n: d.n, c: '#ffffff', v: Math.max(1, Math.round(d.shop ? d.shop / 4 : val * .8)), bld: id, flat: !!(d.floor || d.wall) };
+  if (!d.shop) RECIPES.push({ o: '@' + id, n: d.floor || d.wall ? 2 : 1, i: d.c, st: bStation(id), r: d.r, cat: d.cat });
+}

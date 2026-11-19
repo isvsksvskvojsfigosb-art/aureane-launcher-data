@@ -8,6 +8,27 @@
   },
   "news": [
     {
+      "id": "nerys-2-3",
+      "title": "Nérys 2.3 : nouvel inventaire et vraie fabrication",
+      "tag": "Mise à jour",
+      "date": "2026-11-20",
+      "image": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/news/nerys-2-3.png",
+      "project": "nerys",
+      "summary": "Une barre rapide, un inventaire en glisser-déposer, des coffres, des établis qui servent vraiment et un menu pause.",
+      "body": [
+        "On a repris de zéro l’inventaire, la fabrication et les menus, pour que tout soit plus naturel.",
+        "- Barre rapide de 5 cases en bas de l’écran (touches 1 à 5 ou molette) et inventaire de 20 cases (touche A). Range tes objets en les faisant glisser, comme dans Minecraft. Clic droit : la moitié d’une pile. Maj+clic : envoi rapide. Lâche un objet hors de la fenêtre pour le jeter.",
+        "- Les constructions sont devenues des objets : fabrique-les à l’établi, mets-les dans la barre rapide, puis clic droit pour les poser devant toi. Casse-les (clic gauche maintenu) pour les récupérer.",
+        "- À la main, on fabrique les bâtons, les planches, les outils en bois et l’établi. Tout le reste se fabrique à l’établi, à la fonderie, à l’atelier ou à la cuisine : clic droit dessus.",
+        "- Début de partie : des bâtons traînent près de l’épave. Avec de l’herbe-spaghetti, fabrique une pioche en bois. Les minerais demandent ensuite de meilleurs outils : ferraille, cuivre, cristal, bananium.",
+        "- Des coffres : la caisse (18 cases) et le silo (36 cases).",
+        "- Murs et sols : vise un côté, maintiens le clic droit et marche pour en poser une rangée entière. Même chose au clic gauche pour les casser.",
+        "- Le curseur disparaît en jeu : tu agis toujours sur ce qui est devant ton personnage. Les décorations sans fonction n’ouvrent plus de fenêtre.",
+        "- Un vrai menu pause (Échap) : Reprendre, Paramètres, Sauvegarder, Partager la planète, Quitter. Le journal (Tab) regroupe la recherche, la planète, la collection et le style.",
+        "Tes parties sont gardées : ton ancien sac passe dans le nouvel inventaire, et ce qui ne rentre pas t’attend dans des caisses près de l’épave. Les serveurs multijoueur doivent être mis à jour (nouveau Nerys-Serveur.exe)."
+      ]
+    },
+    {
       "id": "nerys-2-2",
       "title": "Nérys 2.2 : le multijoueur est là !",
       "tag": "Mise à jour",
@@ -144,14 +165,14 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-19T22:39:42.342Z",
+  "updated": "2026-11-19T23:24:04.451Z",
   "games": [
     {
       "id": "nerys",
       "name": "Nérys",
       "subtitle": "Solo & multijoueur",
       "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, fabrique tes outils, construis ta base et terraforme la planète à ton rythme, seul ou avec tes amis. Les machines continuent de travailler même quand le jeu est fermé.",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "order": 20,
       "entry": "index.html",
       "background": "#120d22",
@@ -172,44 +193,50 @@
         {
           "path": "index.html",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/index.html",
-          "sha1": "aa85da5e7ac314709ef2b9130a4caca3c0a98ae3",
-          "size": 3271
+          "sha1": "9aaebe466c62ac946f1805d32e9d70fdfd7c2eb9",
+          "size": 3570
         },
         {
           "path": "style.css",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/style.css",
-          "sha1": "1d2078c3ae5da4c0a2de40144bd8924c7f28e5f5",
-          "size": 38887
+          "sha1": "28a4d4310da23693c9c74ec01dea44e67ab15c7c",
+          "size": 44843
         },
         {
           "path": "js/art.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/art.js",
-          "sha1": "4c78b5c54d94237c67de1b4ab24c13a9845f8f2e",
-          "size": 50281
+          "sha1": "050ea83a84e5c97d61e346a19c1756ecb02b5b3a",
+          "size": 51631
         },
         {
           "path": "js/data.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/data.js",
-          "sha1": "e308299eebd69ddc5e212a5ab484deb89246660b",
-          "size": 39756
+          "sha1": "e35d62d74ad8d185d6f7196111c320011456a52f",
+          "size": 41716
         },
         {
           "path": "js/game.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/game.js",
-          "sha1": "84f8d6a496dd124a5e4d3367cb392bdff0277534",
-          "size": 49405
+          "sha1": "3470cd6bbfc3b218f636a7b474249cc430bf477a",
+          "size": 53684
+        },
+        {
+          "path": "js/inv.js",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/inv.js",
+          "sha1": "2e1cbdd0e14de15109ca2dee8f3fc8b58ef852fd",
+          "size": 14821
         },
         {
           "path": "js/main.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/main.js",
-          "sha1": "46a5e4bb14279c39a1b942bf5ff8dccf43c74d5b",
-          "size": 32038
+          "sha1": "81ea4b1b46fdcda1f6ce43e33701e7c33a51e5b6",
+          "size": 33386
         },
         {
           "path": "js/mp.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/mp.js",
-          "sha1": "5c411dd24417224eab7e70d0cc6abb3f44fbca52",
-          "size": 17391
+          "sha1": "3c81936c66bc29753bde448c6ee14ecd9038afcf",
+          "size": 17558
         },
         {
           "path": "js/render.js",
@@ -220,20 +247,20 @@
         {
           "path": "js/ui.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/ui.js",
-          "sha1": "c14aa848f858755cbe287e7ca3ca8bad31027c93",
-          "size": 52984
+          "sha1": "2db79c5cae7f17075a2e0e29e1f54696a384b5e3",
+          "size": 47894
         },
         {
           "path": "js/util.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/util.js",
-          "sha1": "70641e20455d711f73a294324416e76bad18f11e",
-          "size": 11405
+          "sha1": "d5f5cb968621596c6e8fb2f4bea9c6210ae3690f",
+          "size": 11421
         },
         {
           "path": "js/world.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/world.js",
-          "sha1": "685afb112c4e3667f898566d6c7a858bb20d9b09",
-          "size": 13670
+          "sha1": "caa0456f9b6b8c55a2a2f12a92274613c9dade21",
+          "size": 13816
         },
         {
           "path": "assets/fonts/PressStart2P.ttf",

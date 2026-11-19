@@ -7,10 +7,10 @@
    - Le monde (bâtiments, terraformation, recherche, pièces, science)
      est partagé ; le sac, les tenues et la collection sont à chacun.
    ========================================================== */
-const PROTO = 1, MP_PORT = 25570, SERVER_URL = 'https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/nerys-serveur/Nerys-Serveur.zip';
+const PROTO = 2, MP_PORT = 25570, SERVER_URL = 'https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/nerys-serveur/Nerys-Serveur.zip';
 const MP = { ws: null, on: false, host: false, id: 0, players: {}, info: null, addr: '', name: '', snap: null, acc: 0, pAcc: 0, meAcc: 0, tAcc: 0, me: { msg: '', msgT: 0 } };
 const MAPF = ['od', 'bl', 'fl', 'rg', 'clr', 'tok'], DELTAF = ['sci', 'coins'], REPF = ['stage', 'res', 'pets', 'orders', 'shop', 'met', 'tpN', 'launched'];
-const PERS = ['inv', 'hats', 'suits', 'hat', 'suit', 'helmet', 'fish', 'mobs', 'cnt', 'tro', 'disc', 'buffs', 'tips', 'said', 'x', 'y', 'dir', 'pt', 'looks'];
+const PERS = ['items', 'sel', 'hats', 'suits', 'hat', 'suit', 'helmet', 'fish', 'mobs', 'cnt', 'tro', 'disc', 'buffs', 'tips', 'said', 'x', 'y', 'dir', 'pt', 'looks'];
 const mpUrl = a => { a = String(a || '').trim().replace(/^wss?:\/\//i, '').replace(/\/+$/, ''); if (!/:\d+$/.test(a)) a += ':' + MP_PORT; return 'ws://' + a; };
 const mpLabel = a => String(a || '').trim().replace(/^wss?:\/\//i, '');
 
@@ -35,13 +35,13 @@ function mpPing(addr) {
 /* ---------------- écran Multijoueur ---------------- */
 const PINGS = {};
 function openMulti() {
-  const st = mpStore(); st.servers = st.servers || []; if (!st.name) st.name = launcherName() || ''; if (!st.who) st.who = 'm';
+  const st = mpStore(), lname = launcherName(); st.servers = st.servers || []; if (lname) st.name = lname; if (!st.name) st.name = ''; if (!st.who) st.who = 'm';
   const r = () => {
     const rows = st.servers.map((s, n) => {
       const p = PINGS[s.addr]; const stx = !p ? '<small>Recherche…</small>' : p.ok ? `<small>${esc(p.motd || '')}</small><small>${p.players}/${p.max} joueurs · ${p.ms} ms${p.v !== PROTO ? ' · <b class="no">version différente</b>' : ''}</small>` : '<small class="no">Hors ligne ou introuvable</small>';
       return `<div class="srv"><i class="st ${p ? (p.ok ? 'on' : 'off') : ''}"></i><div class="tx"><b>${esc(s.name || 'Serveur')}</b><small>${esc(mpLabel(s.addr))}</small>${stx}</div><button class="btn sm pri" data-a="join:${n}">Rejoindre</button><button class="btn sm" data-a="edit:${n}">Modifier</button><button class="btn sm" data-a="del:${n}">✕</button></div>`;
     }).join('') || '<p class="hint">Aucun serveur. Ajoute celui de tes amis avec son adresse (IP).</p>';
-    modal('Multijoueur', `<div class="mpme"><label>Pseudo</label><input class="fld" id="mpName" maxlength="16" placeholder="Ton pseudo" value="${esc(st.name)}" autocomplete="off"><div class="who2">${['m', 'f'].map(g => `<button class="btn sm ${st.who === g ? 'on' : ''}" data-a="who:${g}">${NM[g]}</button>`).join('')}</div></div>
+    modal('Multijoueur', `<div class="mpme"><label>Pseudo</label><input class="fld" id="mpName" maxlength="16" placeholder="Ton pseudo" value="${esc(st.name)}" autocomplete="off" ${lname ? 'readonly title="Pseudo de ton compte Aureane"' : ''}>${lname ? '<small class="hint">compte Aureane</small>' : ''}<div class="who2">${['m', 'f'].map(g => `<button class="btn sm ${st.who === g ? 'on' : ''}" data-a="who:${g}">${NM[g]}</button>`).join('')}</div></div>
       <h3>Serveurs</h3><div class="srvl">${rows}</div>
       <div class="row2"><button class="btn sm pri" data-a="add">+ Ajouter un serveur</button><button class="btn sm" data-a="refresh">Actualiser</button><button class="btn sm" data-a="host">Héberger un serveur</button></div>`,
       {

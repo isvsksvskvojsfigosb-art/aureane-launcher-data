@@ -23,12 +23,17 @@ const comfort = () => AG.comfort;
 const dayN = () => Math.floor(G.tm / DAY) + 1;
 const hasR = id => !id || (G && G.res.includes(id));
 const nb = id => AG.nb[id] || 0;
-const inv = k => G.inv[k] || 0;
+/* ===== inventaire à emplacements : G.items[0..4] = barre rapide, [5..24] = sac ===== */
+const NSLOT = 25, HOTN = 5;
+const inv = k => { let n = 0; if (G && G.items) for (const s of G.items) if (s && s.k === k) n += s.n; return n; };
+const held = () => (G && G.items && G.items[G.sel || 0]) || null;
+const heldBld = () => { const h = held(); return h && h.k[0] === '@' ? h.k.slice(1) : null; };
 /* outils : le meilleur que tu possèdes dans le sac est utilisé tout seul */
-const toolTier = kind => { let t = 0; for (const k in G.inv) { const it = ITEMS[k]; if (it && it.tool === kind && G.inv[k] > 0 && it.tier > t) t = it.tier; } return t; };
-const toolBonus = (kind = 'pick') => [0, 0, 1, 2, 4][toolTier(kind)] || 0;
+const toolTier = kind => { let t = 0; if (G && G.items) for (const s of G.items) { const it = s && ITEMS[s.k]; if (it && it.tool === kind && it.tier > t) t = it.tier; } return t; };
+const toolBonus = (kind = 'pick') => [0, 0, 0, 1, 2, 4][toolTier(kind)] || 0;
 let needT = 0;
-function needTool(kind) { if (performance.now() - needT < 2500) return; needT = performance.now(); SFX.bad(); toast('Il te faut ' + TOOLN[kind], kind === 'rod' ? 'i_canne' : kind === 'axe' ? 'i_hache' : 'i_pioche', 'Sac > Fabriquer > À la main', 'bad'); floatTxt(G.x, G.y - 28, 'Il faut ' + TOOLN[kind] + ' !', '#ff8a9a'); }
+function needTool(kind, mt = 1) { if (performance.now() - needT < 2500) return; needT = performance.now(); SFX.bad(); const n = kind === 'rod' ? TOOLN.rod : TOOLN[kind] + (mt > 1 ? ' ' + TIERN[mt] + ' (ou mieux)' : ''); toast('Il te faut ' + n, kind === 'rod' ? 'i_canne' : kind === 'axe' ? 'i_hache_bois' : 'i_pioche_bois', mt > 1 ? 'Fabrique-la à l’établi' : 'Fabrique-la dans ton inventaire', 'bad'); floatTxt(G.x, G.y - 28, 'Il faut ' + n + ' !', '#ff8a9a'); }
+const toolOk = d => !d.tool || toolTier(d.tool) >= (d.mt || 1);
 const isHost = () => !G || !G.mp || (typeof MP !== 'undefined' && MP.host);
 const buff = k => (G.buffs[k] || 0) > 0 || (G.buffs.all || 0) > 0;
 function daylight() { return clamp(.5 + .65 * Math.cos(2 * Math.PI * (G.tm % DAY) / DAY), 0, 1); }
@@ -38,9 +43,9 @@ function clockTxt() { const p = (G.tm % DAY) / DAY, h = (p * 24 + 12) % 24, hh =
 /* ================= NOUVELLE PARTIE / SAUVEGARDE ================= */
 function blankState(who, seed) {
   return {
-    v: 3, seed, who, t: now(), tm: DAY * .86, x: 0, y: 0, dir: 'd',
-    inv: {}, coins: 0, sci: 0, st: { o: 0, h: 0, w: 0, b: 0 }, stage: 0, res: [], bl: {}, fl: {}, od: {}, rg: {}, pets: [],
-    hats: ['none', 'casquette'], suits: ['orange', 'teal', 'blanc'], hat: 'casquette', suit: who === 'm' ? 'orange' : 'teal', helmet: true, pm: 'follow', pt: 0, px: null, py: null,
+    v: 5, seed, who, t: now(), tm: DAY * .86, x: 0, y: 0, dir: 'd',
+    coins: 0, sci: 0, st: { o: 0, h: 0, w: 0, b: 0 }, stage: 0, res: [], bl: {}, fl: {}, od: {}, rg: {}, pets: [],
+    hats: ['none', 'casquette'], suits: ['orange', 'teal', 'blanc'], hat: 'casquette', suit: who === 'm' ? 'orange' : 'teal', helmet: true, pm: 'follow', pt: 0, px: null, py: null, sel: 0, items: Array(25).fill(null),
     looks: { m: { hat: who === 'm' ? 'casquette' : 'none', suit: 'orange' }, f: { hat: who === 'f' ? 'casquette' : 'none', suit: 'teal' } },
     fish: {}, mobs: {}, cnt: {}, tro: {}, disc: {}, tok: {}, shop: null, orders: [], buffs: {}, said: {}, tips: {}, radar: false, met: null, tpN: 0, clr: {},
   };
@@ -77,8 +82,12 @@ function loadFrom(str) {
   fogUnpack(G.fogS || ''); delete G.fogS;
   if (!s.v || s.v < 3) { // v2 -> v3 : les outils deviennent des objets à fabriquer ; on offre ceux déjà « recherchés »
     G.v = 3; const T = hasR('r_outil3') ? ['pioche_ba', 'hache_cr'] : hasR('r_outil2') ? ['pioche_cr', 'hache_cr'] : hasR('r_outil1') ? ['pioche_cu', 'hache_cu'] : ['pioche', 'hache'];
-    for (const k of T) G.inv[k] = 1; if (hasR('r_peche')) G.inv.canne = 1;
+    G.inv = G.inv || {}; for (const k of T) G.inv[k] = 1; if (hasR('r_peche')) G.inv.canne = 1;
   }
+  if ((G.v || 0) < 4) { // v3 -> v4 : les constructions deviennent des objets ; la déco achetée chez Zorg arrive dans le sac
+    G.v = 4; G.inv = G.inv || {}; for (const k in G.tok || {}) if (G.tok[k] > 0) G.inv['@' + k] = (G.inv['@' + k] || 0) + G.tok[k]; G.tok = {};
+  }
+  migrateInv();
   initRuntime(); return true;
 }
 function load(n = SLOT) { SLOT = n; try { return loadFrom(slotRaw(n)); } catch (e) { return false; } }
@@ -91,25 +100,54 @@ function initRuntime() {
 }
 
 /* ================= INVENTAIRE ================= */
-function add(k, n, quiet) {
-  if (n <= 0) return 0;
-  const cur = G.inv[k] || 0, a = Math.max(0, Math.min(room(k), n));
-  if (a > 0) {
-    G.inv[k] = cur + a; inc('got_' + k, a);
-    if (!G.disc['i_' + k]) { G.disc['i_' + k] = 1; G.sci += 2; if (!quiet) toast(`Nouveau : ${ITEMS[k].n}`, 'i_' + k, '+2 science'); }
+/* anciennes sauvegardes (G.inv = { objet: nombre }) -> emplacements ; ce qui ne rentre pas va dans des caisses près de l'épave */
+function migrateInv() {
+  if (!Array.isArray(G.items)) G.items = Array(NSLOT).fill(null);
+  while (G.items.length < NSLOT) G.items.push(null);
+  if (G.sel == null) G.sel = 0;
+  if (!G.inv) return;
+  const old = G.inv; delete G.inv; let over = [];
+  for (const k of Object.keys(old)) { if (!ITEMS[k] || old[k] <= 0) continue; const a = add(k, old[k], true); if (a < old[k]) over.push({ k, n: old[k] - a }); }
+  if (!old.pioche_bois && !toolTier('pick')) add('pioche_bois', 1, true);
+  if (!toolTier('axe')) add('hache_bois', 1, true);
+  for (let r = 2; over.length && r < 12; r++) for (let dx = -r; dx <= r && over.length; dx++) {
+    const i = tI(W.spawn.x + dx, W.spawn.y + r); if (G.bl[i] || W.o[i] || tkind(i) !== 0) continue;
+    const box = Array(18).fill(null); let n = 0;
+    while (over.length && n < 18) { const o = over[0], st = stackOf(o.k), q = Math.min(st, o.n); box[n++] = { k: o.k, n: q }; o.n -= q; if (o.n <= 0) over.shift(); }
+    G.bl[i] = { id: 'caisse', t: now(), inv: box };
   }
-  if (a < n && !quiet) fullWarn(k);
+  if (Object.keys(old).length) G.said.invmig = 1;
+}
+function add(k, n, quiet) {
+  if (n <= 0 || !ITEMS[k]) return 0;
+  const st = stackOf(k), S = G.items; let left = n;
+  for (let i = 0; i < NSLOT && left > 0; i++) { const s = S[i]; if (s && s.k === k && s.n < st) { const q = Math.min(st - s.n, left); s.n += q; left -= q; } }
+  for (let i = 0; i < NSLOT && left > 0; i++) if (!S[i]) { const q = Math.min(st, left); S[i] = { k, n: q }; left -= q; }
+  const a = n - left;
+  if (a > 0) {
+    inc('got_' + k, a);
+    if (!G.disc['i_' + k]) { G.disc['i_' + k] = 1; G.sci += 2; if (!quiet) toast(`Nouveau : ${ITEMS[k].n}`, 'i_' + k, '+2 science'); }
+    invChanged();
+  }
+  if (left > 0 && !quiet) fullWarn(k);
   return a;
 }
+/* retire n objets (le sac d'abord, la barre rapide ensuite) ; renvoie combien ont été retirés */
+function take(k, n) {
+  const S = G.items; let left = n;
+  for (let i = NSLOT - 1; i >= 0 && left > 0; i--) { const s = S[i]; if (s && s.k === k) { const q = Math.min(s.n, left); s.n -= q; left -= q; if (s.n <= 0) S[i] = null; } }
+  if (left < n) invChanged();
+  return n - left;
+}
+let invDirty = true; function invChanged() { invDirty = true; }
 let fullT = 0;
-function fullWarn(k) { if (performance.now() - fullT < 4000) return; fullT = performance.now(); SFX.bad(); toast('Sac plein ! (' + ITEMS[k].n + ')', 'u_bag', 'Jette ou vends des objets, ou construis des caisses de rangement', 'bad'); }
-/* sac à emplacements : 99 par emplacement (outils : 1) */
-function slotsUsed() { let s = 0; for (const k in G.inv) if (G.inv[k] > 0) s += Math.ceil(G.inv[k] / stackOf(k)); return s; }
-function room(k) { const st = stackOf(k), c = inv(k), free = Math.max(0, AG.slots - slotsUsed()); return free * st + (c % st ? st - c % st : 0); }
+function fullWarn(k) { if (performance.now() - fullT < 4000) return; fullT = performance.now(); SFX.bad(); toast('Inventaire plein ! (' + ITEMS[k].n + ')', 'u_bag', 'Range des objets dans une caisse, ou jette-les', 'bad'); }
+function slotsUsed() { return G.items.filter(Boolean).length; }
+function room(k) { const st = stackOf(k); let r = 0; for (const s of G.items) { if (!s) r += st; else if (s.k === k) r += st - s.n; } return r; }
+function invMap() { const m = {}; for (const s of G.items) if (s) m[s.k] = (m[s.k] || 0) + s.n; return m; }
 const canPay = c => Object.entries(c || {}).every(([k, v]) => inv(k) >= v);
-const pay = c => Object.entries(c || {}).forEach(([k, v]) => { G.inv[k] = inv(k) - v; if (G.inv[k] <= 0) delete G.inv[k]; });
-const refund = c => Object.entries(c || {}).forEach(([k, v]) => { G.inv[k] = inv(k) + v; });
-function itemSource(k) {
+const pay = c => Object.entries(c || {}).forEach(([k, v]) => take(k, v));
+const refund = c => Object.entries(c || {}).forEach(([k, v]) => add(k, v, true));function itemSource(k) {
   const where = { fer: [0, 4], cuivre: [3], cristal: [2], bois: [1], fibre: [0, 3, 2], gelee: [3], glace: [4], soufre: [5], fruit: [0, 1], spore: [1], graine: [0, 3, 1], bananium: [5, 2] }[k];
   if (!where) return ITEMS[k].cr ? 'Se fabrique' : k === 'poisson' ? 'Se pêche dans les lacs' : '';
   const tx = G.x / TS, ty = G.y / TS; let best = null;
@@ -203,7 +241,7 @@ function harvestCrop(i, auto) {
   const k = b.crop.k, n = CROPS[k][1] + (auto ? 0 : toolBonus('axe')), a = add(k, n, auto);
   if (Math.random() < .5) add('graine', 1, true);
   inc('crop'); b.crop = null;
-  if (auto && inv('graine') > 0) { G.inv.graine--; plantCrop(i, k); }
+  if (auto && take('graine', 1)) plantCrop(i, k);
   return a;
 }
 function plantCrop(i, k) { const b = G.bl[i]; b.crop = { k, t0: now(), d: CROPS[k][0] * (b.fert ? .5 : 1) }; b.fert = 0; }
@@ -225,9 +263,9 @@ function drones(off) {
 function offline() {
   const cap = (hasR('r_absence') ? 24 : 8) * 3600, dt = Math.min(cap, (now() - G.t) / 1000);
   if (dt < 45) return null;
-  const st0 = { ...G.st }, sci0 = G.sci, stage0 = G.stage, inv0 = { ...G.inv };
+  const st0 = { ...G.st }, sci0 = G.sci, stage0 = G.stage, inv0 = invMap();
   machines(dt, true); G.tm += dt;
-  const got = {}; for (const k in G.inv) { const d = (G.inv[k] || 0) - (inv0[k] || 0); if (d > 0) got[k] = d; }
+  const inv1 = invMap(), got = {}; for (const k in inv1) { const d = inv1[k] - (inv0[k] || 0); if (d > 0) got[k] = d; }
   return { dt, full: (now() - G.t) / 1000 > cap, st: Object.fromEntries(Object.keys(st0).map(k => [k, G.st[k] - st0[k]])), sci: G.sci - sci0, stages: G.stage - stage0, got };
 }
 
@@ -262,7 +300,7 @@ function playerMove(dt, ix, iy) {
   if (!blocked(G.x, G.y + iy * v)) G.y += iy * v;
   G.x = (G.x + WP) % WP; G.y = (G.y + HP) % HP;
   const ax = Math.abs(ix), ay = Math.abs(iy);
-  if (ax > ay * 1.15) G.dir = ix < 0 ? 'l' : 'r'; else if (ay > ax * 1.15) G.dir = iy < 0 ? 'u' : 'd';
+  if (!(typeof dirLock === 'function' && dirLock())) { if (ax > ay * 1.15) G.dir = ix < 0 ? 'l' : 'r'; else if (ay > ax * 1.15) G.dir = iy < 0 ? 'u' : 'd'; }
   if (ix) G.lr = ix < 0 ? 'l' : 'r';
   const d = Math.hypot(wrapD(G.x - ox), wrapD(G.y - oy)); G.step = (G.step || 0) + d; stepAcc += d; inc('walk', d / TS);
   if (stepAcc > 15) { stepAcc = 0; if (k === 1) { SFX.splash(); puff(G.x, G.y, '#bff0ff', 3); } else SFX.step(); }
@@ -379,7 +417,7 @@ function adopt(m) {
   if (!hasR('r_niche')) { toast('Il faut la recherche « Apprivoisement »', 'u_lock', '', 'bad'); return; }
   const n = freeNiche(); if (n < 0) { toast('Construis une niche libre d’abord', 'b_niche', '', 'bad'); SFX.bad(); return; }
   if (inv('fruit') < 1) { toast('Il faut 1 fruit-bulle pour l’adopter', 'i_fruit', '', 'bad'); SFX.bad(); return; }
-  G.inv.fruit--; const name = pick(PET_NAMES);
+  take('fruit', 1); const name = pick(PET_NAMES);
   G.pets.push({ sp: m.sp, gold: m.gold, name }); G.bl[n].pet = G.pets.length - 1; G.bl[n].b = 0;
   MOBL = MOBL.filter(x => x !== m); inc('tame'); spawnPets(); SFX.fanfare(); hearts(m.x, m.y - 12); hearts(m.x, m.y - 18);
   toast(`${name} le ${MOBS[m.sp].n} est adopté !`, 'u_heart', 'Il file à sa niche produire : ' + ITEMS[MOBS[m.sp].drop].n);
@@ -392,8 +430,9 @@ function dropsUpdate(dt) {
   for (const d of DROPS) {
     d.t += dt; if (d.z > 0 || d.vz > 0) { d.vz -= 240 * dt; d.z = Math.max(0, d.z + d.vz * dt); d.x += d.vx * dt; d.y += d.vy * dt; if (d.z === 0 && d.vz < 0) { d.vz = Math.abs(d.vz) > 40 ? -d.vz * .35 : 0; d.vx *= .5; d.vy *= .5; } }
     const dx = wrapD(G.x - d.x), dy = wrapD(G.y - 4 - d.y), l = Math.hypot(dx, dy);
-    if (d.t > .5 && l < 40) { const s = Math.min(l, (60 + d.t * 60) * dt); d.x += dx / l * s; d.y += dy / l * s; }
-    if (d.t > .5 && l < 8) {
+    const wt = d.wait || .5;
+    if (d.t > wt && l < 40) { const s = Math.min(l, (60 + d.t * 60) * dt); d.x += dx / l * s; d.y += dy / l * s; }
+    if (d.t > wt && l < 8) {
       d.dead = 1;
       if (d.k === 'duck') { G.coins += 3; inc('ducks'); inc('coins', 3); SFX.quack(); floatTxt(G.x, G.y - 26, '+3', '#ffd23f', 'u_coin'); }
       else { const a = add(d.k, d.n); if (a) { SFX.pickup(); floatTxt(G.x, G.y - 26, '+' + a, ITEMS[d.k].c, 'i_' + d.k); } }
@@ -407,16 +446,19 @@ function dropsUpdate(dt) {
 function tileCenter(i) { return [(i % WW) * TS + 8, (i / WW | 0) * TS + 10]; }
 function findTarget() {
   const px = G.x, py = G.y - 4, f = DIRS[G.dir]; let best = null, bs = 1e9;
-  const con = (t, x, y, r) => { const dx = wrapD(x - px), dy = wrapD(y - py), d = Math.hypot(dx, dy); if (d > r) return; const s = d - (dx * f[0] + dy * f[1]) / (d || 1) * 9; if (s < bs) { bs = s; best = t; } };
+  // la cible = ce qui est DEVANT le personnage (son regard), jamais derrière
+  const con = (t, x, y, r) => { const dx = wrapD(x - px), dy = wrapD(y - py), d = Math.hypot(dx, dy); if (d > r) return; const fw = dx * f[0] + dy * f[1]; if (fw < -5 && d > 9) return; const s = d - fw / (d || 1) * 12; if (s < bs) { bs = s; best = t; } };
   for (const m of MOBL) con({ k: 'mob', m }, m.x, m.y - 5, 24);
   for (const m of PETL) con({ k: 'mob', m }, m.x, m.y - 5, 22);
   if (!G.mp) { const dx = wrapD(P.x - px), dy = wrapD(P.y - 5 - py), d = Math.hypot(dx, dy); if (d < 18 && d + 12 < bs) { bs = d + 12; best = { k: 'partner' }; } }
   const tx = Math.floor(G.x / TS), ty = Math.floor((G.y - 4) / TS);
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
     const i = tI(tx + dx, ty + dy), [cx, cy] = tileCenter(i), X = (tx + dx) * TS + 8, Y = (ty + dy) * TS + 10;
-    const b = G.bl[i]; if (b && !BLD[b.id].floor && !BLD[b.id].wall) { con({ k: 'bld', i }, X, Y, 24); continue; }
+    const b = G.bl[i]; if (b && BLD[b.id].wall) { con({ k: 'flr', i }, X, Y, 22); continue; }
+    if (b && !BLD[b.id].floor) { con({ k: 'bld', i }, X, Y, 24); continue; }
     const o = W.o[i]; if (o && (OBJ[o].h || OBJ[o].special)) con({ k: 'obj', i }, X, Y, o === 23 ? 34 : 24);
   }
+  if (!best) { const ft = tI(Math.floor((G.x + f[0] * 14) / TS), Math.floor((G.y - 4 + f[1] * 14) / TS)); if (G.fl[ft]) best = { k: 'flr', i: ft }; }
   if (!best && toolTier('rod')) {
     for (const r of [14, 22]) { const i = tI(Math.floor((G.x + f[0] * r) / TS), Math.floor((G.y - 3 + f[1] * r) / TS)); if (isWaterK(tkind(i))) { best = { k: 'fish', i }; break; } }
   }
@@ -426,14 +468,15 @@ function targetLabel(t) {
   if (!t) return '';
   if (t.k === 'mob') return t.m.pet != null ? 'Câlin' : t.m.love >= 5 && hasR('r_niche') ? 'Adopter' : 'Caresser';
   if (t.k === 'partner') return 'Parler';
+  if (t.k === 'flr') return '';
   if (t.k === 'fish') return 'Pêcher';
   if (t.k === 'bld') {
     const b = G.bl[t.i], d = BLD[b.id];
     if (b.id === 'jardin') return cropReady(b) ? 'Récolter' : b.crop ? 'Voir' : 'Planter';
     if (b.b >= 1) return 'Collecter';
     if (d.st) return 'Fabriquer';
-    if (b.id === 'arbre') return 'Admirer';
-    return d.act ? { sleep: 'Dormir', tv: 'Regarder', boing: 'Sauter', flush: 'Tirer', piano: 'Jouer', juke: 'Musique', arcade: 'Jouer', disco: 'Danser', chomp: 'Nourrir', quack: 'Caresser', sock: 'Renifler', purr: 'Câliner' }[d.act] || 'Utiliser' : 'Ouvrir';
+    if (d.act) return { sleep: 'Dormir', tv: 'Regarder', boing: 'Sauter', flush: 'Tirer', piano: 'Jouer', juke: 'Musique', arcade: 'Jouer', disco: 'Danser', chomp: 'Nourrir', quack: 'Caresser', sock: 'Renifler', purr: 'Câliner' }[d.act] || 'Utiliser';
+    return hasUI(b) ? 'Ouvrir' : '';
   }
   const o = W.o[t.i], d = OBJ[o];
   if (d.special === 'cap') return 'Ouvrir';
@@ -456,7 +499,7 @@ function hit(i) {
   if (d.special === 'wreck') { openWreck(); return; }
   if (d.special === 'cap') { openCapsule(i); return; }
   if (d.special === 'mono' || d.special === 'mono2') { monolith(i); return; }
-  if (d.tool && !toolTier(d.tool)) { needTool(d.tool); SHAKE[i] = .12; return; }
+  if (!toolOk(d)) { needTool(d.tool, d.mt); SHAKE[i] = .12; return; }
   SHAKE[i] = .25; inc('hits'); vib(8);
   W.hp[i]++;
   if (d.it) {
@@ -504,7 +547,7 @@ function loot(scale, src) {
   const c = Math.round(ri(10, 30) * (1 + st * .3) * scale), s = Math.round(ri(5, 12) * (1 + st * .6) * scale);
   G.coins += c; inc('coins', c); G.sci += s; got.push(['u_coin', c, 'pièces'], ['u_sci', s, 'science']);
   if (src === 'cap' && Math.random() < .3) { const h = HATS.filter(h => h[2] === 'cap' && !G.hats.includes(h[0])); if (h.length) { const k = pick(h); G.hats.push(k[0]); got.push(['h_' + k[0], 1, 'Chapeau : ' + k[1]]); } }
-  if (Math.random() < .12) { const d = pick(DECO.filter(d => d[5] && d[5].shop)); G.tok[d[0]] = (G.tok[d[0]] || 0) + 1; got.push(['b_' + d[0], 1, d[1]]); }
+  if (Math.random() < .12) { const d = pick(DECO.filter(d => d[5] && d[5].shop)); add('@' + d[0], 1, true); got.push(['i_@' + d[0], 1, d[1]]); }
   return got;
 }
 function openCapsule(i) {
@@ -525,22 +568,22 @@ function monolith(i) {
 
 /* ================= CONSTRUCTION ================= */
 function bldCount(id) { return nb(id); }
-function isUnlocked(id) { const d = BLD[id]; return hasR(d.r) && (!d.shop || (G.tok[id] || 0) > 0 || nb(id) > 0); }
-function costOf(id) { return BLD[id].c || {}; }
-function canAfford(id) { const d = BLD[id]; return d.shop ? (G.tok[id] || 0) > 0 : canPay(d.c); }
+const bkey = id => '@' + id;
+function isUnlocked(id) { return inv(bkey(id)) > 0; }
+function canAfford(id) { return inv(bkey(id)) > 0; }
+/* donne un objet ; si le sac est plein, il tombe par terre */
+function giveItem(k, i) { if (add(k, 1, true) < 1) { const [x, y] = tileCenter(i); drop(x, y - 4, k, 1); toast('Sac plein : l’objet est par terre', 'u_bag', '', 'bad'); } }
 function placeErr(id, tx, ty) {
   const d = BLD[id], i = tI(tx, ty), k = tkind(i), o = W.o[i];
-  if (!isUnlocked(id)) return 'Pas encore débloqué';
+  if (inv(bkey(id)) < 1) return 'Tu n’en as plus';
   if (d.max && nb(id) >= d.max) return 'Une seule possible';
-  if (!canAfford(id)) return 'Il manque des ressources';
   if (d.floor) { if (k !== 0 && k !== 5) return 'Pas sur l’eau'; if (G.fl[i] === id) return 'Déjà posé'; if (o && OBJ[o].solid) return 'Il y a un obstacle'; return ''; }
   if (G.bl[i]) return 'Déjà occupé';
   if (k === 2 || k === 3) return 'Pas sur l’eau';
   if (d.on === 'ore') { if (!o || !OBJ[o].ore) return 'À poser sur un filon'; }
   else if (o && o !== 21 && o !== 5 && o !== 7) return 'Il y a un obstacle';
   if (d.on === 'volcan' && W.b[i] !== 5) return 'Seulement sur un volcan';
-  const solid = d.solid !== 0;
-  if (solid) {
+  if (d.solid !== 0) {
     const pt = (x, y) => Math.floor(x / TS) === (tx & WM) && Math.floor(y / TS) === (ty & WM);
     const ptx = (G.x + WP) % WP, pty = (G.y + HP) % HP;
     for (const [ox, oy] of [[-4, -3], [4, -3], [-4, 1], [4, 1]]) if (pt((ptx + ox + WP) % WP, (pty + oy + HP) % HP)) return 'Tu es dessus !';
@@ -549,44 +592,45 @@ function placeErr(id, tx, ty) {
 }
 function place(id, tx, ty) {
   const err = placeErr(id, tx, ty); if (err) { SFX.bad(); return err; }
-  const d = BLD[id], i = tI(tx, ty);
-  if (d.shop) G.tok[id]--; else pay(d.c);
-  if (d.floor) { const old = G.fl[i]; if (old) refund(BLD[old].c); G.fl[i] = id; if (W.o[i] === 21) { W.o[i] = 0; G.od[i] = 0; } SFX.place(); inc('build'); return ''; }
+  const d = BLD[id], i = tI(tx, ty), key = bkey(id);
+  take(key, 1);
+  if (d.floor) { const old = G.fl[i]; G.fl[i] = id; if (old) giveItem(bkey(old), i); if (W.o[i] === 21) { W.o[i] = 0; G.od[i] = 0; } SFX.place(); inc('build'); return ''; }
   const b = { id, t: now() };
   if (d.on === 'ore') { b.ore = W.o[i]; b.b = 0; delete G.rg[i]; }
   if (W.o[i]) { W.o[i] = 0; G.od[i] = 0; delete G.rg[i]; }
   if (id === 'tp') b.n = 'Téléporteur ' + (++G.tpN);
+  if (d.chest) b.inv = Array(d.chest).fill(null);
   G.bl[i] = b; inc('build'); if (!G.disc['b_' + id]) { G.disc['b_' + id] = 1; G.sci += 1; }
   recount(); SFX.place(); vib(15);
   const [x, y] = tileCenter(i); puff(x, y, '#ffffff', 8);
   if (id === 'radar') radarReveal(i);
-  if (d.pw < 0 && AG.prod <= 0 && !G.tips.pow) { G.tips.pow = 1; setTimeout(() => tip('Cette machine a besoin d’électricité ⚡ : construis un panneau solaire ou une éolienne (Recherche > Électricité).'), 600); }
+  if (d.pw < 0 && AG.prod <= 0 && !G.tips.pow) { G.tips.pow = 1; setTimeout(() => tip('Cette machine a besoin d’électricité ⚡ : fabrique un panneau solaire ou une éolienne à l’établi (recherche « Électricité »).'), 600); }
   return '';
 }
+/* casser une construction : on récupère l'OBJET (pas les ressources) */
 function pickup(tx, ty) {
   const i = tI(tx, ty);
   if (G.bl[i]) {
     const b = G.bl[i], d = BLD[b.id];
     if (b.id === 'fusee' && G.launched) { toast('La fusée est un monument, on la garde !', 'b_fusee', '', 'bad'); return false; }
+    if (b.inv) { const [x, y] = tileCenter(i); for (const s of b.inv) if (s) drop(x, y - 4, s.k, s.n); }
     const it = bufItem(b); if (it && b.b >= 1) add(it, Math.floor(b.b));
-    if (b.crop) refund({ graine: 1 });
-    if (d.shop) G.tok[b.id] = (G.tok[b.id] || 0) + 1; else refund(d.c);
+    if (b.crop) add('graine', 1, true);
     if (b.ore) { W.o[i] = b.ore; if (W.o0[i] === b.ore) delete G.od[i]; else G.od[i] = b.ore; }
-    if (b.id === 'niche' && b.pet != null) { /* la créature attend une autre niche */ }
     delete G.bl[i]; recount(); spawnPets(); SFX.pickup();
+    if (b.id !== 'arbre' || !treeGrown(b)) giveItem(bkey(b.id), i); else { add('bois', 6); add('pousse', 1, true); }
     const [x, y] = tileCenter(i); puff(x, y, '#ffffff', 6); return true;
   }
-  if (G.fl[i]) { refund(BLD[G.fl[i]].c); delete G.fl[i]; SFX.pickup(); return true; }
+  if (G.fl[i]) { const f = G.fl[i]; delete G.fl[i]; giveItem(bkey(f), i); SFX.pickup(); return true; }
   return false;
-}
-/* Défricher : enlève un objet du monde POUR DE BON (rien ne repousse) et rend ce qu'il contenait */
+}/* Défricher : enlève un objet du monde POUR DE BON (rien ne repousse) et rend ce qu'il contenait */
 function clearAt(tx, ty) {
   const i = tI(tx, ty), o = W.o[i]; if (!o) return 'Rien à défricher ici';
   const d = OBJ[o];
   if (d.special === 'cap') return 'C’est une capsule : ouvre-la avec A !';
   if (d.special === 'meteor') return 'Une météorite : tape dessus avec A !';
   if (d.special) return 'Impossible à déplacer';
-  if (d.tool && !toolTier(d.tool)) return 'Il faut ' + TOOLN[d.tool];
+  if (!toolOk(d)) return 'Il faut ' + TOOLN[d.tool] + (d.mt > 1 ? ' ' + TIERN[d.mt] : '');
   const [x, y] = tileCenter(i);
   if (d.it) { const a = add(d.it, d.y * Math.max(1, (d.h || 1) - W.hp[i])); if (a) floatTxt(x, y - 18, '+' + a, ITEMS[d.it].c, 'i_' + d.it); }
   if (d.loot) for (const [k, p] of d.loot) if (Math.random() < p) add(k, 1, true);
@@ -624,7 +668,11 @@ function useBuilding(i) {
     case 'arcade': { const s = ri(100, 99999); bubble(`Score : ${s}. ${s > 50000 ? 'RECORD !' : 'Bof.'}`); SFX.coin(); return; }
     case 'sleep': sleep(); return;
   }
-  openBuildingPanel(i);
+  if (hasUI(b)) openBuildingPanel(i);
+}
+/* seules les constructions utiles ont une fenêtre (stations, jardinière, niche, foreuses, téléporteur, Zorg, fusée) */
+function hasUI(b) { const d = BLD[b.id]; return !!(d.st || d.rate || d.chest || ['jardin', 'niche', 'tp', 'piste', 'fusee', 'ruche'].includes(b.id)); }
+function _noop() {
 }
 function sleep() {
   if (nightness() < .45) { bubble('Dormir en plein jour ? On n’est pas des Flottigelées.'); return; }
@@ -635,7 +683,8 @@ function sleep() {
 /* ================= COMPAGNON : IDÉES (pas de quêtes) ================= */
 function idea() {
   const I = [];
-  if (!nb('etabli')) I.push(inv('fer') >= 10 ? 'On a 10 ferrailles ! Un établi, ce serait chouette. Bouton marteau.' : 'Les débris gris autour de l’épave, c’est de la ferraille. Avec 10, on fait un établi.');
+  if (!nb('etabli') && !inv('@etabli')) I.push(inv('fer') >= 10 ? 'On a 10 ferrailles ! Fabrique un établi dans le sac (Fabriquer), puis pose-le.' : 'Les débris gris autour de l’épave, c’est de la ferraille. Avec 10, on fait un établi.');
+  if (inv('@etabli') && !nb('etabli')) I.push('On a un établi dans le sac ! Prends-le dans la barre rapide et pose-le devant toi.');
   const af = RES.filter(r => !hasR(r.id) && (r.req || []).every(hasR) && (!r.st || G.stage >= r.st) && G.sci >= r.c);
   if (af.length) I.push(`On a assez de science pour « ${af[0].n} ». Sac > Recherche.`);
   if (AG.cons > 0 && AG.eff < 1) I.push('Les machines manquent de jus ⚡. Plus de panneaux solaires ou d’éoliennes ?');
@@ -689,16 +738,16 @@ function shopRefresh() {
 function buyShop(n) {
   const it = G.shop.items[n]; if (!it || G.shop.bought.includes(n)) return false;
   if (G.coins < it.p) { SFX.bad(); return false; }
-  if (it.k === 'res' && room(it.id) < it.n) { toast('Pas assez de place dans le sac', 'u_bag', '', 'bad'); SFX.bad(); return false; }
+  if ((it.k === 'res' && room(it.id) < it.n) || (it.k === 'deco' && room('@' + it.id) < 1)) { toast('Pas assez de place dans le sac', 'u_bag', '', 'bad'); SFX.bad(); return false; }
   G.coins -= it.p;
   if (it.k === 'hat') G.hats.push(it.id); else if (it.k === 'suit') G.suits.push(it.id);
-  else if (it.k === 'deco') G.tok[it.id] = (G.tok[it.id] || 0) + 1; else add(it.id, it.n);
+  else if (it.k === 'deco') add('@' + it.id, 1); else add(it.id, it.n);
   if (it.k !== 'deco') G.shop.bought.push(n);
   SFX.coin(); save(); return true;
 }
 function sell(k, n) {
   n = Math.min(n, inv(k)); if (n <= 0) return 0; const v = ITEMS[k].v * n;
-  G.inv[k] -= n; G.coins += v; inc('coins', v); inc('sell', n); SFX.coin(); return v;
+  take(k, n); G.coins += v; inc('coins', v); inc('sell', n); SFX.coin(); return v;
 }
 function orderPool() {
   const p = ['fer', 'cuivre', 'cristal', 'bois', 'fibre', 'gelee', 'glace', 'soufre', 'fruit', 'spore'];
@@ -761,12 +810,13 @@ function tipsTick() {
   const T = (k, txt, c) => { if (!G.tips[k] && c) { G.tips[k] = 1; tipT = performance.now(); tip(txt); return true; } return false; };
   const K = typeof keyLabel === 'function' ? keyLabel : (c => c);
   T('a', PC ? 'Approche-toi d’un débris gris et fais un clic gauche dessus pour le ramasser (maintiens pour continuer).' : 'Approche-toi d’un débris gris et appuie sur A (ou touche-le) pour le ramasser.', cnt('hits') === 0 && cnt('walk') > 15) ||
-    T('tools', 'Avec 8 ferrailles et 6 fibres, fabrique une pioche et une hache : ' + (PC ? K('KeyQ') + ' (sac)' : 'Sac') + ' > Fabriquer > À la main.', inv('fer') >= 4 && !toolTier('pick')) ||
-    T('etabli', 'Tu as 10 ferrailles : ' + (PC ? 'touche ' + K('KeyB') : 'bouton marteau') + ' > Établi pour le construire où tu veux.', inv('fer') >= 10 && !nb('etabli') && toolTier('pick')) ||
-    T('craft', (PC ? 'Clic droit sur l’établi' : 'Touche l’établi') + ' pour fabriquer des plaques (3 ferrailles).', nb('etabli') && !cnt('craft')) ||
+    T('sticks', 'Les petits bâtons par terre près de l’épave se ramassent à la main. Il en faut pour les outils !', !inv('baton') && cnt('walk') > 60) ||
+    T('tools', 'Avec 2 bâtons et 3 fibres, fabrique une pioche en bois : ouvre ton inventaire (' + (PC ? K('KeyQ') : 'bouton sac') + '). Une hache en bois, c’est pareil.', (inv('baton') >= 2 || inv('fibre') >= 3) && !toolTier('pick')) ||
+    T('etabli', 'Tu as 10 ferrailles : fabrique un établi dans le sac (Fabriquer). Il arrive dans ta barre rapide : ' + (PC ? 'touche 1 puis clic droit pour le poser devant toi.' : 'touche-le, puis touche le sol pour le poser.'), inv('fer') >= 10 && !nb('etabli') && !inv('@etabli') && toolTier('pick')) ||
+    T('craft', (PC ? 'Clic droit sur l’établi' : 'Touche l’établi') + ' : c’est là que se fabriquent les constructions, les machines et les plaques.', nb('etabli') && cnt('craft') < 3) ||
     T('sci', 'Tu as de la science ! Menu > Recherche pour débloquer de nouvelles machines.', G.sci >= 15 && !G.res.length && nb('etabli')) ||
     T('map', 'La carte (' + (PC ? K('KeyM') : 'en haut à droite') + ') montre ce que tu as exploré. La planète boucle : marche tout droit et tu en feras le tour !', cnt('walk') > 400) ||
     T('night', 'La nuit tombe. Pas de danger ici : les machines s’allument et les Flottigelées sortent.', nightness() > .6) ||
     T('partner', G.mp ? '' : `${NM[G.who === 'm' ? 'f' : 'm']} peut t’attendre quelque part (${PC ? K('KeyF') : 'bouton 📍'}) et tu peux jouer l’un ou l’autre (${PC ? K('KeyG') : 'bouton ⇄'}).`, !G.mp && cnt('build') >= 3) ||
-    T('pick', PC ? 'Pour enlever une construction : maintiens le clic gauche dessus (tout est remboursé). Pour faire place nette : ' + K('KeyC') + ' (défricher).' : 'Pour enlever une construction : appui long dessus (tout est remboursé). Pour faire place nette : marteau > Défricher.', cnt('build') >= 6);
+    T('pick', PC ? 'Pour récupérer une construction : regarde-la et maintiens le clic gauche. Pour faire place nette (buissons, rochers…) : C pour défricher.' : 'Pour récupérer une construction : appui long dessus. Pour faire place nette : bouton ⛏ de la barre rapide.', cnt('build') >= 4);
 }

@@ -110,6 +110,8 @@ function genItems() {
   // outils : tête de la couleur du matériau
   const PK = (k, c) => I(k, d => { d.ln(3, 12, 10, 5, '#8a5a34'); d.ln(4, 12, 11, 5, '#c98b5a'); d.poly([[3, 4], [7, 1], [12, 2], [13, 6], [11, 4], [7, 3], [4, 6]], c); d.p(7, 2, shd(c, .5)); });
   const AX = (k, c) => I(k, d => { d.ln(3, 12, 10, 3, '#8a5a34'); d.ln(4, 12, 11, 3, '#c98b5a'); d.poly([[8, 2], [12, 1], [13, 6], [10, 7], [8, 5]], c); d.p(11, 2, shd(c, .5)); });
+  PK('pioche_bois', '#c98b5a'); AX('hache_bois', '#c98b5a');
+  I('baton', d => { d.ln(3, 11, 11, 3, '#8a5a34'); d.ln(4, 11, 12, 3, '#c98b5a'); d.p(7, 6, '#5fd068'); d.p(8, 6, '#5fd068'); });
   PK('pioche', '#9aa3c0'); PK('pioche_cu', '#e08a3c'); PK('pioche_cr', '#4fe3e0'); PK('pioche_ba', '#fff04a');
   AX('hache', '#9aa3c0'); AX('hache_cu', '#e08a3c'); AX('hache_cr', '#4fe3e0');
   I('canne', d => { d.ln(2, 12, 11, 2, '#c98b5a'); d.ln(11, 2, 12, 9, '#e8e8f0'); d.ball(12, 10, 1.5, 1.5, '#ff4d6d'); d.r(3, 10, 2, 2, '#4a5068'); });
@@ -148,6 +150,7 @@ function genObjects() {
   ROCKC.forEach((c, b) => {
     SP('rock_' + b, 16, 14, d => { d.ball(8, 9, 6.5, 4.5, c); d.ball(6, 7, 3.5, 3, shd(c, .1)); d.p(10, 9, shd(c, -.35)); d.p(11, 10, shd(c, -.35)); if (b === 4) { d.r(4, 4, 5, 1, '#ffffff'); d.r(3, 5, 3, 1, '#ffffff'); } });
   });
+  SP('stick', 16, 12, d => { d.ln(2, 10, 12, 6, '#8a5a34'); d.ln(3, 10, 13, 6, '#c98b5a'); d.ln(5, 7, 13, 9, '#8a5a34'); d.ln(5, 8, 13, 10, '#c98b5a'); d.p(9, 5, '#5fd068'); });
   SP('debris', 16, 14, d => { d.poly([[2, 11], [5, 4], [11, 3], [14, 8], [12, 12]], '#8a93b0'); d.poly([[5, 4], [11, 3], [9, 7]], '#c9cfe6'); d.r(6, 8, 5, 1, '#5a6080'); d.r(3, 10, 3, 2, '#ff6f91'); d.p(12, 9, '#ffd23f'); });
   SP('fibreplant', 16, 16, d => { const c = ['#e3e070', '#c9c040', '#f2ee90']; for (let k = 0; k < 6; k++) { let x = 3 + k * 2; for (let y = 14; y > 4 + (k % 3); y--) { d.p(x, y, c[k % 3]); if (y % 3 === 0) x += (k % 2 ? 1 : -1); } } });
   SP('bush', 16, 15, d => { d.ball(8, 9, 6.5, 5, '#3f8f6a'); d.ball(5, 7, 3, 3, '#4fa87a'); [[4, 9], [9, 6], [11, 10], [7, 11]].forEach(([x, y]) => { d.ball(x, y, 1.6, 1.6, '#ff6fae'); d.p(x - 1, y - 1, '#ffd0e4'); }); });
@@ -401,7 +404,17 @@ function portrait(who, helmet, suit) {
 }
 
 /* ================= SURCHARGES PNG + GÉNÉRATION ================= */
-function genArt() { genItems(); genUI(); genObjects(); genBuildings(); genMobs(); genFish(); genHats(); }
+function genArt() { genItems(); genUI(); genObjects(); genBuildings(); genMobs(); genFish(); genHats(); genBldIcons(); }
+/* icône carrée des constructions-objets (le sprite garde ses proportions) */
+function genBldIcons() {
+  for (const k in ITEMS) {
+    if (k[0] !== '@') continue; const id = k.slice(1), d = BLD[id], c = cnv(32, 32), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+    if (d.floor) { const pal = d.pal; x.fillStyle = OL; x.fillRect(3, 3, 26, 26); x.fillStyle = pal[0]; x.fillRect(5, 5, 22, 22); x.fillStyle = pal[1]; x.fillRect(5, 15, 22, 2); x.fillRect(15, 5, 2, 22); x.fillStyle = pal[2]; x.fillRect(6, 6, 6, 2); }
+    else if (d.wall) { const [t, f] = d.pal; x.fillStyle = OL; x.fillRect(5, 3, 22, 26); x.fillStyle = t; x.fillRect(7, 5, 18, 12); x.fillStyle = f; x.fillRect(7, 17, 18, 10); }
+    else { const a = ART['b_' + (id === 'arbre' ? 'arbre0' : id)]; if (a) { const s = Math.min(32 / a.width, 32 / a.height), w = Math.floor(a.width * s), h = Math.floor(a.height * s); x.drawImage(a, (32 - w) >> 1, 32 - h, w, h); } }
+    ART['i_' + k] = c;
+  }
+}
 const ICON = {};
 function iconURL(key) { if (!ICON[key]) { const a = ART[key]; ICON[key] = !a ? '' : a.toDataURL ? a.toDataURL() : a.src; } return ICON[key]; }
 async function loadOverrides() {

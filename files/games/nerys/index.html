@@ -10,7 +10,7 @@
 <div id="hud">
   <button id="hStageW" class="card"><div id="hStage"></div><div id="hStats"></div></button>
   <div id="hClock" class="pill"></div>
-  <div id="hRight"><span id="hNet" class="pill"></span><span id="hCoins" class="pill"></span><span id="hSci" class="pill"></span><span id="hPow" class="pill"></span><button id="bSave" class="ib" aria-label="Sauvegarder" title="Sauvegarder (Ctrl+S)"></button><button id="bMap" class="ib" aria-label="Carte" title="Carte"></button><button id="bMenu" class="ib" aria-label="Sac" title="Sac"></button></div>
+  <div id="hRight"><span id="hNet" class="pill"></span><span id="hCoins" class="pill"></span><span id="hSci" class="pill"></span><span id="hPow" class="pill"></span><button id="bSave" class="ib" aria-label="Sauvegarder" title="Sauvegarder (Ctrl+S)"></button><button id="bMap" class="ib" aria-label="Carte" title="Carte (M)"></button><button id="bJournal" class="ib" aria-label="Journal" title="Journal : recherche, planète, collection (Tab)"></button><button id="bMenu" class="ib" aria-label="Inventaire" title="Inventaire (A)"></button><button id="bPause" class="ib" aria-label="Pause" title="Pause (Échap)">II</button></div>
 </div>
 <div id="fps"></div>
 <div id="toasts"></div>
@@ -19,11 +19,11 @@
 <div id="ctl">
   <div id="joyZ"></div>
   <div id="joy"><div id="knob"></div></div>
-  <button id="bBuild" class="gb" aria-label="Construire"></button><button id="bStay" class="gs" aria-label="Compagnon">📍</button><button id="bSwap" class="gs" aria-label="Changer de personnage">⇄</button><button id="bChat" class="gs" aria-label="Chat">💬</button>
+  <button id="bBuild" class="gb" aria-label="Défricher"></button><button id="bStay" class="gs" aria-label="Compagnon">📍</button><button id="bSwap" class="gs" aria-label="Changer de personnage">⇄</button><button id="bChat" class="gs" aria-label="Chat">💬</button>
   <button id="bA" class="gb"><span>A</span><em id="bAL"></em></button>
 </div>
 <div id="buildBar"></div>
-<div id="keys"><span id="kAct"></span><div id="keysTxt"></div></div>
+<div id="keys"><div id="keysTxt"></div></div><div id="act"></div><div id="hotName"></div><div id="hot"></div>
 <div id="fishUI"></div><div id="chatLog"></div><div id="chatIn"><input maxlength="120" placeholder="Message… (Entrée pour envoyer)" autocomplete="off"><button class="btn sm pri">Envoyer</button></div>
 
 <div id="dlg"><button class="x" id="dlgX" title="Passer (Échap)">✕</button><img id="dlgP" alt=""><div id="dlgN"></div><div id="dlgT"></div><span id="dlgA">▼</span></div>
@@ -34,7 +34,7 @@
 <div id="title" class="scr">
   <div class="logo"><h1><span>N</span><span>É</span><span>R</span><span>Y</span><span>S</span></h1><p>une planète un peu bizarre</p></div>
   <div id="tBtns"></div>
-  <div class="ver">v2.2 · © Aureane Studio</div>
+  <div class="ver">v2.3 · © Aureane Studio</div>
 </div>
 <div id="pick" class="scr"><button class="x xScr" id="pickX" title="Retour (Échap)">✕</button><h2>Qui es-tu ?</h2><div id="pickRow"></div><button class="btn" id="pickBack">‹ Retour</button></div>
 
@@ -48,5 +48,5 @@
 <script src="js/game.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/mp.js"></script><script src="js/main.js"></script>
+<script src="js/inv.js"></script><script src="js/mp.js"></script><script src="js/main.js"></script>
 </body></html>

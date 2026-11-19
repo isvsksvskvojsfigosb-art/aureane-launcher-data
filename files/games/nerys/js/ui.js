@@ -3,7 +3,7 @@
    Nérys — interface : HUD, menus, panneaux, carte, pêche,
    dialogues, notifications
    ========================================================== */
-const UI = { modal: null, tab: 'sac', coll: 'mobs', bcat: 'base', zorg: 'shop', live: null, sel: null };
+const UI = { modal: null, tab: 'res', coll: 'mobs', bcat: 'base', zorg: 'shop', live: null, sel: null };
 const ic = (k, s = 20, cls = '') => `<img class="ic ${cls}" src="${iconURL(k)}" style="width:${s}px;height:${s}px" alt="">`;
 const costHTML = c => Object.entries(c || {}).map(([k, v]) => `<span class="cost ${inv(k) >= v ? '' : 'no'}">${ic('i_' + k, 16)}<b>${v}</b></span>`).join('');
 const bar = (p, col = 'var(--mint)') => `<div class="bar"><i style="width:${clamp(p, 0, 1) * 100}%;background:${col}"></i></div>`;
@@ -65,12 +65,12 @@ $('#modal').addEventListener('click', e => {
 });
 
 /* ================= MENU PRINCIPAL ================= */
-const TABS = [['sac', 'Sac', 'u_bag'], ['craft', 'Fabriquer', 'u_hammer'], ['res', 'Recherche', 'u_sci'], ['planet', 'Planète', 'u_planet'], ['coll', 'Collection', 'u_book'], ['style', 'Style', 'u_shirt'], ['opt', 'Options', 'u_gear']];
+const TABS = [['res', 'Recherche', 'u_sci'], ['planet', 'Planète', 'u_planet'], ['coll', 'Collection', 'u_book'], ['style', 'Style', 'u_shirt']];
 function openMenu(tab) {
-  if (tab) UI.tab = tab;
+  if (tab) UI.tab = tab; if (!TABV[UI.tab] || !TABS.some(t => t[0] === UI.tab)) UI.tab = 'res';
   const r = () => {
     const rail = TABS.map(([k, n, i]) => `<button class="rt ${k === UI.tab ? 'on' : ''}" data-a="tab:${k}">${ic(i, 22)}<span>${n}</span></button>`).join('');
-    modal(null, `<div class="menu"><nav class="rail">${rail}<button class="rt cl" data-a="close">${ic('u_x', 20)}<span>Fermer</span></button></nav><section class="rbody">${TABV[UI.tab]()}</section></div>`, MENUA, { id: 'menu', cls: 'big menuB', r, live: UI.tab === 'planet' || UI.tab === 'sac' ? 1 : null });
+    modal(null, `<div class="menu"><nav class="rail">${rail}<button class="rt cl" data-a="close">${ic('u_x', 20)}<span>Fermer</span></button></nav><section class="rbody">${TABV[UI.tab]()}</section></div>`, MENUA, { id: 'menu', cls: 'big menuB', r, live: UI.tab === 'planet' ? 1 : null });
   };
   r();
 }
@@ -93,44 +93,7 @@ const MENUA = {
   exp: () => G.mp ? null : (save(), exportSlot(SLOT)), quit: () => { save(); closeModal(); toTitle(); }, cred: () => credits(),
 };
 const TABV = {};
-TABV.sac = () => {
-  const stacks = []; for (const k of Object.keys(ITEMS)) { let n = inv(k); const st = stackOf(k); while (n > 0) { const q = Math.min(st, n); stacks.push([k, q]); n -= q; } }
-  const tot = AG.slots, cells = stacks.map(([k, q]) => `<button class="slotc ${UI.sel === k ? 'on' : ''}" data-a="sel:${k}" title="${esc(ITEMS[k].n)}">${ic('i_' + k, 28)}${q > 1 ? `<b>${q}</b>` : ''}</button>`);
-  for (let n = stacks.length; n < tot; n++) cells.push('<span class="slotc empty"></span>');
-  let det = `<div class="det hint0">${ic('u_bag', 30)}<div><b>${PC ? 'Clique' : 'Touche'} un objet</b><small>pour voir où le trouver, le manger ou le jeter.</small></div></div>`;
-  if (UI.sel && ITEMS[UI.sel] && inv(UI.sel) > 0) {
-    const k = UI.sel, it = ITEMS[k], src = itemSource(k);
-    const info = it.tool ? `Outil : ${it.tool === 'pick' ? 'roche, minerais, cristaux, glace' : it.tool === 'axe' ? 'champignons géants, arbres, cactus' : 'pêche dans les lacs'}${it.tool !== 'rod' ? ' · +' + [0, 0, 1, 2, 4][it.tier] + ' par coup' : ''}. Utilisé tout seul.` : it.food ? it.food.d : src;
-    det = `<div class="det">${ic('i_' + k, 34)}<div><b>${it.n} <small>×${inv(k)}</small></b><small>${esc(info || '')}</small></div><div class="det-bt">${it.food ? `<button class="btn pri sm" data-a="eat:${k}">Manger</button>` : ''}<button class="btn sm" data-a="drop:${k},1">Jeter 1</button>${inv(k) > 1 ? `<button class="btn sm" data-a="drop:${k},all">Jeter tout</button>` : ''}</div></div>`;
-  }
-  const tl = ['pick', 'axe', 'rod'].map(t => { const tier = toolTier(t), k = Object.keys(ITEMS).find(x => ITEMS[x].tool === t && ITEMS[x].tier === tier && inv(x) > 0); return `<span class="chip ${k ? '' : 'miss'}">${ic(k ? 'i_' + k : t === 'pick' ? 'i_pioche' : t === 'axe' ? 'i_hache' : 'i_canne', 16)} ${k ? ITEMS[k].n : 'Pas de ' + (t === 'pick' ? 'pioche' : t === 'axe' ? 'hache' : 'canne')}</span>`; }).join('');
-  const buffs = Object.entries(G.buffs).filter(([k, v]) => v > 0 && k !== 'rainbow').map(([k, v]) => `<span class="chip">${{ speed: 'Vitesse', harvest: 'Récolte ×2', luck: 'Chance', all: 'Super-forme' }[k]} · ${fmtT(v)}</span>`).join('');
-  return `<h3>Sac <small>· ${stacks.length} / ${tot} emplacements</small></h3>${det}<div class="sgrid2">${cells.join('')}</div><div class="chips">${tl}${buffs}</div>`;
-};const stationOk = st => st === 'main' || nb(st) > 0;
-function recipeRows(st) {
-  return RECIPES.map((r, i) => [r, i]).filter(([r]) => r.st === st && hasR(r.r)).map(([r, i]) => {
-    const can = stationOk(r.st) && canPay(r.i) && room(r.o) >= r.n, mx = maxCraft(r), tool = ITEMS[r.o].tool;
-    return `<div class="rrow ${can ? '' : 'off'}">${ic('i_' + r.o, 28)}<div class="rn"><b>${ITEMS[r.o].n}${r.n > 1 ? ' ×' + r.n : ''}</b><div>${costHTML(r.i)}</div></div><small>${inv(r.o) || ''}</small><button class="btn sm ${tool ? 'pri' : ''}" data-a="craft:${i},1">×1</button>${tool ? '' : `<button class="btn sm" data-a="craft:${i},5">×5</button><button class="btn sm pri" data-a="craft:${i},max">Max${mx ? ' ' + mx : ''}</button>`}</div>`;
-  }).join('');
-}
-function maxCraft(r) { if (!stationOk(r.st)) return 0; let m = Math.floor(room(r.o) / r.n); for (const k in r.i) m = Math.min(m, Math.floor(inv(k) / r.i[k])); return Math.max(0, m); }
-TABV.craft = () => Object.keys(STATIONS).map(st => {
-  if (st === 'main') return `<h3>${ic('u_hammer', 22)} À la main <small>· pas besoin d’atelier</small></h3>${recipeRows('main')}`;
-  const built = nb(st) > 0, unlocked = hasR(BLD[st].r);
-  if (!unlocked) return `<h3 class="lock">${ic('u_lock', 16)} ${STATIONS[st]} <small>· recherche « ${RESI[BLD[st].r].n} »</small></h3>`;
-  return `<h3>${ic('b_' + st, 22)} ${STATIONS[st]} ${built ? '' : '<small class="no">· à construire (' + (PC ? keyLabel('KeyB') : 'marteau') + ')</small>'}</h3>${recipeRows(st)}`;
-}).join('') + '<p class="hint">Les stations marchent de partout : pas besoin d’être à côté. Les outils servent tout seuls quand ils sont dans le sac.</p>';
-function craftN(i, n) {
-  const r = RECIPES[i]; if (!stationOk(r.st)) { toast('Construis d’abord : ' + STATIONS[r.st], 'b_' + r.st, '', 'bad'); SFX.bad(); return 0; }
-  let d = 0; for (; d < n; d++) { if (!canPay(r.i) || room(r.o) < r.n) break; pay(r.i); add(r.o, r.n, d > 0); }
-  if (d) { inc('craft', d); SFX.ok(); vib(10); if (ITEMS[r.o].tool) toast(ITEMS[r.o].n + ' fabriquée !', 'i_' + r.o, 'Elle sert toute seule, garde-la dans le sac'); }
-  else { SFX.bad(); if (room(r.o) < r.n) fullWarn(r.o); }
-  return d;
-}
-function dropItem(k, n) { n = n === 'all' ? inv(k) : Math.min(inv(k), +n); if (n <= 0) return; G.inv[k] -= n; if (G.inv[k] <= 0) { delete G.inv[k]; UI.sel = null; } SFX.pickup(); refresh(); }function eat(k) {
-  const f = ITEMS[k].food; if (!f || inv(k) < 1) return; G.inv[k]--; G.buffs[f.b] = Math.max(G.buffs[f.b] || 0, f.t); inc('eat');
-  SFX.ok(); toast('Miam : ' + ITEMS[k].n, 'i_' + k, f.d); refresh();
-}
+const stationOk = st => st === 'main' || nb(st) > 0;
 function resState(r) {
   if (hasR(r.id)) return 'done';
   const miss = (r.req || []).filter(x => !hasR(x)); if (miss.length) return 'req';
@@ -201,7 +164,7 @@ TABV.opt = () => {
   const sl = (k, l, min, max) => `<div class="sl"><label><span>${l}</span><b id="v_${k}">${CFG[k]}%</b></label><input type="range" data-k="${k}" min="${min}" max="${max}" value="${CFG[k]}" style="--v:${(CFG[k] - min) / (max - min) * 100}%"></div>`;
   const tg = (k, l, s) => `<button class="tg" data-a="tog:${k}"><span>${l}${s ? `<small>${s}</small>` : ''}</span><i class="sw ${CFG[k] ? 'on' : ''}"></i></button>`;
   const K = keyLabel, other = NM[G && G.who === 'm' ? 'f' : 'm'];
-  const game = G && !G.demo ? `<h3>Partie</h3><div class="row2"><button class="btn pri sm" data-a="save">${ic('u_star', 14)} ${G.mp ? 'Envoyer ma progression' : 'Sauvegarder'}${PC ? ' (Ctrl+S)' : ''}</button>${G.mp ? '' : '<button class="btn sm" data-a="exp">Exporter en fichier</button>'}</div>
+  const game = false ? `<h3>Partie</h3><div class="row2"><button class="btn pri sm" data-a="save">${ic('u_star', 14)} ${G.mp ? 'Envoyer ma progression' : 'Sauvegarder'}${PC ? ' (Ctrl+S)' : ''}</button>${G.mp ? '' : '<button class="btn sm" data-a="exp">Exporter en fichier</button>'}</div>
   ${G.mp ? `<p class="hint">Partie en ligne sur « ${esc(MP.info ? MP.info.name : MP.addr)} ». Tout est enregistré sur le serveur.</p>` : `<p class="hint">Sauvegarde automatique toutes les 20 secondes · emplacement ${SLOT + 1}.</p>
   <h3>Équipe</h3><div class="row2"><button class="btn sm" data-a="swap">⇄ Jouer ${other}${PC ? ' (' + K('KeyG') + ')' : ''}</button><button class="btn sm" data-a="stay">${G.pm === 'stay' ? 'Dire à ' + other + ' de te suivre' : 'Dire à ' + other + ' de rester ici'}${PC ? ' (' + K('KeyF') + ')' : ''}</button></div>`}
   <div class="row2"><button class="btn sm" data-a="quit">${G.mp ? 'Quitter le serveur' : 'Menu principal'}</button></div>` : '';
@@ -215,11 +178,11 @@ TABV.opt = () => {
     <span><b>${K('KeyF')}</b></span><i>Compagnon : reste ici / suis-moi</i><span><b>${K('KeyG')}</b></span><i>Changer de personnage</i>
     <span><b>${K('KeyM')}</b></span><i>Carte</i><span><b>Entrée</b></span><i>Chat (multijoueur)</i>
     <span><b>Molette</b> · + / −</span><i>Zoom</i><span><b>Ctrl+S</b></span><i>Sauvegarder</i><span><b>F11</b></span><i>Plein écran</i></div>
-    ${tg('keys', 'Aide des touches à l’écran')}<div class="row2"><button class="btn sm" data-a="fs">Plein écran (F11)</button>${ELECTRON ? '<button class="btn sm" data-a="quitApp">Quitter le jeu</button>' : ''}</div>` : '';
+    ${tg('keyhelp', 'Afficher les touches en bas à gauche')}<div class="row2"><button class="btn sm" data-a="fs">Plein écran (F11)</button>${ELECTRON ? '<button class="btn sm" data-a="quitApp">Quitter le jeu</button>' : ''}</div>` : '';
   return game + `<h3>Son</h3>${sl('vm', 'Volume général', 0, 100)}${sl('vs', 'Effets', 0, 100)}${sl('vx', 'Musique', 0, 100)}${PC ? '' : tg('vib', 'Vibrations')}
   <h3>Affichage</h3><div class="zoom"><span>Zoom</span>${[[.75, 'Loin'], [1, 'Normal'], [1.3, 'Près']].map(([z, n]) => `<button class="btn sm ${CFG.zoom === z ? 'pri' : ''}" data-a="zoom:${z}">${n}</button>`).join('')}</div>${sl('nd', 'Obscurité de la nuit', 0, 100)}${sl('ui', 'Taille de l’interface', 70, 130)}${tg('fps', 'Afficher les FPS')}
   ${pcs}${PC ? '' : `<h3>Commandes</h3>${tg('lefty', 'Mode gaucher', 'Joystick à droite, boutons à gauche')}${sl('bs', 'Taille des boutons', 70, 140)}${sl('bo', 'Opacité des boutons', 30, 100)}`}${tg('tips', 'Astuces', 'Petits conseils au début')}
-  <div class="row2"><button class="btn sm" data-a="cred">Crédits</button></div><p class="ver">Nérys v2.2 · © Aureane Studio</p>`;
+  <div class="row2"><button class="btn sm" data-a="cred">Crédits</button></div><p class="ver">Nérys v2.3 · © Aureane Studio</p>`;
 };$('#modal').addEventListener('input', e => {
   const t = e.target, k = t.dataset.k; if (!k) return; CFG[k] = +t.value;
   t.style.setProperty('--v', (t.value - t.min) / (t.max - t.min) * 100 + '%'); const l = $('#v_' + k); if (l) l.textContent = t.value + '%';
@@ -228,7 +191,7 @@ TABV.opt = () => {
 $('#modal').addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.k; if (k === 'vs' || k === 'vm') SFX.ok(); });
 function applyCfg() {
   const s = document.documentElement.style; s.setProperty('--bs', CFG.bs / 100); s.setProperty('--bo', CFG.bo / 100);
-  document.body.classList.toggle('lefty', !!CFG.lefty); document.body.classList.toggle('nokeys', CFG.keys === false); $('#fps').style.display = CFG.fps ? 'block' : 'none';
+  document.body.classList.toggle('lefty', !!CFG.lefty); document.body.classList.toggle('nokeys', !CFG.keyhelp); $('#fps').style.display = CFG.fps ? 'block' : 'none';
   s.setProperty('--ui', (CFG.ui || 100) / 100);
 }
 function exportSave() {
@@ -269,16 +232,13 @@ const BUILDA = {
   clear: () => { closeModal(); BUILD = { clear: true }; buildBar(); },
 };
 function startBuild(id) { BUILD = { id }; SFX.tab(); buildBar(); }
+function startBuild() { }
 function buildBar() {
   const b = $('#buildBar');
-  if (!BUILD) { b.classList.remove('on'); document.body.classList.remove('building'); return; }
+  if (!BUILD || !BUILD.clear) { b.classList.remove('on'); document.body.classList.toggle('building', !!BUILD); return; }
   document.body.classList.add('building'); b.classList.add('on');
-  if (BUILD.pick) { b.innerHTML = `<div class="bi">${ic('u_hammer', 26)}<div><b>Ramasser</b><small>${PC ? 'Clique' : 'Touche'} une construction ou un sol : c’est remboursé</small></div></div><span class="berr" id="berr"></span><button class="btn sm" data-b="exit">✕ Fini</button>`; return; }
-  if (BUILD.clear) { b.innerHTML = `<div class="bi">${ic('u_pick', 26)}<div><b>Défricher</b><small>${PC ? 'Clique ou glisse' : 'Touche ou glisse'} sur buissons, rochers, plantes… Ils ne repoussent plus.</small></div></div><span class="berr" id="berr"></span><button class="btn sm" data-b="exit">✕ Fini</button>`; return; }
-  const d = BLD[BUILD.id], spr = d.floor ? `<img class="ic" src="${floorTile(BUILD.id).toDataURL()}" style="width:26px;height:26px">` : d.wall ? '' : ic('b_' + BUILD.id, 26);
-  b.innerHTML = `<div class="bi">${spr}<div><b>${d.n}</b><div class="costs">${d.shop ? `<span class="cost">reste ${G.tok[BUILD.id] || 0}</span>` : costHTML(d.c)}</div></div></div><span class="berr" id="berr"></span><button class="btn sm" data-b="menu">Changer</button><button class="btn sm" data-b="exit">✕</button>`;
-}
-$('#buildBar').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b) return; SFX.tab(); if (b.dataset.b === 'exit') { BUILD = null; buildBar(); } else { BUILD = null; buildBar(); openBuild(); } });
+  b.innerHTML = `<div class="bi">${ic('u_pick', 26)}<div><b>Défricher</b><small>${PC ? 'Clic gauche (maintenir) sur ce qui est devant toi' : 'Touche ou glisse'} : buissons, rochers, plantes… disparaissent pour de bon.</small></div></div><span class="berr" id="berr"></span><button class="btn sm" data-b="exit">✕ Fini</button>`;
+}$('#buildBar').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b) return; SFX.tab(); if (b.dataset.b === 'exit') { BUILD = null; buildBar(); } else { BUILD = null; buildBar(); openBuild(); } });
 function buildAt(tx, ty) {
   if (!BUILD) return;
   const e = $('#berr'), showErr = m => { if (e && m) { e.textContent = m; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); } };
@@ -292,6 +252,7 @@ function buildAt(tx, ty) {
 
 /* ================= PANNEAUX DES CONSTRUCTIONS ================= */
 function openBuildingPanel(i) {
+  { const b0 = G.bl[i]; if (b0 && BLD[b0.id].st) return openInv('st', i); if (b0 && BLD[b0.id].chest) return openInv('chest', i); }
   const r = () => {
     const b = G.bl[i]; if (!b) { closeModal(); return; }
     const d = BLD[b.id]; let body = `<p class="desc">${d.d || ''}</p>`;
@@ -323,8 +284,8 @@ function PANELA(i) {
     col: () => { collect(i); refresh(); },
     pick: () => { const [tx, ty] = [i % WW, i / WW | 0]; closeModal(); pickup(tx, ty); },
     craft: a => { const [k, n] = a.split(','); craftN(+k, n === 'max' ? 999 : +n); refresh(); },
-    plant: k => { if (inv('graine') < 1) { toast('Il faut 1 graine', 'i_graine', 'Les plantes en donnent parfois', 'bad'); SFX.bad(); return; } G.inv.graine--; plantCrop(i, k); SFX.ok(); refresh(); },
-    fert: () => { const b = G.bl[i]; if (!b.crop || inv('engrais') < 1) { SFX.bad(); return; } G.inv.engrais--; const el = (now() - b.crop.t0) / 1000; b.crop.d = el + (b.crop.d - el) / 2; SFX.ok(); refresh(); },
+    plant: k => { if (inv('graine') < 1) { toast('Il faut 1 graine', 'i_graine', 'Les plantes en donnent parfois', 'bad'); SFX.bad(); return; } take('graine', 1); plantCrop(i, k); SFX.ok(); refresh(); },
+    fert: () => { const b = G.bl[i]; if (!b.crop || inv('engrais') < 1) { SFX.bad(); return; } take('engrais', 1); const el = (now() - b.crop.t0) / 1000; b.crop.d = el + (b.crop.d - el) / 2; SFX.ok(); refresh(); },
     harv: () => { harvestCrop(i); SFX.hit('fruit'); refresh(); },
     tp: j => teleport(+j), home: () => teleport(-1),
     ztab: k => { UI.zorg = k; SFX.tab(); refresh(); },
@@ -471,15 +432,21 @@ function hud(force) {
   $('#hSci').innerHTML = ic('u_sci', 16) + fmt(G.sci);
   $('#hPow').innerHTML = ic('u_bolt', 16) + fmt(AG.prod) + '/' + fmt(AG.cons); $('#hPow').classList.toggle('warn', AG.eff < 1);
   $('#hClock').textContent = clockTxt();
-  const al = targetLabel(TGT), A = $('#bAL'); if (A.textContent !== al) A.textContent = al;
-  if (PC) { const k = $('#kAct'); let h = ''; if (HOVT && HOVT.far) h = 'Trop loin'; else if (HOVT) { const a = primaryLabel(HOVT), u = useLabel(HOVT); h = (a ? 'Clic G : ' + a : '') + (u && u !== a && HOVT.k !== 'flr' ? '   ·   Clic D : ' + u : ''); } else if (BUILD && !BUILD.clear && !BUILD.pick) h = 'Clic D : poser   ·   Clic G (maintenir) : casser   ·   ' + keyLabel('KeyB') + ' / Échap : terminer'; else if (al) h = keyLabel('KeyE') + ' : ' + al; if (k.textContent !== h) k.textContent = h; }
+  const al = BUILD && BUILD.id ? 'Poser' : targetLabel(TGT), A = $('#bAL'); if (A.textContent !== al) A.textContent = al;
+  { const k = $('#act'); let h = '';
+    if (BUILD && BUILD.clear) h = PC ? 'Clic gauche : défricher devant toi   ·   C / Échap : terminer' : '';
+    else if (BUILD && BUILD.id) { const d = BLD[BUILD.id]; h = PC ? 'Clic droit : poser ' + d.n + (d.floor || d.wall ? ' (maintiens et avance pour enchaîner)' : '') + (TGT ? '   ·   Clic gauche : ' + (primaryLabel(TGT) || 'casser') : '') : 'Touche le sol pour viser, puis encore (ou A) pour poser'; }
+    else if (TGT && PC) { const a = primaryLabel(TGT), u = useLabel(TGT); h = [a && 'Clic gauche : ' + a, u && u !== a && 'Clic droit : ' + u].filter(Boolean).join('   ·   '); }
+    else if (PC) { const hs = held(); if (hs && ITEMS[hs.k].food) h = 'Clic droit : manger ' + ITEMS[hs.k].n; }
+    if (k.textContent !== h) k.textContent = h; k.classList.toggle('on', !!h); }
+  hotbar();
   $('#bStay').classList.toggle('stay', G.pm === 'stay'); $('#bStay').title = G.pm === 'stay' ? 'Compagnon : reste ici (appuie pour qu’il te suive)' : 'Compagnon : te suit (appuie pour qu’il t’attende ici)';
   if (G.mp) $('#hNet').innerHTML = ic('u_planet', 16) + (Object.keys(MP.players).length + 1) + ' en ligne';
   $('#bA').classList.toggle('dim', !TGT && !BUILD && !DLG.on && !FISH_ST);
   if (UI.live && UI.modal) { if (UI.modal === 'menu' && UI.tab === 'planet') drawPlanetC(); if (++UI.lv % 4 === 0) refreshLive(); }
 }
 UI.lv = 0;
-function refreshLive() { const a = document.activeElement; if (a && a.tagName === 'INPUT') return; if (UI.modal === 'menu' && UI.tab !== 'planet' && UI.tab !== 'sac') return; refresh(); if (UI.modal === 'menu' && UI.tab === 'planet') drawPlanetC(); }
+function refreshLive() { const a = document.activeElement; if (a && a.tagName === 'INPUT') return; if (UI.modal === 'menu' && UI.tab !== 'planet') return; if (UI.modal === 'inv' || UI.modal === 'set' || UI.modal === 'pause') return; refresh(); if (UI.modal === 'menu' && UI.tab === 'planet') drawPlanetC(); }
 
 /* ================= FONDU ================= */
 function fadeOut(fn, ms = 500) {
