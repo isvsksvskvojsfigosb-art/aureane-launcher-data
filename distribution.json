@@ -89,10 +89,11 @@
           "sha1": "c98467cbbaf4d197377266795ae015f4130d65b6",
           "size": 2426039
         }
-      ]
+      ],
+      "order": 10
     }
   ],
-  "updated": "2026-11-19T18:14:33.184Z",
+  "updated": "2026-11-19T18:51:14.811Z",
   "games": [
     {
       "id": "nerys",
@@ -100,6 +101,7 @@
       "subtitle": "Jeu solo · Chill",
       "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, construis ta base et terraforme la planète à ton rythme. Les machines continuent de travailler même quand le jeu est fermé.",
       "version": "2.1.0",
+      "order": 20,
       "entry": "index.html",
       "background": "#120d22",
       "tags": [
