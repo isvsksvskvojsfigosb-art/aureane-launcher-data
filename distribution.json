@@ -8,6 +8,58 @@
   },
   "news": [
     {
+      "id": "launcher-2",
+      "title": "Le launcher Aureane fait peau neuve",
+      "tag": "Launcher",
+      "date": "2026-11-19",
+      "image": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/news/launcher-2.png",
+      "summary": "Un seul launcher pour tous les projets d'Aureane Studio, un compte Aureane, des amis et une photo de profil à ton image.",
+      "body": [
+        "Le launcher passe en version 2.0. Il ne sert plus seulement au serveur Minecraft : c'est maintenant la porte d'entrée de tous les projets d'Aureane Studio.",
+        "- L'accueil affiche tous les projets : le serveur Aureane, le jeu Nérys et ceux qui arriveront ensuite. Choisis-en un, le bouton Jouer s'occupe du reste, téléchargement et mises à jour compris.",
+        "- Un compte Aureane unique, avec ton pseudo et un numéro (par exemple Naiffie#0602).",
+        "- Les amis : ajoute n'importe qui avec son pseudo et son numéro, vois qui est en ligne et à quoi il joue.",
+        "- Une photo de profil à personnaliser : une couleur de fond et un petit logo parmi 18, à choisir dans Mon profil.",
+        "- Ton compte Minecraft se lie à ton compte Aureane depuis la page Mon profil. Il reste nécessaire pour jouer sur le serveur.",
+        "Pour l'instant, les comptes sont encore enregistrés sur ton PC. Le serveur de comptes en ligne arrive bientôt, et avec lui les amis entre joueurs."
+      ]
+    },
+    {
+      "id": "nerys-sortie",
+      "title": "Nérys, notre premier jeu, est disponible",
+      "tag": "Nérys",
+      "date": "2026-11-19",
+      "image": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/news/nerys-sortie.png",
+      "project": "nerys",
+      "summary": "Un jeu chill et un peu goofy : deux astronautes, une planète bizarre, et tout à reconstruire à ton rythme.",
+      "body": [
+        "Vaël et Lysséa viennent de s'écraser sur Nérys, une exoplanète violette, froide et grognonne. Ta mission : la rendre vivable. Sans te presser.",
+        "- Explore une planète qui fait le tour d'elle-même : six biomes, des lacs, des volcans, des capsules de fret à ouvrir et de mystérieuses statues de canard.",
+        "- Construis ta base comme tu veux : une centaine de machines, de meubles, de sols et de murs. Les machines te regardent. Elles ont des yeux.",
+        "- Terraforme la planète : l'herbe pousse, les lacs se remplissent, la neige fond… et un jour, on enlève le casque.",
+        "- Caresse et adopte des créatures (ouvre l’œil pour les dorées), pêche des poissons improbables et fais du commerce avec Zorg et sa théière volante.",
+        "Les machines continuent de travailler même quand le jeu est fermé : 10 minutes ou 2 heures, chaque session fait avancer ta planète.",
+        "Nérys est gratuit. Tu le trouves dans les projets, sur l'accueil du launcher."
+      ]
+    },
+    {
+      "id": "nerys-2-1",
+      "title": "Nérys 2.1 : souris, clavier et place nette",
+      "tag": "Mise à jour",
+      "date": "2026-11-19",
+      "image": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/news/nerys-2-1.png",
+      "project": "nerys",
+      "summary": "Nérys se joue maintenant confortablement à la souris, et tu peux défricher pour bâtir ta base où tu veux.",
+      "body": [
+        "- Souris : clique sur un objet ou une créature, ton astronaute y va et agit. Garde le clic appuyé pour récolter en continu.",
+        "- Clavier : ZQSD pour bouger, E pour agir, B pour construire, Tab pour le menu, M pour la carte, molette pour zoomer et F11 pour le plein écran.",
+        "- Nouvel outil Défricher (touche C) : buissons, rochers et plantes disparaissent pour de bon et laissent la place à ta base. Tu récupères leurs ressources.",
+        "- Un bouton Maison sur la carte pour rentrer à l'épave.",
+        "- Toutes les fenêtres ont une croix pour se fermer, et l'animation qui se répétait dans les menus a disparu.",
+        "La mise à jour s’installe toute seule au prochain lancement depuis le launcher."
+      ]
+    },
+    {
       "title": "Les outils staff arrivent",
       "tag": "Mise à jour",
       "image": "",
@@ -93,7 +145,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-19T18:51:14.811Z",
+  "updated": "2026-11-19T19:06:22.374Z",
   "games": [
     {
       "id": "nerys",
