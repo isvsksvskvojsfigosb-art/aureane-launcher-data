@@ -236,20 +236,11 @@ function drawPartner(x, y, t) {
   drawAstroAt(w, L.suit || (w === 'm' ? 'orange' : 'teal'), P.dir, astroFrame(P.mv, P.step), x, y, L.hat || 'none', t);
   if (G.pm === 'stay') { const bx = Math.round(x) + 6, by = Math.round(y) - 30 + Math.round(Math.sin(t / 300)); R(bx, by, 1, 8, '#4a5068'); R(bx + 1, by, 5, 3, '#7ce86a'); R(bx + 1, by + 3, 3, 1, '#7ce86a'); }
 }
-/* fissures façon Minecraft (5 étapes) + fine barre, quand on casse un objet / une construction */
+/* fine barre de progression quand on casse un objet / une construction */
 function drawBreak(B, ox, oy) {
   const i = B.t.i; if (i == null) return;
-  const p = clamp(B.p / B.dur, 0, 1), st = Math.min(4, p * 5 | 0), tx = (i % WW) * TS, ty = (i / WW | 0) * TS;
+  const p = clamp(B.p / B.dur, 0, 1), tx = (i % WW) * TS, ty = (i / WW | 0) * TS;
   const h = B.t.k === 'flr' && G.fl[i] && !G.bl[i] ? 16 : Math.max(16, sprH(i)), X = Math.round(ox(tx)), Y = Math.round(oy(ty + 16)) - h;
-  let sd = i * 9301 + 49297; const rn = () => { sd = (sd * 233280 + 12345) % 1000003; return sd / 1000003; };
-  ctx.fillStyle = 'rgba(24,14,40,.78)';
-  for (let k = 0; k <= st; k++) {
-    let x = 8 + (rn() - .5) * 6, y = h * (.35 + rn() * .4); const a0 = rn() * 6.283;
-    for (let n = 0; n < 3 + k; n++) {
-      const a = a0 + (rn() - .5) * 1.6, l = 2 + rn() * 3;
-      for (let q = 0; q < l; q++) { x += Math.cos(a); y += Math.sin(a) * .8; if (x < 1 || x > 15 || y < 1 || y > h - 1) break; ctx.fillRect(X + Math.round(x), Y + Math.round(y), 1, 1); }
-    }
-  }
   const w = 14, bx = X + 1, by = Y + h + 2;
   R(bx, by, w, 2, 'rgba(29,21,48,.75)'); R(bx, by, Math.max(1, Math.round(w * p)), 2, p > .8 ? '#ffd166' : '#ffffff');
 }/* petit texte toujours lisible, quelle que soit l'échelle du monde */
