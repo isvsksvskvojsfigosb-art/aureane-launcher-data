@@ -181,15 +181,43 @@ function tvalid(t) {
 }
 function treach(t) { const [x, y] = tpos(t), r = t.k === 'fish' ? 34 : t.k === 'obj' && W.o[t.i] === 23 ? 44 : 30; return Math.hypot(wrapD(x - G.x), wrapD(y - (G.y - 4))) < r; }
 function faceTo(t) { const [x, y] = tpos(t), dx = wrapD(x - G.x), dy = wrapD(y - (G.y - 4)); G.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'l' : 'r') : (dy < 0 ? 'u' : 'd'); if (dx) G.lr = dx < 0 ? 'l' : 'r'; }
-function doAct(t) { if (!tvalid(t)) return; faceTo(t); if (t.k === 'obj') G.swing = .18; act(t); }
+function doAct(t, ex) { if (!tvalid(t)) return; faceTo(t); if (t.k === 'obj' && mineable(t.i)) { mineStart(t, ex || { auto: !PC }); return; } act(t); }
+/* ---- casser façon Minecraft : on maintient, le perso tape en boucle, la vitesse dépend de l'outil ---- */
+function brkDur(t) {
+  if (t.k === 'obj') return mineTime(t.i);
+  const pt = toolTier('pick');
+  return t.k === 'flr' ? .2 / (1 + .25 * pt) : .7 / (1 + .25 * pt);
+}
+function canBreak(t) {
+  if (t.k === 'flr') return true;
+  if (t.k === 'obj') return mineable(t.i);
+  if (t.k !== 'bld') return false;
+  const b = G.bl[t.i]; return !!b && !(b.b >= 1) && !(b.id === 'jardin' && cropReady(b));
+}
+function startBrk(t, ex) { BRK = { t, p: 0, dur: brkDur(t), sw: 0, ...(ex || {}) }; }
+const sameT = (a, b) => a && b && a.k === b.k && a.i === b.i;
+function mineStart(t, ex) {
+  if (BRK && sameT(BRK.t, t)) { Object.assign(BRK, ex || {}); return; }
+  const d = OBJ[W.o[t.i]];
+  if (!toolOk(d)) { needTool(d.tool, d.mt); SHAKE[t.i] = .12; return; }
+  if (!treach(t)) { if (!PC) MOVE = { t }; return; }
+  faceTo(t); startBrk(t, ex);
+}
+function toolIco(kind) { let best = null, tr = 0; for (const s of G.items) { const it = s && ITEMS[s.k]; if (it && it.tool === kind && it.tier > tr) { tr = it.tier; best = 'i_' + s.k; } } return best; }
+function brkSwing(t) {
+  if (!PC) faceTo(t);
+  G.swing = .18;
+  if (t.k === 'obj') { G.swingIco = toolIco(OBJ[W.o[t.i]].tool); mineSwing(t.i); }
+  else { G.swingIco = toolIco('pick'); const [x, y] = tpos(t); SHAKE[t.i] = .2; SFX.hit('rock'); chips(x, y - 6, '#c9bfe0'); vib(5); }
+}
 let farT = 0;
 function tooFar(wx, wy) { if (performance.now() - farT < 900) return; farT = performance.now(); SFX.bad(); floatTxt(wx, wy - 6, 'Trop loin', '#ffb0b8'); }
 /* clic gauche : casser / récolter / caresser.   clic droit (ou toucher) : utiliser / ouvrir */
 function primaryLabel(t) {
   if (!t) return '';
-  if (t.k === 'bld') { const b = G.bl[t.i]; return b.b >= 1 ? 'Collecter' : b.id === 'jardin' && cropReady(b) ? 'Récolter' : 'Casser (maintenir)'; }
-  if (t.k === 'flr') return 'Casser (maintenir)';
-  if (t.k === 'obj') { const d = OBJ[W.o[t.i]]; if (d.special) return targetLabel(t); if (!toolOk(d)) return 'Il faut ' + TOOLN[d.tool] + (d.mt > 1 ? ' ' + TIERN[d.mt] : ''); return 'Récolter'; }
+  if (t.k === 'bld') { const b = G.bl[t.i]; return b.b >= 1 ? 'Collecter' : b.id === 'jardin' && cropReady(b) ? 'Récolter' : 'Casser'; }
+  if (t.k === 'flr') return 'Casser';
+  if (t.k === 'obj') { const d = OBJ[W.o[t.i]]; if (!d) return ''; if (d.special && d.special !== 'meteor') return targetLabel(t); if (!toolOk(d)) return 'Il faut ' + TOOLN[d.tool] + (d.mt > 1 ? ' ' + TIERN[d.mt] : ''); return 'Casser'; }
   return targetLabel(t);
 }
 function useLabel(t) { if (!t) return ''; if (t.k === 'flr') return ''; if (t.k === 'bld') return targetLabel(t); return targetLabel(t); }
@@ -199,13 +227,14 @@ function primary(t) {
     const b = G.bl[t.i];
     if (b.b >= 1) { collect(t.i); return; }
     if (b.id === 'jardin' && cropReady(b)) { doAct(t); return; }
-    BRK = { t, p: 0, dur: .45 }; return;
+    startBrk(t); return;
   }
-  if (t.k === 'flr') { BRK = { t, p: 0, dur: .1 }; return; }
-  doAct(t); if (t.k === 'obj') { MHOLD = t; mholdT = .3; }
+  if (t.k === 'flr') { startBrk(t); return; }
+  doAct(t, {});
 }
 function breakTarget(t) {
   if (!tvalid(t)) return;
+  if (t.k === 'obj') { breakObj(t.i); return; }
   const i = t.i, tx = i % WW, ty = i / WW | 0;
   if (t.k === 'flr' && G.bl[i] && BLD[G.bl[i].id].wall) pickup(tx, ty);
   else if (!pickup(tx, ty)) SFX.bad();
@@ -233,7 +262,7 @@ cv.addEventListener('pointerdown', e => {
     RDOWN = true; lastPaint = '';
     if (BUILD && BUILD.clear) { BUILD = null; buildBar(); SFX.tab(); return; }
     if (BUILD && BUILD.id) { const [tx, ty] = buildCursor(); lastPaint = tx + ',' + ty; buildAt(tx, ty); return; }
-    if (TGT) { doAct(TGT); return; }
+    if (TGT && !(TGT.k === 'obj' && mineable(TGT.i))) { doAct(TGT); return; }
     const h = held(); if (h && ITEMS[h.k].food) eat(h.k);
     return;
   }
@@ -248,9 +277,10 @@ function pcHold(dt) {
   if (!LDOWN) return;
   if (BUILD && BUILD.clear) { clearT -= dt; if (clearT <= 0) { clearT = .22; buildAt(...buildCursor()); } return; }
   const t = TGT; if (!t) { BRK = null; return; }
-  const b = t.k === 'bld' && G.bl[t.i], brk = t.k === 'flr' || (b && !(b.b >= 1) && !(b.id === 'jardin' && cropReady(b)));
-  if (brk) { if (!BRK || BRK.t.k !== t.k || BRK.t.i !== t.i) BRK = { t, p: 0, dur: t.k === 'flr' ? .1 : .45 }; }
-  else { BRK = null; if (t.k === 'obj') { mholdT -= dt; if (mholdT <= 0) { mholdT = .26; doAct(t); } } }
+  if (BRK && sameT(BRK.t, t)) return;
+  if (!canBreak(t)) { BRK = null; return; }
+  if (t.k === 'obj') { const d = OBJ[W.o[t.i]]; if (!toolOk(d)) { BRK = null; needTool(d.tool, d.mt); return; } }
+  startBrk(t);
 }
 cv.addEventListener('pointermove', e => {
   if (LP && Math.hypot(e.clientX - LP.x, e.clientY - LP.y) > 12) LP.moved = true;
@@ -272,10 +302,11 @@ function touchDown(e) {
   if (BUILD) { if (paintable()) { paint = e.pointerId; cv.setPointerCapture(e.pointerId); } tapWorld(e.clientX, e.clientY); return; }
   const t = targetAt(wx, wy), f = t ? null : flatAt(wx, wy), bt = t && t.k === 'bld' ? t : f;
   LP = { x: e.clientX, y: e.clientY, t0: performance.now(), tap: t, brk: bt, moved: false, done: false };
-  if (bt && treach(bt)) BRK = { t: bt, p: 0, dur: .6, touch: true, delay: .2 };
+  if (t && t.k === 'obj' && mineable(t.i)) { LP.done = true; MOVE = null; doAct(t, { auto: true }); return; }
+  if (bt && treach(bt)) startBrk(bt, { touch: true, delay: .2 });
 }
 function touchUp(e) {
-  const lp = LP; LP = null; BRK = null; if (!lp || lp.done || lp.moved) return;
+  const lp = LP; LP = null; if (!(BRK && BRK.auto)) BRK = null; if (!lp || lp.done || lp.moved) return;
   if (performance.now() - lp.t0 < 450) tapWorld(e.clientX, e.clientY);
 }
 function tapWorld(cx, cy) {
@@ -287,7 +318,7 @@ function tapWorld(cx, cy) {
     return;
   }
   const t = targetAt(wx, wy); if (!t) return;
-  if (treach(t)) { MOVE = null; doAct(t); if (t.k === 'obj') { MHOLD = t; mholdT = .3; } }
+  if (treach(t)) { MOVE = null; doAct(t); }
   else MOVE = { t };                                     // mobile : marche jusqu'à l'objet touché
 }
 function followMove(dt) {
@@ -305,24 +336,24 @@ joyZ.addEventListener('pointerdown', e => {
   if (STATE !== 'play') return; e.preventDefault(); audio();
   MOVE = null; JOY.id = e.pointerId; joyZ.setPointerCapture(e.pointerId); JOY.ox = e.clientX; JOY.oy = e.clientY; JOY.moved = false; JOY.t0 = performance.now();
   joyB.style.left = e.clientX + 'px'; joyB.style.top = e.clientY + 'px'; joyB.classList.add('on'); knob.style.transform = '';
-  if (!blocking() && !BUILD) { const [wx, wy] = screenWorld(e.clientX, e.clientY), t = targetAt(wx, wy), f = t ? null : flatAt(wx, wy), bt = t && t.k === 'bld' ? t : f; if (bt && treach(bt)) BRK = { t: bt, p: 0, dur: .6, touch: true, delay: .2 }; }
+  if (!blocking() && !BUILD) { const [wx, wy] = screenWorld(e.clientX, e.clientY), t = targetAt(wx, wy), f = t ? null : flatAt(wx, wy), bt = t && t.k === 'bld' ? t : f; if (bt && treach(bt)) startBrk(bt, { touch: true, delay: .2 }); }
 });
 joyZ.addEventListener('pointermove', e => {
   if (e.pointerId !== JOY.id) return; let dx = e.clientX - JOY.ox, dy = e.clientY - JOY.oy; const l = Math.hypot(dx, dy), r = joyR();
-  if (l > 10) { JOY.moved = true; BRK = null; } if (!JOY.moved) return;
+  if (l > 10) { JOY.moved = true; if (BRK && BRK.touch) BRK = null; } if (!JOY.moved) return;
   if (l > r) { JOY.ox += dx / l * (l - r); JOY.oy += dy / l * (l - r); joyB.style.left = JOY.ox + 'px'; joyB.style.top = JOY.oy + 'px'; dx = e.clientX - JOY.ox; dy = e.clientY - JOY.oy; }
   JOY.x = dx / r; JOY.y = dy / r; knob.style.transform = `translate(${dx}px,${dy}px)`;
 });
 const joyUp = e => {
   if (e.pointerId !== JOY.id) return; JOY.id = null; JOY.x = JOY.y = 0; joyB.classList.remove('on'); knob.style.transform = '';
-  const broke = BRK && BRK.done; BRK = null; MHOLD = null;
+  const broke = BRK && BRK.done; if (!(BRK && BRK.auto)) BRK = null; MHOLD = null;
   if (!JOY.moved && !broke && performance.now() - JOY.t0 < 450) tapWorld(e.clientX, e.clientY);
 };
 joyZ.addEventListener('pointerup', joyUp); joyZ.addEventListener('pointercancel', joyUp);
 
 /* ---------------- bouton A (mobile) / touche E ---------------- */
 let holdA = null, holdT = 0;
-function press(rep) {
+function press(rep, src) {
   if (STATE !== 'play') return;
   if (DLG.on) { if (!rep) dlgNext(); return; }
   if (FISH_ST) { if (!rep) fishTap(); return; }
@@ -330,8 +361,8 @@ function press(rep) {
   if (UI.modal) return;
   if (BUILD) { if (!rep) buildAt(...buildCursor()); return; }
   if (!TGT) { if (!rep) SFX.tab(); return; }
-  if (rep && !(TGT.k === 'obj' || (TGT.k === 'bld' && G.bl[TGT.i] && G.bl[TGT.i].b >= 1))) return;
-  if (TGT.k === 'obj') G.swing = .18;
+  if (TGT.k === 'obj' && mineable(TGT.i)) { if (!rep || !BRK) doAct(TGT, src === 'k' ? { key: true } : { auto: true }); return; }
+  if (rep && !(TGT.k === 'bld' && G.bl[TGT.i] && G.bl[TGT.i].b >= 1)) return;
   act(TGT);
 }
 const bA = $('#bA');
@@ -367,7 +398,7 @@ addEventListener('keydown', e => {
   if (/^Digit[1-5]$/.test(c) && !UI.modal) { selectHot(+c.slice(5) - 1); return; }
   if (c === 'KeyQ') { if (UI.modal === 'inv') closeModal(); else if (!DLG.on && !FISH_ST && !MAPO && !UI.modal) openInv(); return; }
   if (c === 'Tab' || ch === 'j') { e.preventDefault(); if (UI.modal === 'menu') closeModal(); else if (!blocking()) openMenu(); return; }
-  if (c === 'Space' || ch === 'e') { e.preventDefault(); if (!e.repeat) { MOVE = null; press(false); holdA = 'k'; holdT = .38; } return; }
+  if (c === 'Space' || ch === 'e') { e.preventDefault(); if (!e.repeat) { MOVE = null; holdA = 'k'; press(false, 'k'); holdT = .38; } return; }
   if (c === 'Enter' || c === 'NumpadEnter') { if (DLG.on) dlgNext(); else if (G.mp && !blocking()) { e.preventDefault(); openChat(); } return; }
   if (ch === 'm') { MAPO ? closeMap() : (!blocking() && openMap()); return; }
   if (blocking()) return;
@@ -415,12 +446,16 @@ function loop(t) {
       TGT = blocking() || (BUILD && BUILD.clear) ? null : findTarget(); HOVT = null;
       cv.style.cursor = blocking() ? 'default' : 'none';
       if (PC && !blocking()) pcHold(dt);
-      if (holdA !== null) { holdT -= dt; if (holdT <= 0) { holdT = .26; press(true); } }
-      if (MHOLD && !PC && !blocking()) { mholdT -= dt; if (mholdT <= 0) { mholdT = .26; if (tvalid(MHOLD) && treach(MHOLD)) doAct(MHOLD); else MHOLD = null; } }
+      if (holdA !== null) { holdT -= dt; if (holdT <= 0) { holdT = .26; press(true, holdA === 'k' ? 'k' : 'a'); } }
       if (BRK) {
+        const bt = BRK.t;
         if (BRK.delay > 0) BRK.delay -= dt;
-        else if (!tvalid(BRK.t) || !treach(BRK.t) || (LP && LP.moved)) BRK = null;
-        else { BRK.p += dt; if (BRK.p >= BRK.dur) { breakTarget(BRK.t); if (LP) LP.done = true; BRK.done = true; const keep = BRK; BRK = null; if (keep.touch) { BRK = { ...keep, p: 0, done: true, delay: 9 }; } } }
+        else if (blocking() || !tvalid(bt) || !treach(bt) || (bt.k === 'obj' && !mineable(bt.i)) || (LP && LP.moved && BRK.touch) || (BRK.auto && manual) || (BRK.key && holdA !== 'k')) BRK = null;
+        else {
+          BRK.sw -= dt; if (BRK.sw <= 0) { BRK.sw = .3; brkSwing(bt); }
+          BRK.p += dt;
+          if (BRK.p >= BRK.dur) { breakTarget(bt); if (LP) LP.done = true; BRK.done = true; const keep = BRK; BRK = null; if (keep.touch) { BRK = { ...keep, p: 0, done: true, delay: 9 }; } }
+        }
       }
       hud();
       saveT += dt; if (saveT > 20) { saveT = 0; save(); }

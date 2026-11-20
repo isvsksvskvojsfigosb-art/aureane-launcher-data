@@ -182,7 +182,7 @@ TABV.opt = () => {
   return game + `<h3>Son</h3>${sl('vm', 'Volume général', 0, 100)}${sl('vs', 'Effets', 0, 100)}${sl('vx', 'Musique', 0, 100)}${PC ? '' : tg('vib', 'Vibrations')}
   <h3>Affichage</h3><div class="zoom"><span>Zoom</span>${[[.75, 'Loin'], [1, 'Normal'], [1.3, 'Près']].map(([z, n]) => `<button class="btn sm ${CFG.zoom === z ? 'pri' : ''}" data-a="zoom:${z}">${n}</button>`).join('')}</div>${sl('nd', 'Obscurité de la nuit', 0, 100)}${sl('ui', 'Taille de l’interface', 70, 130)}${tg('fps', 'Afficher les FPS')}
   ${pcs}${PC ? '' : `<h3>Commandes</h3>${tg('lefty', 'Mode gaucher', 'Joystick à droite, boutons à gauche')}${sl('bs', 'Taille des boutons', 70, 140)}${sl('bo', 'Opacité des boutons', 30, 100)}`}${tg('tips', 'Astuces', 'Petits conseils au début')}
-  <div class="row2"><button class="btn sm" data-a="cred">Crédits</button></div><p class="ver">Nérys v2.3 · © Aureane Studio</p>`;
+  <div class="row2"><button class="btn sm" data-a="cred">Crédits</button></div><p class="ver">Nérys v2.4 · © Aureane Studio</p>`;
 };$('#modal').addEventListener('input', e => {
   const t = e.target, k = t.dataset.k; if (!k) return; CFG[k] = +t.value;
   t.style.setProperty('--v', (t.value - t.min) / (t.max - t.min) * 100 + '%'); const l = $('#v_' + k); if (l) l.textContent = t.value + '%';
@@ -434,10 +434,11 @@ function hud(force) {
   $('#hClock').textContent = clockTxt();
   const al = BUILD && BUILD.id ? 'Poser' : targetLabel(TGT), A = $('#bAL'); if (A.textContent !== al) A.textContent = al;
   { const k = $('#act'); let h = '';
-    if (BUILD && BUILD.clear) h = PC ? 'Clic gauche : défricher devant toi   ·   C / Échap : terminer' : '';
-    else if (BUILD && BUILD.id) { const d = BLD[BUILD.id]; h = PC ? 'Clic droit : poser ' + d.n + (d.floor || d.wall ? ' (maintiens et avance pour enchaîner)' : '') + (TGT ? '   ·   Clic gauche : ' + (primaryLabel(TGT) || 'casser') : '') : 'Touche le sol pour viser, puis encore (ou A) pour poser'; }
-    else if (TGT && PC) { const a = primaryLabel(TGT), u = useLabel(TGT); h = [a && 'Clic gauche : ' + a, u && u !== a && 'Clic droit : ' + u].filter(Boolean).join('   ·   '); }
-    else if (PC) { const hs = held(); if (hs && ITEMS[hs.k].food) h = 'Clic droit : manger ' + ITEMS[hs.k].n; }
+    if (BUILD && BUILD.clear) h = 'Défrichage';
+    else if (TGT && (TGT.k === 'obj' || TGT.k === 'bld' || TGT.k === 'flr')) {
+      if (TGT.k === 'obj') { const d = OBJ[W.o[TGT.i]]; h = d ? (toolOk(d) ? d.n : d.n + ' · il faut ' + TOOLN[d.tool] + (d.mt > 1 ? ' ' + TIERN[d.mt] : '')) : ''; }
+      else { const b = G.bl[TGT.i], fid = !b && G.fl[TGT.i]; h = b ? BLD[b.id].n : fid && BLD[fid] ? BLD[fid].n : ''; }
+    }
     if (k.textContent !== h) k.textContent = h; k.classList.toggle('on', !!h); }
   hotbar();
   $('#bStay').classList.toggle('stay', G.pm === 'stay'); $('#bStay').title = G.pm === 'stay' ? 'Compagnon : reste ici (appuie pour qu’il te suive)' : 'Compagnon : te suit (appuie pour qu’il t’attende ici)';

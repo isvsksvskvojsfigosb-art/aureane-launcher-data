@@ -136,7 +136,7 @@ function draw(t, dt) {
   if (MOVE && !MOVE.t) { const x = ox(MOVE.x), y = oy(MOVE.y), k = (t / 120) % 4 | 0; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1; ctx.strokeRect(Math.round(x) - 3 - (k & 1) + .5, Math.round(y) - 2 + .5, 6 + (k & 1) * 2, 3); }
   /* construction */
   if (BUILD) drawGhost(t);
-  if (BRK && BRK.delay <= 0 && !BRK.done) drawBreak(BRK, ox, oy);
+  if (BRK && !(BRK.delay > 0) && !BRK.done) drawBreak(BRK, ox, oy);
   if (G.mp && MP.me && MP.me.msgT > 0) drawBubble(G.x, G.y - 30, MP.me.msg);
   /* particules */
   ctx.font = '8px PS, monospace'; ctx.textAlign = 'center';
@@ -228,7 +228,7 @@ function drawAstroAt(who, suit, dir, fr, x, y, hat, t, helm = G.helmet) {
 }
 function drawPlayer(x, y, t) {
   let jy = 0; if (G.jump > 0) jy = -Math.sin(G.jump / .6 * Math.PI) * 14;
-  if (G.swing > 0) { const f = DIRS[G.dir], k = G.swing / .18; ctx.save(); ctx.translate(Math.round(x + f[0] * 7 + (G.dir === 'd' || G.dir === 'u' ? 6 : 0)), Math.round(y - 8 + f[1] * 4)); ctx.rotate((1 - k) * 2 - 1); ctx.drawImage(ART.u_pick, -7, -12, 12, 12); ctx.restore(); }
+  if (G.swing > 0) { const f = DIRS[G.dir], k = G.swing / .18, ic = ART[G.swingIco]; if (ic) { ctx.save(); ctx.translate(Math.round(x + f[0] * 7 + (G.dir === 'd' || G.dir === 'u' ? 6 : 0)), Math.round(y - 8 + f[1] * 4)); ctx.rotate((1 - k) * 2 - 1); ctx.drawImage(ic, -7, -12, 12, 12); ctx.restore(); } else { const l = Math.sin(k * Math.PI) * 2; x += f[0] * l; y += f[1] * l; } }
   drawAstroAt(G.who, G.suit, G.dir, astroFrame(G.mv, G.step || 0), x, y + jy, G.hat, t);
 }
 function drawPartner(x, y, t) {
@@ -236,14 +236,23 @@ function drawPartner(x, y, t) {
   drawAstroAt(w, L.suit || (w === 'm' ? 'orange' : 'teal'), P.dir, astroFrame(P.mv, P.step), x, y, L.hat || 'none', t);
   if (G.pm === 'stay') { const bx = Math.round(x) + 6, by = Math.round(y) - 30 + Math.round(Math.sin(t / 300)); R(bx, by, 1, 8, '#4a5068'); R(bx + 1, by, 5, 3, '#7ce86a'); R(bx + 1, by + 3, 3, 1, '#7ce86a'); }
 }
-/* anneau de progression quand on casse une construction (clic maintenu / appui long) */
+/* fissures façon Minecraft (5 étapes) + fine barre, quand on casse un objet / une construction */
 function drawBreak(B, ox, oy) {
-  const [x, y] = tpos(B.t), X = Math.round(ox(x)), Y = Math.round(oy(y)) - 4, p = clamp(B.p / B.dur, 0, 1);
-  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(29,21,48,.7)'; ctx.beginPath(); ctx.arc(X, Y, 9, 0, 6.283); ctx.stroke();
-  ctx.strokeStyle = '#ff6f91'; ctx.beginPath(); ctx.arc(X, Y, 9, -Math.PI / 2, -Math.PI / 2 + p * 6.283); ctx.stroke(); ctx.lineWidth = 1;
-  if (Math.random() < .3) chips(x, y - 4, '#ffffff');
-}
-/* petit texte toujours lisible, quelle que soit l'échelle du monde */
+  const i = B.t.i; if (i == null) return;
+  const p = clamp(B.p / B.dur, 0, 1), st = Math.min(4, p * 5 | 0), tx = (i % WW) * TS, ty = (i / WW | 0) * TS;
+  const h = B.t.k === 'flr' && G.fl[i] && !G.bl[i] ? 16 : Math.max(16, sprH(i)), X = Math.round(ox(tx)), Y = Math.round(oy(ty + 16)) - h;
+  let sd = i * 9301 + 49297; const rn = () => { sd = (sd * 233280 + 12345) % 1000003; return sd / 1000003; };
+  ctx.fillStyle = 'rgba(24,14,40,.78)';
+  for (let k = 0; k <= st; k++) {
+    let x = 8 + (rn() - .5) * 6, y = h * (.35 + rn() * .4); const a0 = rn() * 6.283;
+    for (let n = 0; n < 3 + k; n++) {
+      const a = a0 + (rn() - .5) * 1.6, l = 2 + rn() * 3;
+      for (let q = 0; q < l; q++) { x += Math.cos(a); y += Math.sin(a) * .8; if (x < 1 || x > 15 || y < 1 || y > h - 1) break; ctx.fillRect(X + Math.round(x), Y + Math.round(y), 1, 1); }
+    }
+  }
+  const w = 14, bx = X + 1, by = Y + h + 2;
+  R(bx, by, w, 2, 'rgba(29,21,48,.75)'); R(bx, by, Math.max(1, Math.round(w * p)), 2, p > .8 ? '#ffd166' : '#ffffff');
+}/* petit texte toujours lisible, quelle que soit l'échelle du monde */
 function label(s, x, y, c) { const k = clamp(10 * Math.min(devicePixelRatio || 1, 3) / (8 * S), .3, 1); ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(k, k); ctx.font = '8px PS, monospace'; ctx.textAlign = 'center'; txt(s, 0, 0, c); ctx.restore(); }
 function drawBubble(x0, y0, s) {
   const k = clamp(11 * Math.min(devicePixelRatio || 1, 3) / (8 * S), .3, 1); ctx.save(); ctx.translate(Math.round(x0), Math.round(y0)); ctx.scale(k, k); let x = 0, y = 0;

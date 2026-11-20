@@ -349,9 +349,43 @@ const CHARS = { m: { hair: '#2b2a6b', skin: '#d9a07a' }, f: { hair: '#d1457a', s
 const ASTRO = new Map();
 function suitColor(id, t) { if (id === 'arcenciel') return rgbHex(...hsl(((t / 20) % 360), .8, .65)); const s = SUITS.find(s => s[0] === id); return s ? s[2] : '#f0a030'; }
 function hsl(h, s, l) { const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0) * 255, f(8) * 255, f(4) * 255]; }
+/* planche PNG perso (assets/joueur_m.png, joueur_f.png) : 3 colonnes (repos, pas 1, pas 2) × 8 lignes
+   (bas, gauche, droite, haut avec casque puis les mêmes sans casque), cases de 16×23.
+   La couleur de combinaison choisie en jeu remplace celle de la planche (mêmes teintes que le dessin d'origine). */
+const SUITMAP = new Map();
 function astro(who, suit, dir, fr, helmet) {
+  const sh = ART['joueur_' + who]; if (!sh) return astroGen(who, suit, dir, fr, helmet);
+  const key = 'P' + who + suit + dir + fr + (helmet ? 1 : 0); let c = ASTRO.get(key); if (c) return c;
+  if (ASTRO.size > 400) ASTRO.clear();
+  c = cnv(16, 23); const x = c.getContext('2d'), row = { d: 0, l: 1, r: 2, u: 3 }[dir] + (helmet ? 0 : 4), col = fr === 1 ? 1 : fr === 3 ? 2 : 0;
+  x.drawImage(sh, col * 16, row * 23, 16, 23, 0, 0, 16, 23);
+  const base = suitColor(who === 'm' ? 'orange' : 'teal');
+  if (suit !== base) {
+    const mk = who + suit; let map = SUITMAP.get(mk);
+    if (!map) {
+      map = new Map();
+      for (const dd of ['d', 'l', 'u']) for (const h of [true, false]) {
+        const a = astroGen(who, base, dd, 0, h).getContext('2d').getImageData(0, 0, 16, 23).data, b = astroGen(who, suit, dd, 0, h).getContext('2d').getImageData(0, 0, 16, 23).data;
+        for (let p = 0; p < a.length; p += 4) if (a[p + 3] && (a[p] !== b[p] || a[p + 1] !== b[p + 1] || a[p + 2] !== b[p + 2])) map.set((a[p] << 16) | (a[p + 1] << 8) | a[p + 2], [b[p], b[p + 1], b[p + 2]]);
+      }
+      if (SUITMAP.size > 60) SUITMAP.clear(); SUITMAP.set(mk, map);
+    }
+    const im = x.getImageData(0, 0, 16, 23), D = im.data;
+    for (let p = 0; p < D.length; p += 4) { if (!D[p + 3]) continue; const m = map.get((D[p] << 16) | (D[p + 1] << 8) | D[p + 2]); if (m) { D[p] = m[0]; D[p + 1] = m[1]; D[p + 2] = m[2]; } }
+    x.putImageData(im, 0, 0);
+  }
+  ASTRO.set(key, c); return c;
+}
+/* planche des sprites joueurs dessinés par le code (pour les exporter / les refaire) */
+function astroSheet(who, helmetOnly) {
+  const c = cnv(48, 23 * 8), x = c.getContext('2d'), suit = suitColor(who === 'm' ? 'orange' : 'teal');
+  ['d', 'l', 'r', 'u'].forEach((d, r) => [0, 1, 3].forEach((fr, col) => { x.drawImage(astroGen(who, suit, d, fr, true), col * 16, r * 23); x.drawImage(astroGen(who, suit, d, fr, false), col * 16, (r + 4) * 23); }));
+  return c;
+}
+function astroGen(who, suit, dir, fr, helmet) {
   const key = who + suit + dir + fr + (helmet ? 1 : 0); let c = ASTRO.get(key); if (c) return c;
   if (ASTRO.size > 400) ASTRO.clear();
+  const flip = dir === 'r'; if (flip) dir = 'l';
   c = cnv(16, 23); const d = Dr(c), C = CHARS[who], side = dir === 'l' || dir === 'r', back = dir === 'u';
   const bob = fr === 1 || fr === 3 ? 1 : 0, lL = fr === 1 ? -1 : fr === 3 ? 1 : 0;
   const boots = '#3a3448', pack = '#9aa3c0';
@@ -394,7 +428,7 @@ function astro(who, suit, dir, fr, helmet) {
     else { d.p(6, hy + 1, '#1d1530'); d.p(11, hy + 1, '#1d1530'); d.r(8, hy + 3, 2, 1, '#c0606a'); d.p(5, hy + 2, '#ff9ab0'); d.p(12, hy + 2, '#ff9ab0'); }
   }
   outline(c);
-  if (dir === 'r') { const f = cnv(16, 23), x = f.getContext('2d'); x.translate(16, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); c = f; }
+  if (flip) { const f = cnv(16, 23), x = f.getContext('2d'); x.translate(16, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); c = f; }
   ASTRO.set(key, c); return c;
 }
 /* portrait pour les dialogues */

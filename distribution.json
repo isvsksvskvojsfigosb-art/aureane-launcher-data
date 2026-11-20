@@ -8,6 +8,25 @@
   },
   "news": [
     {
+      "id": "nerys-2-4",
+      "title": "Nérys 2.4 : on casse pour de vrai",
+      "tag": "Mise à jour",
+      "date": "2026-11-20",
+      "image": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/news/nerys-2-4.png",
+      "project": "nerys",
+      "summary": "Maintiens pour casser : ton perso tape, des fissures apparaissent, et tout tombe d’un coup. Plus l’outil est bon, plus ça va vite.",
+      "body": [
+        "Casser un rocher, un arbre ou un filon se fait maintenant comme dans Minecraft.",
+        "- Maintiens le clic gauche (ou E) : ton personnage tape en boucle et l’objet se fissure petit à petit. Sur mobile, touche-le : ton perso le casse tout seul.",
+        "- Les ressources tombent toutes d’un coup quand l’objet casse, plus au compte-gouttes.",
+        "- La vitesse dépend de l’outil : une pioche en cristal va plus de deux fois plus vite qu’une pioche en bois. Les objets durs (minerais, bananium) prennent plus de temps.",
+        "- Les constructions et les murs se cassent aussi plus vite avec une meilleure pioche.",
+        "- Le menu pause ne garde que l’essentiel : Reprendre, Paramètres, Quitter. La partie se sauvegarde toute seule.",
+        "- Moins de texte sur les touches à l’écran : en bas, seulement le nom de ce que tu vises.",
+        "- Correction : ton personnage regarde enfin à droite quand il marche vers la droite."
+      ]
+    },
+    {
       "id": "nerys-2-3",
       "title": "Nérys 2.3 : nouvel inventaire et vraie fabrication",
       "tag": "Mise à jour",
@@ -165,14 +184,14 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-19T23:24:04.451Z",
+  "updated": "2026-11-20T18:28:09.692Z",
   "games": [
     {
       "id": "nerys",
       "name": "Nérys",
       "subtitle": "Solo & multijoueur",
       "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, fabrique tes outils, construis ta base et terraforme la planète à ton rythme, seul ou avec tes amis. Les machines continuent de travailler même quand le jeu est fermé.",
-      "version": "2.3.0",
+      "version": "2.4.0",
       "order": 20,
       "entry": "index.html",
       "background": "#120d22",
@@ -193,7 +212,7 @@
         {
           "path": "index.html",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/index.html",
-          "sha1": "9aaebe466c62ac946f1805d32e9d70fdfd7c2eb9",
+          "sha1": "471984b3a493c1b579b9fe35caeeac58674fc80a",
           "size": 3570
         },
         {
@@ -205,32 +224,32 @@
         {
           "path": "js/art.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/art.js",
-          "sha1": "050ea83a84e5c97d61e346a19c1756ecb02b5b3a",
-          "size": 51631
+          "sha1": "1cd14fefa83a76c87e52ffeb09158c837d272873",
+          "size": 53997
         },
         {
           "path": "js/data.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/data.js",
-          "sha1": "e35d62d74ad8d185d6f7196111c320011456a52f",
-          "size": 41716
+          "sha1": "de7e40036af07aa2b981ffe2779af39de6fa653e",
+          "size": 41715
         },
         {
           "path": "js/game.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/game.js",
-          "sha1": "3470cd6bbfc3b218f636a7b474249cc430bf477a",
-          "size": 53684
+          "sha1": "2c9ed3b5f48ac04a56c1577c535bc45b3837b4d4",
+          "size": 54585
         },
         {
           "path": "js/inv.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/inv.js",
-          "sha1": "2e1cbdd0e14de15109ca2dee8f3fc8b58ef852fd",
-          "size": 14821
+          "sha1": "7f81b08444a6a7cc3e006857ee6b66e00102568a",
+          "size": 13726
         },
         {
           "path": "js/main.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/main.js",
-          "sha1": "81ea4b1b46fdcda1f6ce43e33701e7c33a51e5b6",
-          "size": 33386
+          "sha1": "4b7264abd2ca2270c72c4898077866c103d33445",
+          "size": 35051
         },
         {
           "path": "js/mp.js",
@@ -241,14 +260,14 @@
         {
           "path": "js/render.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/render.js",
-          "sha1": "d746184f5f1612c104639466389809746fe41746",
-          "size": 27218
+          "sha1": "db75dbce16de623878ebc94c1bda70cf2e1babba",
+          "size": 27929
         },
         {
           "path": "js/ui.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/ui.js",
-          "sha1": "2db79c5cae7f17075a2e0e29e1f54696a384b5e3",
-          "size": 47894
+          "sha1": "e992a4f68797133006125fa3eabf3c61e0ba7d86",
+          "size": 47609
         },
         {
           "path": "js/util.js",

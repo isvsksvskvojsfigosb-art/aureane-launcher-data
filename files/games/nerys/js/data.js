@@ -98,7 +98,7 @@ const STATIONS = { main: 'À la main', etabli: 'Établi', fonderie: 'Fonderie', 
 /* ---------- objets du monde (couche O) ----------
    h: coups, it: ressource, y: quantité par coup, rg: repousse (s), seed: chance de graine */
 const OBJ = {
-  1: { k: 'rock', n: 'Rocher', h: 3, solid: 1, loot: [['fer', .35], ['cristal', .06]] },
+  1: { k: 'rock', n: 'Rocher', h: 3, solid: 1, loot: [['fer', .7], ['cristal', .08]] },
   2: { k: 'debris', n: 'Débris de l’Aurore', h: 3, it: 'fer', y: 2, solid: 1, rg: 500 },
   3: { k: 'fibreplant', n: 'Herbe-spaghetti', h: 2, it: 'fibre', y: 2, rg: 240, seed: .25 },
   4: { k: 'bush', n: 'Buisson à bulles', h: 1, it: 'fruit', y: 3, rg: 200, seed: .2, left: 5 },

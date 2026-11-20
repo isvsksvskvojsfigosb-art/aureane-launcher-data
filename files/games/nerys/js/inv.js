@@ -32,7 +32,7 @@ function hotbar(force) {
   if (!G || !G.items) return;
   const sig = G.sel + '|' + G.items.slice(0, HOTN).map(s => s ? s.k + s.n : '-').join(',');
   if (!force && sig === hotSig && !invDirty) return; hotSig = sig;
-  $('#hot').innerHTML = G.items.slice(0, HOTN).map((s, i) => `<button class="hs ${i === G.sel ? 'on' : ''}" data-h="${i}">${PC ? `<i>${i + 1}</i>` : ''}${s ? ic('i_' + s.k, 34) + (s.n > 1 ? `<b>${s.n}</b>` : '') : ''}</button>`).join('');
+  $('#hot').innerHTML = G.items.slice(0, HOTN).map((s, i) => `<button class="hs ${i === G.sel ? 'on' : ''}" data-h="${i}">${s ? ic('i_' + s.k, 34) + (s.n > 1 ? `<b>${s.n}</b>` : '') : ''}</button>`).join('');
   if (UI.modal === 'inv') renderInv();
   invDirty = false;
 }
@@ -40,7 +40,7 @@ function selectHot(i) {
   if (!G || i < 0 || i >= HOTN) return;
   G.sel = i; SFX.tab(); hotbar(true);
   const s = G.items[i], n = $('#hotName');
-  n.textContent = s ? ITEMS[s.k].n + (s.k[0] === '@' ? (PC ? ' — clic droit pour poser' : ' — touche le sol pour poser') : ITEMS[s.k].food ? (PC ? ' — clic droit pour manger' : '') : '') : '';
+  n.textContent = s ? ITEMS[s.k].n : '';
   n.classList.remove('on'); void n.offsetWidth; if (s) n.classList.add('on');
 }
 $('#hot').addEventListener('pointerdown', e => { const b = e.target.closest('[data-h]'); if (!b) return; e.preventDefault(); e.stopPropagation(); if (STATE === 'play') selectHot(+b.dataset.h); });
@@ -57,12 +57,12 @@ function slotHTML(ref, s, cls = '') { return `<div class="isl ${cls} ${INV.sel =
 function playerGrid() {
   const bag = G.items.slice(HOTN).map((s, i) => slotHTML('p:' + (i + HOTN), s)).join('');
   const hot = G.items.slice(0, HOTN).map((s, i) => slotHTML('p:' + i, s, 'hotc' + (i === G.sel ? ' cur' : ''))).join('');
-  return `<div class="ipane"><h3>Sac</h3><div class="igrid5">${bag}</div><h3>Barre rapide <small>${PC ? '· touches 1 à 5' : ''}</small></h3><div class="igrid5 hotrow">${hot}</div></div>`;
+  return `<div class="ipane"><h3>Sac</h3><div class="igrid5">${bag}</div><h3>Barre rapide</h3><div class="igrid5 hotrow">${hot}</div></div>`;
 }
 function detailHTML() {
   const s = INV.sel && getS(INV.sel);
-  if (!s) return `<div class="idet hint0">${PC ? 'Glisse les objets pour les ranger · clic droit : la moitié · Maj+clic : envoi rapide · lâche hors de la fenêtre pour jeter' : 'Fais glisser les objets pour les ranger · lâche-les hors de la fenêtre pour les jeter · touche un objet pour le voir'}</div>`;
-  const it = ITEMS[s.k], src = s.k[0] === '@' ? 'Construction : mets-la dans la barre rapide, puis ' + (PC ? 'clic droit' : 'touche le sol') + ' pour la poser devant toi.' : it.tool ? `Outil ${it.tool === 'rod' ? '' : TIERN[it.tier]} : ${it.tool === 'pick' ? 'roche et minerais' : it.tool === 'axe' ? 'bois, champignons, cactus' : 'pêche'}${it.tool !== 'rod' && toolBonus(it.tool) ? ' · +' + [0, 0, 0, 1, 2, 4][it.tier] + ' par coup' : ''}. Il sert tout seul, n’importe où dans l’inventaire.` : it.food ? it.food.d : itemSource(s.k);
+  if (!s) return '';
+  const it = ITEMS[s.k], src = s.k[0] === '@' ? 'Construction : place-la dans la barre rapide pour la poser.' : it.tool ? `Outil ${it.tool === 'rod' ? '' : TIERN[it.tier]} : ${it.tool === 'pick' ? 'roche et minerais' : it.tool === 'axe' ? 'bois, champignons, cactus' : 'pêche'}${it.tool !== 'rod' && toolBonus(it.tool) ? ' · +' + [0, 0, 0, 1, 2, 4][it.tier] + ' de récolte' : ''}. Il sert tout seul, n’importe où dans l’inventaire.` : it.food ? it.food.d : itemSource(s.k);
   return `<div class="idet">${ic('i_' + s.k, 30)}<div class="tx"><b>${it.n} <small>×${s.n}</small></b><small>${esc(src || '')}</small></div>${it.food ? `<button class="btn sm pri" data-a="eat">Manger</button>` : ''}<button class="btn sm" data-a="toss1">Jeter 1</button>${s.n > 1 ? `<button class="btn sm" data-a="tossall">Jeter tout</button>` : ''}</div>`;
 }
 /* --- fabrication --- */
@@ -76,14 +76,14 @@ function recipeList() {
     const can = canPay(r.i), it = ITEMS[r.o], many = stackOf(r.o) > 1;
     return `<div class="rcp ${can ? '' : 'off'}" data-a="mk:${i},1" title="${esc(it.n)}">${ic('i_' + r.o, 30)}<div class="rn"><b>${it.n}${r.n > 1 ? ' ×' + r.n : ''}</b><div>${costHTML(r.i)}</div></div>${many ? `<button class="btn sm" data-a="mk:${i},5">×5</button>` : ''}<button class="btn sm ${can ? 'pri' : 'off'}" data-a="mk:${i},1">Fabriquer</button></div>`;
   }).join('') || '<p class="hint">Rien à fabriquer ici pour l’instant.</p>';
-  const lk = locked.length ? `<p class="hint">${ic('u_lock', 12)} ${locked.length} recette${locked.length > 1 ? 's' : ''} à débloquer avec la recherche (Journal > Recherche).</p>` : '';
+  const lk = locked.length ? `<p class="hint">${ic('u_lock', 12)} ${locked.length} recette${locked.length > 1 ? 's' : ''} à débloquer avec la recherche.</p>` : '';
   let tabs = '';
   if (st !== 'main') {
     const cats = [['all', 'Tout'], ['obj', 'Matériaux'], ...CATS.filter(([k]) => ok.some(([r]) => r.cat === k))];
     tabs = `<div class="tabs ctabs">${cats.map(([k, n]) => `<button class="tab ${INV.cat === k ? 'on' : ''}" data-a="cat:${k}">${n}</button>`).join('')}</div>`;
   }
   const title = st === 'main' ? 'Fabriquer à la main' : STATIONS[st];
-  const tip = st === 'main' ? '<p class="hint">Constructions, machines et plaques se fabriquent à l’établi : pose-le, puis ' + (PC ? 'clic droit' : 'touche-le') + ' dessus.</p>' : '';
+  const tip = '';
   return `<div class="ipane cpane"><h3>${st === 'main' ? ic('u_hammer', 18) : ic('i_@' + st, 22)} ${title}</h3>${tabs}<div class="rlist">${rows}</div>${lk}${tip}</div>`;
 }
 function chestGrid() {
@@ -185,11 +185,9 @@ function openPause() {
   modal('Pause', `<div class="pausem">
     <button class="btn pri big" data-a="close">Reprendre</button>
     <button class="btn big" data-a="set">Paramètres</button>
-    <button class="btn big" data-a="save">${mp ? 'Envoyer ma progression' : 'Sauvegarder'}${PC ? ' <small>Ctrl+S</small>' : ''}</button>
-    ${mp ? '' : `<button class="btn big" data-a="share">Partager la planète</button>`}
     <button class="btn big" data-a="quit">${mp ? 'Quitter le serveur' : 'Quitter la partie'}</button></div>
-    <p class="hint">${mp ? 'Partie en ligne : tout est enregistré sur le serveur.' : 'Planète ' + (SLOT + 1) + ' · sauvegarde automatique toutes les 20 secondes.'}</p>`,
-    { set: () => openSettings(openPause), save: () => saveNow(), share: () => { save(); exportSlot(SLOT); }, quit: () => { save(); closeModal(); toTitle(); } }, { id: 'pause', cls: 'small', icon: 'u_planet' });
+    <p class="hint">${mp ? 'Partie en ligne : tout est enregistré sur le serveur.' : 'Planète ' + (SLOT + 1) + ' · sauvegarde automatique.'}</p>`,
+    { set: () => openSettings(openPause), quit: () => { save(); closeModal(); toTitle(); } }, { id: 'pause', cls: 'small', icon: 'u_planet' });
 }
 function openSettings(back) {
   const r = () => modal('Paramètres', TABV.opt() + (back ? `<button class="btn wide" data-a="back">‹ Retour</button>` : ''), { ...MENUA, back: back || closeModal }, { id: 'set', cls: 'big setB', icon: 'u_gear', r });

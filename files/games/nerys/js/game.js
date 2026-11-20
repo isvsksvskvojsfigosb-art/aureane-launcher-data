@@ -478,7 +478,7 @@ function targetLabel(t) {
     if (d.act) return { sleep: 'Dormir', tv: 'Regarder', boing: 'Sauter', flush: 'Tirer', piano: 'Jouer', juke: 'Musique', arcade: 'Jouer', disco: 'Danser', chomp: 'Nourrir', quack: 'Caresser', sock: 'Renifler', purr: 'Câliner' }[d.act] || 'Utiliser';
     return hasUI(b) ? 'Ouvrir' : '';
   }
-  const o = W.o[t.i], d = OBJ[o];
+  const o = W.o[t.i], d = OBJ[o]; if (!d) return '';
   if (d.special === 'cap') return 'Ouvrir';
   if (d.special === 'mono' || d.special === 'mono2') return 'Vénérer';
   if (d.special === 'wreck') return 'Épave';
@@ -493,32 +493,46 @@ function act(t) {
   if (t.k === 'obj') { hit(t.i); return true; }
   return false;
 }
+/* objets spéciaux (épave, capsule, statue) : action immédiate. Le reste se mine en maintenant (voir mineTime / breakObj) */
 function hit(i) {
-  const o = W.o[i], d = OBJ[o]; if (!d) return;
-  const [x, y] = tileCenter(i);
-  if (d.special === 'wreck') { openWreck(); return; }
-  if (d.special === 'cap') { openCapsule(i); return; }
-  if (d.special === 'mono' || d.special === 'mono2') { monolith(i); return; }
-  if (!toolOk(d)) { needTool(d.tool, d.mt); SHAKE[i] = .12; return; }
-  SHAKE[i] = .25; inc('hits'); vib(8);
-  W.hp[i]++;
-  if (d.it) {
-    let n = d.y + (d.tool ? toolBonus(d.tool) : 0); if (buff('harvest') || G.buffs.rainbow > 0) n *= 2;
-    const a = add(d.it, n); if (a) floatTxt(x, y - 18, '+' + a, ITEMS[d.it].c, 'i_' + d.it);
-    SFX.hit(d.it); chips(x, y - 6, ITEMS[d.it].c);
-    if (d.seed && Math.random() < d.seed) { add('graine', 1, true); }
-  } else { SFX.hit('rock'); chips(x, y - 6, '#9a90b8'); }
-  if (W.hp[i] >= (d.h || 1)) {
-    W.hp[i] = 0;
-    if (d.loot) for (const [k, p] of d.loot) if (Math.random() < p) drop(x, y - 4, k, 1 + toolBonus(d.tool || 'pick'));
-    if (d.special === 'meteor') { const got = loot(1.5, 'meteor'); lootToast('Météorite', got); G.met = null; }
-    const nw = d.left || 0; W.o[i] = nw; G.od[i] = nw;
-    if (d.rg) G.rg[i] = now() + d.rg * 1000 * rand(.8, 1.2);
-    else if (W.o0[i] === nw) delete G.od[i];
-    puff(x, y - 4, '#ffffff', 5); dirtyMapAt(i);
-  }
+  const o = W.o[i], d = OBJ[o]; if (!d) return false;
+  if (d.special === 'wreck') { openWreck(); return true; }
+  if (d.special === 'cap') { openCapsule(i); return true; }
+  if (d.special === 'mono' || d.special === 'mono2') { monolith(i); return true; }
+  return false;
 }
-function dirtyMapAt(i) { const x = MAPC.getContext('2d'); x.fillStyle = W.o[i] ? '#000' : (tileLook(i) || PAL.bed)[1]; if (!W.o[i]) x.fillRect(i % WW, i / WW | 0, 1, 1); }
+const mineable = i => { const d = OBJ[W.o[i]]; return !!(d && d.h && (!d.special || d.special === 'meteor')); };
+/* durée pour casser un objet : dureté (h) et puissance de l'outil (palier au-dessus du minimum = plus vite) */
+function mineTime(i) {
+  const d = OBJ[W.o[i]]; if (!d) return 1;
+  if (!d.tool) return Math.max(.3, .24 * (d.h || 1));
+  const over = Math.max(0, toolTier(d.tool) - (d.mt || 1));
+  return .55 * (d.h || 1) / (1 + .5 * over);
+}
+/* un coup de l'animation (répété tant qu'on mine) : aucun matériau, juste le geste */
+function mineSwing(i) {
+  const d = OBJ[W.o[i]]; if (!d) return; const [x, y] = tileCenter(i);
+  SHAKE[i] = .22; vib(6); inc('hits');
+  SFX.hit(d.it || 'rock'); chips(x, y - 6, d.it ? ITEMS[d.it].c : '#9a90b8');
+}
+/* l'objet casse : tout tombe d'un coup */
+function breakObj(i) {
+  const o = W.o[i], d = OBJ[o]; if (!d) return;
+  const [x, y] = tileCenter(i), dbl = buff('harvest') || G.buffs.rainbow > 0;
+  if (d.it) {
+    let n = (d.y + (d.tool ? toolBonus(d.tool) : 0)) * (d.h || 1); if (dbl) n *= 2;
+    drop(x, y - 4, d.it, n);
+    let sd = 0; for (let k = 0; k < (d.h || 1); k++) if (d.seed && Math.random() < d.seed) sd++;
+    if (sd) drop(x, y - 4, 'graine', sd);
+  }
+  if (d.loot) for (const [k, p] of d.loot) if (Math.random() < p) drop(x, y - 4, k, (1 + toolBonus(d.tool || 'pick')) * (dbl ? 2 : 1));
+  if (d.special === 'meteor') { const got = loot(1.5, 'meteor'); lootToast('Météorite', got); G.met = null; }
+  W.hp[i] = 0; SFX.hit(d.it || 'rock'); vib(15);
+  const nw = d.left || 0; W.o[i] = nw; G.od[i] = nw;
+  if (d.rg) G.rg[i] = now() + d.rg * 1000 * rand(.8, 1.2);
+  else if (W.o0[i] === nw) delete G.od[i];
+  puff(x, y - 4, '#ffffff', 7); chips(x, y - 6, d.it ? ITEMS[d.it].c : '#9a90b8'); dirtyMapAt(i);
+}function dirtyMapAt(i) { const x = MAPC.getContext('2d'); x.fillStyle = W.o[i] ? '#000' : (tileLook(i) || PAL.bed)[1]; if (!W.o[i]) x.fillRect(i % WW, i / WW | 0, 1, 1); }
 function respawnTick() {
   const t = now(), ptx = Math.floor(G.x / TS), pty = Math.floor(G.y / TS);
   for (const k in G.rg) {
@@ -809,7 +823,7 @@ function tipsTick() {
   if (!CFG.tips || blocking() || performance.now() - tipT < 25000) return;
   const T = (k, txt, c) => { if (!G.tips[k] && c) { G.tips[k] = 1; tipT = performance.now(); tip(txt); return true; } return false; };
   const K = typeof keyLabel === 'function' ? keyLabel : (c => c);
-  T('a', PC ? 'Approche-toi d’un débris gris et fais un clic gauche dessus pour le ramasser (maintiens pour continuer).' : 'Approche-toi d’un débris gris et appuie sur A (ou touche-le) pour le ramasser.', cnt('hits') === 0 && cnt('walk') > 15) ||
+  T('a', PC ? 'Approche-toi d’un débris gris et maintiens le clic gauche dessus jusqu’à ce qu’il casse.' : 'Approche-toi d’un débris gris et touche-le : ton perso le casse tout seul.', cnt('hits') === 0 && cnt('walk') > 15) ||
     T('sticks', 'Les petits bâtons par terre près de l’épave se ramassent à la main. Il en faut pour les outils !', !inv('baton') && cnt('walk') > 60) ||
     T('tools', 'Avec 2 bâtons et 3 fibres, fabrique une pioche en bois : ouvre ton inventaire (' + (PC ? K('KeyQ') : 'bouton sac') + '). Une hache en bois, c’est pareil.', (inv('baton') >= 2 || inv('fibre') >= 3) && !toolTier('pick')) ||
     T('etabli', 'Tu as 10 ferrailles : fabrique un établi dans le sac (Fabriquer). Il arrive dans ta barre rapide : ' + (PC ? 'touche 1 puis clic droit pour le poser devant toi.' : 'touche-le, puis touche le sol pour le poser.'), inv('fer') >= 10 && !nb('etabli') && !inv('@etabli') && toolTier('pick')) ||
