@@ -505,9 +505,9 @@ const mineable = i => { const d = OBJ[W.o[i]]; return !!(d && d.h && (!d.special
 /* durée pour casser un objet : dureté (h) et puissance de l'outil (palier au-dessus du minimum = plus vite) */
 function mineTime(i) {
   const d = OBJ[W.o[i]]; if (!d) return 1;
-  if (!d.tool) return Math.max(.3, .24 * (d.h || 1));
-  const over = Math.max(0, toolTier(d.tool) - (d.mt || 1));
-  return .55 * (d.h || 1) / (1 + .5 * over);
+  const base = d.bt || 2 * (d.h || 1);
+  if (!d.tool) return base;
+  return base / (1 + .5 * Math.max(0, toolTier(d.tool) - (d.mt || 1)));
 }
 /* un coup de l'animation (répété tant qu'on mine) : aucun matériau, juste le geste */
 function mineSwing(i) {

@@ -186,7 +186,7 @@ function doAct(t, ex) { if (!tvalid(t)) return; faceTo(t); if (t.k === 'obj' && 
 function brkDur(t) {
   if (t.k === 'obj') return mineTime(t.i);
   const pt = toolTier('pick');
-  return t.k === 'flr' ? .2 / (1 + .25 * pt) : .7 / (1 + .25 * pt);
+  return t.k === 'flr' ? .25 / (1 + .25 * pt) : 1.5 / (1 + .25 * pt);
 }
 function canBreak(t) {
   if (t.k === 'flr') return true;
@@ -452,7 +452,7 @@ function loop(t) {
         if (BRK.delay > 0) BRK.delay -= dt;
         else if (blocking() || !tvalid(bt) || !treach(bt) || (bt.k === 'obj' && !mineable(bt.i)) || (LP && LP.moved && BRK.touch) || (BRK.auto && manual) || (BRK.key && holdA !== 'k')) BRK = null;
         else {
-          BRK.sw -= dt; if (BRK.sw <= 0) { BRK.sw = .3; brkSwing(bt); }
+          BRK.sw -= dt; if (BRK.sw <= 0) { BRK.sw = .38; brkSwing(bt); }
           BRK.p += dt;
           if (BRK.p >= BRK.dur) { breakTarget(bt); if (LP) LP.done = true; BRK.done = true; const keep = BRK; BRK = null; if (keep.touch) { BRK = { ...keep, p: 0, done: true, delay: 9 }; } }
         }

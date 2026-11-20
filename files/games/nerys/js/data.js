@@ -128,10 +128,13 @@ const OBJ = {
 // [outil, palier minimum] : bois 1 · ferraille 2 · cuivre 3 · cristal 4 · bananium 5
 const TOOLREQ = { 1: ['pick', 1], 13: ['pick', 1], 14: ['pick', 1], 6: ['axe', 1], 17: ['axe', 1], 22: ['axe', 1], 10: ['pick', 2], 15: ['pick', 2], 20: ['pick', 2], 9: ['pick', 3], 16: ['pick', 4] };
 for (const k in TOOLREQ) { OBJ[k].tool = TOOLREQ[k][0]; OBJ[k].mt = TOOLREQ[k][1]; }
+/* temps pour casser (secondes) avec l'outil minimum ; chaque palier d'outil au-dessus va plus vite (voir mineTime) */
+const MINET = { 25: 1.5, 21: 1.5, 4: 2.5, 3: 2.5, 12: 2.5, 8: 3, 11: 3, 17: 4, 2: 4, 1: 5, 6: 6, 22: 6, 13: 6, 14: 8, 15: 10, 10: 12, 9: 18, 20: 15, 16: 35 };
+for (const k in MINET) OBJ[k].bt = MINET[k];
 
 /* ---------- constructions ---------- */
 const BLD = {
-  etabli: { n: 'Établi', cat: 'base', c: { planche: 4, fer: 4 }, st: 1, d: 'Plaques, câbles, planches, tissu, circuits.', eyes: [[5, 7], [10, 7]] },
+  etabli: { n: 'Établi', cat: 'base', c: { planche: 4, fer: 4 }, st: 1, d: 'Plaques, câbles, planches, tissu, circuits.' },
   caisse: { n: 'Caisse de rangement', cat: 'base', c: { planche: 4, fer: 6 }, chest: 18, d: 'Un coffre de 18 emplacements. Clic droit pour l’ouvrir et y ranger tes affaires.' },
   jardin: { n: 'Jardinière', cat: 'base', c: { planche: 4, fer: 4 }, r: 'r_jardin', solid: 0, d: 'Plante une graine, attends, récolte. Ça marche hors-ligne.' },
   labo: { n: 'Labo', cat: 'base', c: { plaque: 8, circuit: 2, cristal: 4 }, pw: -4, r: 'r_labo', sci: .15, d: 'Produit 0,15 science/s, même quand tu dors.', eyes: [[5, 9], [10, 9]] },

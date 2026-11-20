@@ -184,14 +184,14 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-20T18:28:09.692Z",
+  "updated": "2026-11-20T18:53:45.093Z",
   "games": [
     {
       "id": "nerys",
       "name": "Nérys",
       "subtitle": "Solo & multijoueur",
       "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, fabrique tes outils, construis ta base et terraforme la planète à ton rythme, seul ou avec tes amis. Les machines continuent de travailler même quand le jeu est fermé.",
-      "version": "2.4.0",
+      "version": "2.4.1",
       "order": 20,
       "entry": "index.html",
       "background": "#120d22",
@@ -230,14 +230,14 @@
         {
           "path": "js/data.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/data.js",
-          "sha1": "de7e40036af07aa2b981ffe2779af39de6fa653e",
-          "size": 41715
+          "sha1": "eedd1b4003f1c7e2e1ba2a396d94ec84f8406119",
+          "size": 42013
         },
         {
           "path": "js/game.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/game.js",
-          "sha1": "2c9ed3b5f48ac04a56c1577c535bc45b3837b4d4",
-          "size": 54585
+          "sha1": "790c15aa3366d88f39c2d9ed8d5c6012a9801653",
+          "size": 54565
         },
         {
           "path": "js/inv.js",
@@ -248,8 +248,8 @@
         {
           "path": "js/main.js",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/js/main.js",
-          "sha1": "4b7264abd2ca2270c72c4898077866c103d33445",
-          "size": 35051
+          "sha1": "f308e483fc1dd7fe33b0b663246e5b9b85150ed6",
+          "size": 35054
         },
         {
           "path": "js/mp.js",
@@ -290,8 +290,20 @@
         {
           "path": "assets/manifest.json",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/manifest.json",
-          "sha1": "97d170e1550eee4afc0af065b78cda302a97674c",
-          "size": 2
+          "sha1": "cb9f015096a750a0ba197d42d830edeac6220040",
+          "size": 47
+        },
+        {
+          "path": "assets/sprites/joueur_f.png",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/sprites/joueur_f.png",
+          "sha1": "6035967afc6f0e2d6f73489db224c5f89da3bcdc",
+          "size": 1757
+        },
+        {
+          "path": "assets/sprites/joueur_m.png",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/sprites/joueur_m.png",
+          "sha1": "a29482affb5d170fc138867ac9e776d25d406330",
+          "size": 1750
         },
         {
           "path": "icon.png",
