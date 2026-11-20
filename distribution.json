@@ -184,14 +184,14 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-20T18:53:45.093Z",
+  "updated": "2026-11-20T19:06:45.088Z",
   "games": [
     {
       "id": "nerys",
       "name": "Nérys",
       "subtitle": "Solo & multijoueur",
       "description": "Vaël et Lysséa se sont écrasés sur une exoplanète un peu bizarre. Explore, récolte, fabrique tes outils, construis ta base et terraforme la planète à ton rythme, seul ou avec tes amis. Les machines continuent de travailler même quand le jeu est fermé.",
-      "version": "2.4.1",
+      "version": "2.4.2",
       "order": 20,
       "entry": "index.html",
       "background": "#120d22",
@@ -296,14 +296,14 @@
         {
           "path": "assets/sprites/joueur_f.png",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/sprites/joueur_f.png",
-          "sha1": "6035967afc6f0e2d6f73489db224c5f89da3bcdc",
-          "size": 1757
+          "sha1": "0b46ca6191e4fa1fbbff49ac53456689bea3eb76",
+          "size": 1727
         },
         {
           "path": "assets/sprites/joueur_m.png",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/games/nerys/assets/sprites/joueur_m.png",
-          "sha1": "a29482affb5d170fc138867ac9e776d25d406330",
-          "size": 1750
+          "sha1": "5219bde527909c4f73ebfdf627f60eb883d6aab8",
+          "size": 1719
         },
         {
           "path": "icon.png",
