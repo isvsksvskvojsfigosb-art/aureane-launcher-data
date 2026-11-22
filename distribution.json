@@ -196,7 +196,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-22T21:06:12.655Z",
+  "updated": "2026-11-22T21:08:42.673Z",
   "games": [
     {
       "id": "nerys",
@@ -339,10 +339,10 @@
     "anonKey": "sb_publishable_WGv5v0VFmVMBj5_QyTS8cA_r8OAktuU"
   },
   "launcher": {
-    "version": "2.4.0",
-    "url": "https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/launcher/Aureane-Launcher-Setup-2.4.0.exe",
-    "sha256": "cb4ac9dd5e7122124f3b313755f8029420af174ea1ab3f389000388b733a75df",
-    "size": 121927593
+    "version": "2.4.1",
+    "url": "https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/launcher/Aureane-Launcher-Setup-2.4.1.exe",
+    "sha256": "2679c6a8affd512a7002f2d2f762b0367cc75352ee70082981d1b5d6eaf33f56",
+    "size": 121927700
   },
   "mobile": {
     "version": "1.0.1",
