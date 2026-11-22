@@ -196,7 +196,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-22T20:41:47.010Z",
+  "updated": "2026-11-22T20:42:45.683Z",
   "games": [
     {
       "id": "nerys",
@@ -347,7 +347,7 @@
   "mobile": {
     "version": "1.0.0",
     "url": "https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/mobile-android/Aureane-1.0.0.apk",
-    "size": 4910204,
-    "sha256": "c4c0e0ef0a3135022ccb7a6b04f1090948cb1481d53a598ff4f342292368bd5a"
+    "size": 4910208,
+    "sha256": "105ef4467be8c2c2fb31464fa8be8b377345ecf7985d65bbf799efee87009f62"
   }
 }
