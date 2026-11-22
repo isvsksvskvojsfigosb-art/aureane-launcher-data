@@ -441,6 +441,7 @@ function hud(force) {
     }
     if (k.textContent !== h) k.textContent = h; k.classList.toggle('on', !!h); }
   hotbar();
+  { const bs = $('#bStay'), k = G.pm === 'stay' ? 'flag' : 'steps'; if (bs.dataset.k !== k) { bs.dataset.k = k; bs.innerHTML = ic('u_' + k, 26); } }
   $('#bStay').classList.toggle('stay', G.pm === 'stay'); $('#bStay').title = G.pm === 'stay' ? 'Compagnon : reste ici (appuie pour qu’il te suive)' : 'Compagnon : te suit (appuie pour qu’il t’attende ici)';
   if (G.mp) $('#hNet').innerHTML = ic('u_planet', 16) + (Object.keys(MP.players).length + 1) + ' en ligne';
   $('#bA').classList.toggle('dim', !TGT && !BUILD && !DLG.on && !FISH_ST);

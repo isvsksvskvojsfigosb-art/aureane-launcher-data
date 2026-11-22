@@ -334,20 +334,30 @@ const joyZ = $('#joyZ'), joyB = $('#joy'), knob = $('#knob');
 function joyR() { return 46 * CFG.bs / 100; }
 joyZ.addEventListener('pointerdown', e => {
   if (STATE !== 'play') return; e.preventDefault(); audio();
-  MOVE = null; JOY.id = e.pointerId; joyZ.setPointerCapture(e.pointerId); JOY.ox = e.clientX; JOY.oy = e.clientY; JOY.moved = false; JOY.t0 = performance.now();
-  joyB.style.left = e.clientX + 'px'; joyB.style.top = e.clientY + 'px'; joyB.classList.add('on'); knob.style.transform = '';
+  MOVE = null; JOY.id = e.pointerId; joyZ.setPointerCapture(e.pointerId); JOY.moved = false; JOY.t0 = performance.now();
+  // Joystick FIXE : il ne bouge pas. On le pilote en touchant près de lui ; ailleurs, c'est un toucher dans le monde.
+  const jr = joyB.getBoundingClientRect(); JOY.ox = jr.left + jr.width / 2; JOY.oy = jr.top + jr.height / 2;
+  JOY.stick = Math.hypot(e.clientX - JOY.ox, e.clientY - JOY.oy) < jr.width * .85;
+  if (JOY.stick) { joyB.classList.add('on'); joyMove(e); return; }
   if (!blocking() && !BUILD) { const [wx, wy] = screenWorld(e.clientX, e.clientY), t = targetAt(wx, wy), f = t ? null : flatAt(wx, wy), bt = t && t.k === 'bld' ? t : f; if (bt && treach(bt)) startBrk(bt, { touch: true, delay: .2 }); }
 });
-joyZ.addEventListener('pointermove', e => {
-  if (e.pointerId !== JOY.id) return; let dx = e.clientX - JOY.ox, dy = e.clientY - JOY.oy; const l = Math.hypot(dx, dy), r = joyR();
-  if (l > 10) { JOY.moved = true; if (BRK && BRK.touch) BRK = null; } if (!JOY.moved) return;
-  if (l > r) { JOY.ox += dx / l * (l - r); JOY.oy += dy / l * (l - r); joyB.style.left = JOY.ox + 'px'; joyB.style.top = JOY.oy + 'px'; dx = e.clientX - JOY.ox; dy = e.clientY - JOY.oy; }
+function joyMove(e) {
+  let dx = e.clientX - JOY.ox, dy = e.clientY - JOY.oy; const l = Math.hypot(dx, dy), r = joyR();
+  if (l < 6) { JOY.x = JOY.y = 0; knob.style.transform = ''; return; }
+  JOY.moved = true; if (BRK && BRK.touch) BRK = null;
+  if (l > r) { dx = dx / l * r; dy = dy / l * r; }
   JOY.x = dx / r; JOY.y = dy / r; knob.style.transform = `translate(${dx}px,${dy}px)`;
+}
+joyZ.addEventListener('pointermove', e => {
+  if (e.pointerId !== JOY.id) return;
+  if (JOY.stick) return joyMove(e);
+  if (Math.hypot(e.clientX - JOY.ox, e.clientY - JOY.oy) > 10) JOY.moved = true;
 });
 const joyUp = e => {
   if (e.pointerId !== JOY.id) return; JOY.id = null; JOY.x = JOY.y = 0; joyB.classList.remove('on'); knob.style.transform = '';
   const broke = BRK && BRK.done; if (!(BRK && BRK.auto)) BRK = null; MHOLD = null;
-  if (!JOY.moved && !broke && performance.now() - JOY.t0 < 450) tapWorld(e.clientX, e.clientY);
+  if (!JOY.stick && !JOY.moved && !broke && performance.now() - JOY.t0 < 450) tapWorld(e.clientX, e.clientY);
+  JOY.stick = false;
 };
 joyZ.addEventListener('pointerup', joyUp); joyZ.addEventListener('pointercancel', joyUp);
 
@@ -502,7 +512,7 @@ try {
   genArt(); if (bar) bar.style.width = '60%';
   await loadOverrides(); if (bar) bar.style.width = '80%';
   try { await document.fonts.load('8px PS'); } catch (e) { }
-  [['#bBuild', 'u_pick'], ['#bMenu', 'u_bag'], ['#bMap', 'u_map'], ['#bSave', 'u_star'], ['#bJournal', 'u_book']].forEach(([s, k]) => { $(s).innerHTML = ic(k, 26); });
+  [['#bBuild', 'u_pick'], ['#bMenu', 'u_bag'], ['#bMap', 'u_map'], ['#bSave', 'u_star'], ['#bJournal', 'u_book'], ['#bSwap', 'u_swap']].forEach(([s, k]) => { $(s).innerHTML = ic(k, 26); });
   applyCfg(); toTitle(); keysHelp(); if (bar) bar.style.width = '100%';
   requestAnimationFrame(loop);
   setTimeout(() => { const s = $('#splash'); s.classList.add('out'); setTimeout(() => s.remove(), 700); }, Math.max(400, 2400 - (performance.now() - T0)));
