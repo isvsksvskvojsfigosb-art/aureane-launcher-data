@@ -139,10 +139,16 @@
       "strictMods": true,
       "files": [
         {
+          "path": "mods/aureane-cinematic-2.0.0.jar",
+          "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-cinematic-2.0.0.jar",
+          "sha1": "0c504c80a4de6a5ba76532903c0fd4a43141dcb9",
+          "size": 2115381
+        },
+        {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
-          "sha1": "5989bebac801f886442d149d17928bd585b4ee73",
-          "size": 1858467
+          "sha1": "3de5d269854a8d4be4f7e07ea959f05bc6c0b41c",
+          "size": 1858597
         },
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
@@ -196,7 +202,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-24T19:06:42.211Z",
+  "updated": "2026-11-24T20:23:39.596Z",
   "games": [
     {
       "id": "nerys",
