@@ -141,14 +141,14 @@
         {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
-          "sha1": "4eed04a1f92f16c89347d4bb1752ac1b017dfc9b",
-          "size": 1473752
+          "sha1": "da250c2156a1b4b6af46b8f4c33cb03b802cd5e2",
+          "size": 1481689
         },
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-cosmetics-2.0.0.jar",
-          "sha1": "9477153cb5e3aa0cd991e32ec4f8571940e55fcc",
-          "size": 682120
+          "sha1": "339e0f4b361c6345c2b512040abe48913835767a",
+          "size": 682132
         },
         {
           "path": "mods/aureane-factions-2.0.0.jar",
@@ -159,8 +159,8 @@
         {
           "path": "mods/aureane-pass-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-pass-2.0.0.jar",
-          "sha1": "12f6e46c2cbf48868076f1e37dde31a51ce7dc0b",
-          "size": 268283
+          "sha1": "802488a7ef256cc5b5cbd0c6cbcc683a45960865",
+          "size": 268098
         },
         {
           "path": "mods/aureane-perms-2.0.0.jar",
@@ -196,7 +196,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-23T23:21:21.545Z",
+  "updated": "2026-11-24T00:17:28.974Z",
   "games": [
     {
       "id": "nerys",
