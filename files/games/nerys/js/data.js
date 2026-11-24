@@ -57,8 +57,11 @@ const ITEMS = {
   hache_cu: { n: 'Hache en cuivre', c: '#e08a3c', v: 20, cr: 1, tool: 'axe', tier: 3 },
   hache_cr: { n: 'Hache de cristal', c: '#4fe3e0', v: 60, cr: 1, tool: 'axe', tier: 4 },
   canne: { n: 'Canne à pêche', c: '#c98b5a', v: 10, cr: 1, tool: 'rod', tier: 1 },
+  pelle: { n: 'Pelle de défrichage', c: '#9aa3c0', v: 4, cr: 1, tool: 'shovel', tier: 1 },
 };
-const TOOLN = { pick: 'une pioche', axe: 'une hache', rod: 'une canne à pêche' };
+const TOOLN = { pick: 'une pioche', axe: 'une hache', rod: 'une canne à pêche', shovel: 'une pelle' };
+/* vitesse de l'outil selon son palier (bois 1 → bananium 5) : un meilleur outil casse vraiment plus vite */
+const TSPD = [1, 1, 1.7, 2.6, 3.8, 5.5];
 const TIERN = ['', 'en bois', 'en ferraille', 'en cuivre', 'de cristal', 'en bananium'];
 const STACK = 99, BAG = 20;
 const stackOf = k => (ITEMS[k] && ITEMS[k].tool ? 1 : ITEMS[k] && ITEMS[k].bld && !ITEMS[k].flat ? 20 : STACK);
@@ -70,6 +73,7 @@ const RECIPES = [
   { o: 'hache_bois', n: 1, i: { baton: 2, fibre: 3 }, st: 'main' },
   { o: 'baton', n: 4, i: { bois: 1 }, st: 'main' },
   { o: 'canne', n: 1, i: { baton: 3, fibre: 4 }, st: 'main', r: 'r_peche' },
+  { o: 'pelle', n: 1, i: { baton: 2, fibre: 2 }, st: 'main' },
   { o: 'pioche', n: 1, i: { fer: 5, baton: 2 }, st: 'etabli' },
   { o: 'hache', n: 1, i: { fer: 5, baton: 2 }, st: 'etabli' },
   { o: 'pioche_cu', n: 1, i: { cuivre: 6, baton: 2 }, st: 'etabli', r: 'r_outil1' },
@@ -78,7 +82,7 @@ const RECIPES = [
   { o: 'hache_cr', n: 1, i: { cristal: 6, baton: 2, plaque: 2 }, st: 'etabli', r: 'r_outil2' },
   { o: 'pioche_ba', n: 1, i: { bananium: 4, moteur: 1, pioche_cr: 1 }, st: 'atelier', r: 'r_outil3' },
   { o: 'plaque', n: 1, i: { fer: 3 }, st: 'etabli' },
-  { o: 'cable', n: 3, i: { cuivre: 2 }, st: 'etabli' },
+  { o: 'cable', n: 4, i: { cuivre: 1 }, st: 'etabli' },
   { o: 'planche', n: 2, i: { bois: 2 }, st: 'main' },
   { o: 'tissu', n: 1, i: { fibre: 4 }, st: 'main' },
   { o: 'circuit', n: 1, i: { cristal: 1, cable: 2 }, st: 'etabli' },
@@ -116,20 +120,25 @@ const OBJ = {
   16: { k: 'bananium', n: 'Bananium', h: 6, it: 'bananium', y: 1, solid: 1, rg: 1800, ore: 1 },
   17: { k: 'cactus', n: 'Cactus-bouclette', h: 2, it: 'fibre', y: 3, solid: 1, rg: 300, seed: .2 },
   18: { k: 'capsule', n: 'Capsule de fret', h: 1, solid: 1, special: 'cap' },
-  19: { k: 'monolith', n: 'Statue de canard', solid: 1, special: 'mono' },
+  19: { k: 'monolith', n: 'Statue ancienne', solid: 1, special: 'mono' },
   20: { k: 'meteor', n: 'Météorite', h: 3, solid: 1, special: 'meteor' },
   21: { k: 'flower', n: 'Fleur', h: 1, it: 'graine', y: 1 },
   22: { k: 'tree', n: 'Arbre-bulle', h: 4, it: 'bois', y: 3, solid: 1, rg: 420, seed: .3, left: 7 },
   23: { k: 'wreck', n: 'Épave de l’Aurore-7', solid: 1, special: 'wreck' },
-  24: { k: 'mono_done', n: 'Statue de canard (vénérée)', solid: 1, special: 'mono2' },
+  24: { k: 'mono_done', n: 'Statue ancienne (réveillée)', solid: 1, special: 'mono2' },
   25: { k: 'stick', n: 'Bâtons', h: 1, it: 'baton', y: 2, rg: 240 },
+  26: { k: 'sapling', n: 'Jeune arbre', h: 1, it: 'pousse', y: 1 },
 };
 // outil obligatoire pour récolter (sinon : à la main)
 // [outil, palier minimum] : bois 1 · ferraille 2 · cuivre 3 · cristal 4 · bananium 5
 const TOOLREQ = { 1: ['pick', 1], 13: ['pick', 1], 14: ['pick', 1], 6: ['axe', 1], 17: ['axe', 1], 22: ['axe', 1], 10: ['pick', 2], 15: ['pick', 2], 20: ['pick', 2], 9: ['pick', 3], 16: ['pick', 4] };
 for (const k in TOOLREQ) { OBJ[k].tool = TOOLREQ[k][0]; OBJ[k].mt = TOOLREQ[k][1]; }
+// pas obligatoire, mais l'outil en main accélère : la hache pour les plantes, la pioche pour les débris
+const SOFT = { 3: 'axe', 4: 'axe', 8: 'axe', 11: 'axe', 12: 'axe', 21: 'axe', 25: 'axe', 26: 'axe', 2: 'pick' };
+for (const k in SOFT) OBJ[k].soft = SOFT[k];
+const GROW = 480; // jeune arbre -> arbre (s)
 /* temps pour casser (secondes) avec l'outil minimum ; chaque palier d'outil au-dessus va plus vite (voir mineTime) */
-const MINET = { 25: 1.5, 21: 1.5, 4: 2.5, 3: 2.5, 12: 2.5, 8: 3, 11: 3, 17: 4, 2: 4, 1: 5, 6: 6, 22: 6, 13: 6, 14: 8, 15: 10, 10: 12, 9: 18, 20: 15, 16: 35 };
+const MINET = { 26: 1.5, 25: 1.5, 21: 1.5, 4: 2.5, 3: 2.5, 12: 2.5, 8: 3, 11: 3, 17: 4, 2: 4, 1: 5, 6: 6, 22: 6, 13: 6, 14: 8, 15: 10, 10: 12, 9: 18, 20: 15, 16: 35 };
 for (const k in MINET) OBJ[k].bt = MINET[k];
 
 /* ---------- constructions ---------- */
@@ -137,44 +146,45 @@ const BLD = {
   etabli: { n: 'Établi', cat: 'base', c: { planche: 4, fer: 4 }, st: 1, d: 'Plaques, câbles, planches, tissu, circuits.' },
   caisse: { n: 'Caisse de rangement', cat: 'base', c: { planche: 4, fer: 6 }, chest: 18, d: 'Un coffre de 18 emplacements. Clic droit pour l’ouvrir et y ranger tes affaires.' },
   jardin: { n: 'Jardinière', cat: 'base', c: { planche: 4, fer: 4 }, r: 'r_jardin', solid: 0, d: 'Plante une graine, attends, récolte. Ça marche hors-ligne.' },
-  labo: { n: 'Labo', cat: 'base', c: { plaque: 8, circuit: 2, cristal: 4 }, pw: -4, r: 'r_labo', sci: .15, d: 'Produit 0,15 science/s, même quand tu dors.', eyes: [[5, 9], [10, 9]] },
-  fonderie: { n: 'Fonderie', cat: 'base', c: { plaque: 8, cuivre: 6, cristal: 2 }, pw: -3, r: 'r_fonderie', st: 1, d: 'Verre et batteries.', eyes: [[4, 10], [11, 10]] },
-  cuisine: { n: 'Cuisine', cat: 'base', c: { plaque: 6, planche: 6, fruit: 5 }, r: 'r_cuisine', st: 1, d: 'Des plats qui donnent des super-pouvoirs (temporaires).', eyes: [[5, 10], [10, 10]] },
-  atelier: { n: 'Atelier', cat: 'base', c: { plaque: 12, circuit: 4, planche: 6 }, pw: -4, r: 'r_atelier', st: 1, d: 'Moteurs et puces quantiques.', eyes: [[5, 8], [10, 8]] },
-  foreuse: { n: 'Foreuse', cat: 'base', c: { plaque: 6, cable: 4, circuit: 1 }, pw: -3, r: 'r_foreuse', on: 'ore', rate: 1 / 20, buf: 40, d: 'À poser SUR un filon (cuivre, fer, cristal, glace, soufre…). Fore à l’infini.', eyes: [[5, 9], [10, 9]] },
-  foreuse2: { n: 'Super-foreuse', cat: 'base', c: { moteur: 2, plaque: 10, batterie: 2 }, pw: -8, r: 'r_foreuse2', on: 'ore', rate: 1 / 5, buf: 80, d: 'Comme la foreuse, mais en colère. 4× plus rapide.', eyes: [[5, 9], [10, 9]] },
+  labo: { n: 'Labo', cat: 'base', c: { plaque: 8, circuit: 2, cristal: 4 }, pw: -4, r: 'r_labo', sci: .15, d: 'Produit 0,15 science/s, même quand tu dors.' },
+  fonderie: { n: 'Fonderie', cat: 'base', c: { plaque: 8, cuivre: 6, cristal: 2 }, pw: -3, r: 'r_fonderie', st: 1, d: 'Verre et batteries.' },
+  cuisine: { n: 'Cuisine', cat: 'base', c: { plaque: 6, planche: 6, fruit: 5 }, r: 'r_cuisine', st: 1, d: 'Des plats qui donnent des super-pouvoirs (temporaires).' },
+  atelier: { n: 'Atelier', cat: 'base', c: { plaque: 12, circuit: 4, planche: 6 }, pw: -4, r: 'r_atelier', st: 1, d: 'Moteurs et puces quantiques.' },
+  foreuse: { n: 'Foreuse', cat: 'base', c: { plaque: 6, cable: 4, circuit: 1 }, pw: -3, r: 'r_foreuse', on: 'ore', rate: 1 / 20, buf: 40, d: 'À poser SUR un filon (cuivre, fer, cristal, glace, soufre…). Fore à l’infini.' },
+  foreuse2: { n: 'Super-foreuse', cat: 'base', c: { moteur: 2, plaque: 10, batterie: 2 }, pw: -8, r: 'r_foreuse2', on: 'ore', rate: 1 / 5, buf: 80, d: 'Comme la foreuse, mais en colère. 4× plus rapide.' },
   niche: { n: 'Niche', cat: 'base', c: { planche: 6, tissu: 2 }, r: 'r_niche', d: 'Maison pour une créature adoptée. Elle y produit des ressources.' },
-  ruche: { n: 'Ruche à drones', cat: 'base', c: { moteur: 2, circuit: 4, batterie: 2 }, pw: -6, r: 'r_drones', rad: 14, d: 'Ramène toute seule la production des machines à 14 cases autour.', eyes: [[5, 11], [10, 11]] },
+  ruche: { n: 'Ruche à drones', cat: 'base', c: { moteur: 2, circuit: 4, batterie: 2 }, pw: -6, r: 'r_drones', rad: 14, d: 'Ramène toute seule la production des machines à 14 cases autour.' },
   silo: { n: 'Silo', cat: 'base', c: { plaque: 20, verre: 6, moteur: 1 }, r: 'r_stock2', chest: 36, d: 'Un énorme coffre de 36 emplacements.' },
   radar: { n: 'Radar', cat: 'base', c: { plaque: 6, circuit: 3, cable: 6 }, pw: -2, r: 'r_radar', d: 'Dévoile la carte sur 40 cases et repère toutes les capsules.' },
   tp: { n: 'Téléporteur', cat: 'base', c: { moteur: 1, circuit: 4, verre: 4 }, pw: -5, r: 'r_tp', solid: 0, d: 'Voyage instantané entre téléporteurs. Ne pas éternuer dedans.' },
   piste: { n: 'Piste de Zorg', cat: 'base', c: { plaque: 12, planche: 8, cable: 6 }, r: 'r_piste', max: 1, d: 'Zorg, marchand interstellaire, y gare sa théière volante.' },
-  superlabo: { n: 'Super-labo', cat: 'base', c: { moteur: 2, verre: 10, circuit: 6 }, pw: -15, r: 'r_labo2', sci: 1.2, d: '1,2 science/s. Sent légèrement le brûlé.', eyes: [[5, 9], [10, 9]] },
+  superlabo: { n: 'Super-labo', cat: 'base', c: { moteur: 2, verre: 10, circuit: 6 }, pw: -15, r: 'r_labo2', sci: 1.2, d: '1,2 science/s. Sent légèrement le brûlé.' },
   fusee: { n: 'Fusée de la Fête', cat: 'base', c: { puce: 20, moteur: 20, batterie: 20, bananium: 30, plaque: 100 }, r: 'r_fusee', max: 1, d: 'Pour célébrer la planète la plus goofy de la galaxie.' },
 
   solaire: { n: 'Panneau solaire', cat: 'energie', c: { plaque: 3, cristal: 2, cable: 2 }, pw: 4, solar: 1, r: 'r_energie', solid: 1, d: '+4 ⚡ le jour, rien la nuit.' },
   eolienne: { n: 'Éolienne', cat: 'energie', c: { plaque: 4, planche: 3, cable: 3 }, pw: 3, r: 'r_energie', d: '+3 ⚡ jour et nuit. Fait « whouuu ».' },
   roue: { n: 'Roue à Blobo', cat: 'energie', c: { planche: 8, gelee: 6, cable: 2 }, pw: 6, r: 'r_roue', d: '+6 ⚡. Un Blobo court dedans. Il adore ça. Promis.' },
-  generateur: { n: 'Générateur à soufre', cat: 'energie', c: { plaque: 8, soufre: 6, cable: 4 }, pw: 12, r: 'r_soufre', d: '+12 ⚡. Sent l’œuf pourri.', eyes: [[5, 9], [10, 9]] },
+  accu: { n: 'Batterie', cat: 'energie', c: { cuivre: 4, plaque: 2, gelee: 2 }, r: 'r_energie', bat: 1, d: 'Garde l’électricité en trop pour plus tard (la nuit, par exemple). Sans batterie, ce qui n’est pas utilisé tout de suite est perdu. Améliorable.' },
+  generateur: { n: 'Générateur à soufre', cat: 'energie', c: { plaque: 8, soufre: 6, cable: 4 }, pw: 12, r: 'r_soufre', d: '+12 ⚡. Sent l’œuf pourri.' },
   geo: { n: 'Géothermie', cat: 'energie', c: { plaque: 12, moteur: 1, verre: 4 }, pw: 35, r: 'r_geo', on: 'volcan', d: '+35 ⚡. Seulement sur les terres volcaniques.' },
-  reacteur: { n: 'Réacteur au Bananium', cat: 'energie', c: { puce: 3, moteur: 4, batterie: 6, bananium: 10 }, pw: 150, r: 'r_bananium', d: '+150 ⚡ et une légère odeur de banane.', eyes: [[5, 11], [10, 11]] },
+  reacteur: { n: 'Réacteur au Bananium', cat: 'energie', c: { puce: 3, moteur: 4, batterie: 6, bananium: 10 }, pw: 150, r: 'r_bananium', d: '+150 ⚡ et une légère odeur de banane.' },
 
-  souffleur: { n: 'Souffleur à bulles', cat: 'terra', c: { plaque: 4, cable: 3, fruit: 3 }, pw: -2, tf: { o: .2 }, r: 'r_terra1', eyes: [[5, 8], [10, 8]] },
-  radiateur: { n: 'Radiateur de jardin', cat: 'terra', c: { plaque: 4, cable: 3, cuivre: 4 }, pw: -2, tf: { h: .2 }, r: 'r_terra1', eyes: [[5, 8], [10, 8]] },
-  fonte: { n: 'Fonte-glace', cat: 'terra', c: { plaque: 4, cable: 3, glace: 4 }, pw: -2, tf: { w: .2 }, r: 'r_terra1', eyes: [[5, 9], [10, 9]] },
-  semeur: { n: 'Semeur de spores', cat: 'terra', c: { plaque: 4, cable: 3, spore: 4 }, pw: -2, tf: { b: .2 }, r: 'r_terra1', eyes: [[5, 9], [10, 9]] },
-  pompe: { n: 'Pompe à oxygène', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, fruit: 10 }, pw: -8, tf: { o: 1.5 }, r: 'r_terra2', eyes: [[5, 10], [10, 10]] },
-  grillepain: { n: 'Grille-pain géant', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, soufre: 10 }, pw: -8, tf: { h: 1.5 }, r: 'r_terra2', eyes: [[5, 11], [10, 11]] },
-  nuage: { n: 'Arroseur de nuages', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, glace: 10 }, pw: -8, tf: { w: 1.5 }, r: 'r_terra2', eyes: [[5, 11], [10, 11]] },
-  lichen: { n: 'Ferme à lichen', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, gelee: 10 }, pw: -8, tf: { b: 1.5 }, r: 'r_terra2', eyes: [[5, 11], [10, 11]] },
-  poumon: { n: 'Poumon géant', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, fruit: 25 }, pw: -30, tf: { o: 10 }, r: 'r_terra3', eyes: [[5, 12], [10, 12]] },
-  soleil: { n: 'Soleil de poche', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, soufre: 25 }, pw: -30, tf: { h: 10 }, r: 'r_terra3', eyes: [[6, 9], [9, 9]] },
-  pluie: { n: 'Machine à pluie', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, glace: 25 }, pw: -30, tf: { w: 10 }, r: 'r_terra3', eyes: [[5, 12], [10, 12]] },
-  coeur: { n: 'Cœur-forêt', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, spore: 25 }, pw: -30, tf: { b: 10 }, r: 'r_terra3', eyes: [[5, 12], [10, 12]] },
-  megao: { n: 'Arbre-poumon cosmique', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, fruit: 50 }, pw: -100, tf: { o: 60 }, r: 'r_terra4', eyes: [[5, 14], [10, 14]] },
-  megah: { n: 'Noyau de lave', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, soufre: 50 }, pw: -100, tf: { h: 60 }, r: 'r_terra4', eyes: [[5, 12], [10, 12]] },
-  megaw: { n: 'Comète apprivoisée', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, glace: 50 }, pw: -100, tf: { w: 60 }, r: 'r_terra4', eyes: [[5, 12], [10, 12]] },
-  megab: { n: 'Mère-champignon', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, spore: 50 }, pw: -100, tf: { b: 60 }, r: 'r_terra4', eyes: [[6, 13], [9, 13]] },
+  souffleur: { n: 'Souffleur à bulles', cat: 'terra', c: { plaque: 4, cable: 3, fruit: 3 }, pw: -2, tf: { o: .2 }, r: 'r_terra1' },
+  radiateur: { n: 'Radiateur de jardin', cat: 'terra', c: { plaque: 4, cable: 3, cuivre: 4 }, pw: -2, tf: { h: .2 }, r: 'r_terra1' },
+  fonte: { n: 'Fonte-glace', cat: 'terra', c: { plaque: 4, cable: 3, glace: 4 }, pw: -2, tf: { w: .2 }, r: 'r_terra1' },
+  semeur: { n: 'Semeur de spores', cat: 'terra', c: { plaque: 4, cable: 3, spore: 4 }, pw: -2, tf: { b: .2 }, r: 'r_terra1' },
+  pompe: { n: 'Pompe à oxygène', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, fruit: 10 }, pw: -8, tf: { o: 1.5 }, r: 'r_terra2' },
+  grillepain: { n: 'Grille-pain géant', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, soufre: 10 }, pw: -8, tf: { h: 1.5 }, r: 'r_terra2' },
+  nuage: { n: 'Arroseur de nuages', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, glace: 10 }, pw: -8, tf: { w: 1.5 }, r: 'r_terra2' },
+  lichen: { n: 'Ferme à lichen', cat: 'terra', c: { plaque: 10, circuit: 3, verre: 3, gelee: 10 }, pw: -8, tf: { b: 1.5 }, r: 'r_terra2' },
+  poumon: { n: 'Poumon géant', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, fruit: 25 }, pw: -30, tf: { o: 10 }, r: 'r_terra3' },
+  soleil: { n: 'Soleil de poche', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, soufre: 25 }, pw: -30, tf: { h: 10 }, r: 'r_terra3' },
+  pluie: { n: 'Machine à pluie', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, glace: 25 }, pw: -30, tf: { w: 10 }, r: 'r_terra3' },
+  coeur: { n: 'Cœur-forêt', cat: 'terra', c: { moteur: 3, batterie: 3, plaque: 20, verre: 8, spore: 25 }, pw: -30, tf: { b: 10 }, r: 'r_terra3' },
+  megao: { n: 'Arbre-poumon cosmique', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, fruit: 50 }, pw: -100, tf: { o: 60 }, r: 'r_terra4' },
+  megah: { n: 'Noyau de lave', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, soufre: 50 }, pw: -100, tf: { h: 60 }, r: 'r_terra4' },
+  megaw: { n: 'Comète apprivoisée', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, glace: 50 }, pw: -100, tf: { w: 60 }, r: 'r_terra4' },
+  megab: { n: 'Mère-champignon', cat: 'terra', c: { puce: 4, moteur: 6, batterie: 6, bananium: 6, spore: 50 }, pw: -100, tf: { b: 60 }, r: 'r_terra4' },
   arbre: { n: 'Arbre planté', cat: 'terra', c: { pousse: 1 }, r: 'r_jardin', grow: 600, tf: { b: .4 }, d: 'Pousse en 10 min, puis +0,4 biomasse/s sans électricité. Gratuit et joli.' },
 };
 const TFD = {
@@ -187,43 +197,45 @@ for (const k in TFD) BLD[k].d = TFD[k];
 
 /* ---------- déco : [id, nom, coût, charme, recherche, options] ---------- */
 const DECO = [
-  ['pot', 'Plante en pot', { planche: 1, fibre: 2 }, 2, 'r_deco1'],
-  ['chaise', 'Chaise', { planche: 3 }, 1, 'r_deco1', { solid: 0 }],
-  ['table', 'Table', { planche: 4 }, 1, 'r_deco1'],
-  ['lampe', 'Lampe de chevet', { plaque: 1, cristal: 1 }, 2, 'r_deco1', { light: 40 }],
-  ['pancarte', 'Pancarte « Chez nous »', { planche: 2 }, 2, 'r_deco1'],
-  ['nain', 'Nain de jardin alien', { fer: 4, gelee: 2 }, 3, 'r_deco1'],
+  ['pot', 'Plante en pot', { planche: 1, fibre: 2 }, 2, 'r_deco1', { act: 'water' }],
+  ['chaise', 'Chaise', { planche: 3 }, 1, 'r_deco1', { solid: 0, act: 'sit' }],
+  ['table', 'Table', { planche: 4 }, 1, 'r_deco1', { act: 'knock' }],
+  ['lampe', 'Lampe de chevet', { plaque: 1, cristal: 1 }, 2, 'r_deco1', { light: 40, act: 'lamp' }],
+  ['pancarte', 'Pancarte « Chez nous »', { planche: 2 }, 2, 'r_deco1', { act: 'read' }],
+  ['nain', 'Nain de jardin alien', { fer: 4, gelee: 2 }, 3, 'r_deco1', { act: 'gnome' }],
   ['chaussettes', 'Tas de chaussettes', { tissu: 2 }, 1, 'r_deco1', { solid: 0, act: 'sock' }],
-  ['flamant', 'Flamant rose en plastique', { plaque: 2, fruit: 4 }, 3, 'r_deco1'],
-  ['drapeau', 'Drapeau de l’Aurore', { tissu: 2, fer: 2 }, 2, 'r_deco1'],
-  ['canape', 'Canapé moelleux', { tissu: 6, planche: 4 }, 4, 'r_deco2'],
-  ['lit', 'Lit douillet', { tissu: 4, planche: 6 }, 4, 'r_deco2', { act: 'sleep' }],
+  ['flamant', 'Flamant rose en plastique', { plaque: 2, fruit: 4 }, 3, 'r_deco1', { act: 'honk' }],
+  ['drapeau', 'Drapeau de l’Aurore', { tissu: 2, fer: 2 }, 2, 'r_deco1', { act: 'wave' }],
+  ['canape', 'Canapé moelleux', { tissu: 6, planche: 4 }, 4, 'r_deco2', { act: 'sit' }],
+  ['lit', 'Lit douillet', { tissu: 4, planche: 6 }, 4, 'r_deco2', { act: 'sleep', solid: 0 }],
   ['tele', 'Télé rétro', { circuit: 2, verre: 2, plaque: 3 }, 5, 'r_deco2', { act: 'tv', light: 24 }],
-  ['lavalampe', 'Lampe à lave', { verre: 2, gelee: 3 }, 4, 'r_deco2', { light: 44 }],
+  ['lavalampe', 'Lampe à lave', { verre: 2, gelee: 3 }, 4, 'r_deco2', { light: 44, act: 'lamp' }],
   ['frigo', 'Frigo qui ronronne', { plaque: 6, glace: 4 }, 3, 'r_deco2', { act: 'purr' }],
-  ['aquarium', 'Aquarium', { verre: 6, poisson: 3 }, 6, 'r_deco2', { light: 20 }],
+  ['aquarium', 'Aquarium', { verre: 6, poisson: 3 }, 6, 'r_deco2', { light: 20, act: 'feed' }],
   ['arcade', 'Borne d’arcade', { circuit: 4, plaque: 4, verre: 2 }, 6, 'r_deco2', { act: 'arcade', light: 24 }],
   ['trampoline', 'Trampoline', { tissu: 4, plaque: 2 }, 5, 'r_deco2', { solid: 0, act: 'boing' }],
-  ['barbecue', 'Barbecue', { plaque: 4, soufre: 2 }, 3, 'r_deco2', { light: 20 }],
-  ['lampadaire', 'Lampadaire', { plaque: 3, cristal: 2, cable: 2 }, 3, 'r_deco2', { light: 70 }],
-  ['bonhomme', 'Bonhomme de neige', { glace: 8 }, 3, 'r_deco2'],
+  ['barbecue', 'Barbecue', { plaque: 4, soufre: 2 }, 3, 'r_deco2', { light: 20, act: 'grill' }],
+  ['lampadaire', 'Lampadaire', { plaque: 3, cristal: 2, cable: 2 }, 3, 'r_deco2', { light: 70, act: 'lamp' }],
+  ['bonhomme', 'Bonhomme de neige', { glace: 8 }, 3, 'r_deco2', { act: 'brr' }],
   ['disco', 'Boule disco', { verre: 8, batterie: 1 }, 10, 'r_deco3', { light: 70, act: 'disco' }],
-  ['fontaine', 'Fontaine', { plaque: 6, verre: 4, glace: 6 }, 8, 'r_deco3'],
-  ['statue', 'Statue du Canard', { bananium: 2, plaque: 6 }, 12, 'r_deco3', { act: 'quack' }],
+  ['fontaine', 'Fontaine', { plaque: 6, verre: 4, glace: 6 }, 8, 'r_deco3', { act: 'splash' }],
+  ['statue', 'Statue de l’étoile', { bananium: 2, plaque: 6 }, 12, 'r_deco3', { act: 'chime' }],
   ['toilettes', 'Toilettes en or', { bananium: 4, plaque: 4 }, 15, 'r_deco3', { act: 'flush' }],
   ['piano', 'Piano', { planche: 10, plaque: 4, tissu: 2 }, 10, 'r_deco3', { act: 'piano' }],
   ['jukebox', 'Juke-box', { circuit: 4, verre: 4, batterie: 2 }, 10, 'r_deco3', { act: 'juke', light: 30 }],
-  ['dino', 'Crâne de dino', { fer: 20 }, 8, 'r_deco3'],
-  ['baignoire', 'Baignoire à bulles', { plaque: 6, verre: 2, gelee: 4 }, 6, 'r_deco3'],
+  ['dino', 'Crâne de dino', { fer: 20 }, 8, 'r_deco3', { act: 'rawr' }],
+  ['baignoire', 'Baignoire à bulles', { plaque: 6, verre: 2, gelee: 4 }, 6, 'r_deco3', { act: 'bath' }],
   ['carnivore', 'Plante carnivore', { spore: 10, gelee: 5 }, 7, 'r_deco3', { act: 'chomp' }],
-  ['neon', 'Néon « GOOFY »', null, 14, null, { light: 50, shop: 300 }],
-  ['statuezorg', 'Statue de Zorg', null, 12, null, { shop: 250 }],
-  ['nainor', 'Nain doré', null, 16, null, { shop: 400 }],
-  ['chaisebanane', 'Chaise-banane', null, 8, null, { shop: 150, solid: 0 }],
-  ['licorne', 'Licorne gonflable', null, 10, null, { shop: 200 }],
-  ['fuseejouet', 'Fusée jouet', null, 8, null, { shop: 180 }],
+  ['neon', 'Néon « GOOFY »', null, 14, null, { light: 50, shop: 300, act: 'lamp' }],
+  ['statuezorg', 'Statue de Zorg', null, 12, null, { act: 'zorg', shop: 250 }],
+  ['nainor', 'Nain doré', null, 16, null, { act: 'shine', shop: 400 }],
+  ['chaisebanane', 'Chaise-banane', null, 8, null, { shop: 150, solid: 0, act: 'sit' }],
+  ['licorne', 'Licorne gonflable', null, 10, null, { act: 'boing', shop: 200 }],
+  ['fuseejouet', 'Fusée jouet', null, 8, null, { act: 'pew', shop: 180 }],
 ];
-for (const [id, n, c, ch, r, o] of DECO) BLD[id] = { n, cat: 'deco', c: c || {}, ch, r, ...(o || {}) };
+for (const [id, n, c, ch, r, o] of DECO) BLD[id] = { n, cat: 'deco', c: c || {}, ch, r, rot: 1, ...(o || {}) };
+// meubles à 4 orientations dessinées ; les autres se retournent (miroir)
+const ROT4 = { chaise: 1, canape: 1, lit: 1, chaisebanane: 1 };
 
 const FLOORS = [
   ['f_metal', 'Sol en métal', { plaque: 1 }, null, ['#7d86a3', '#6a7290', '#949cb8']],
@@ -241,7 +253,9 @@ const WALLS = [
   ['w_metal', 'Mur en métal', { plaque: 2 }, null, ['#9aa3c0', '#6a7290']],
   ['w_bois', 'Mur en bois', { planche: 2 }, 'r_deco1', ['#c48c58', '#8a5a34']],
   ['w_brique', 'Mur en briques', { fer: 3 }, 'r_deco1', ['#d0705a', '#94443a']],
-  ['w_verre', 'Mur en verre', { verre: 2 }, 'r_deco2', ['#bff4ff', '#6ab4d8']],
+  ['w_verre', 'Mur en verre', { verre: 2 }, 'r_deco1', ['#bff4ff', '#6ab4d8']],
+  ['w_fenetre', 'Fenêtre en métal', { plaque: 1, verre: 1 }, 'r_deco1', ['#9aa3c0', '#6a7290']],
+  ['w_fenbois', 'Fenêtre en bois', { planche: 1, verre: 1 }, 'r_deco1', ['#c48c58', '#8a5a34']],
   ['w_haie', 'Haie taillée', { fibre: 4, graine: 1 }, 'r_deco2', ['#4fbf5a', '#2f8a3e']],
   ['w_bonbon', 'Mur en bonbon', { fruit: 3, gelee: 2 }, 'r_deco3', ['#ff9ccf', '#d0508a']],
 ];
@@ -251,8 +265,8 @@ const CATS = [['base', 'Base'], ['energie', 'Énergie'], ['terra', 'Terraformati
 
 /* ---------- recherche ---------- */
 const RES = [
-  { id: 'r_energie', n: 'Électricité', d: 'Panneaux solaires et éoliennes.', c: 5 },
-  { id: 'r_deco1', n: 'Déco maison', d: 'Meubles, sols et murs de base.', c: 6 },
+  { id: 'r_energie', n: 'Électricité', d: 'Panneaux solaires, éoliennes et batteries. Relie-les aux machines avec des câbles.', c: 5 },
+  { id: 'r_deco1', n: 'Déco maison', d: 'Meubles, sols, murs et fenêtres de base.', c: 6 },
   { id: 'r_terra1', n: 'Terraformation I', d: 'Les 4 machines de base pour rendre la planète moins grognonne.', c: 10, req: ['r_energie'] },
   { id: 'r_labo', n: 'Laboratoire', d: 'Produit de la science en continu.', c: 15 },
   { id: 'r_jardin', n: 'Jardinage', d: 'Jardinière, engrais et pousses d’arbres.', c: 15, req: ['r_terra1'] },
@@ -319,7 +333,6 @@ const MOBS = {
   cristaloup: { n: 'Cristaloup', b: [2], c: '#4fe3e0', drop: 'cristal', d: 'Un chiot de cristal. Ne pas lancer de bâton : il le mange.' },
   pingou: { n: 'Pingouflon', b: [4], c: '#eef4ff', drop: 'glace', d: 'Mi-pingouin, mi-mouton, 100 % duvet.' },
   lavachat: { n: 'Lavachat', b: [5], c: '#ff7a3a', drop: 'soufre', d: 'Un chat de lave. Ronronne à 800 °C.' },
-  canardo: { n: 'Canardo', b: [0, 3], c: '#ffd23f', drop: 'fruit', st: 2, d: 'Un canard extraterrestre. Ou un canard tout court ?' },
   meduse: { n: 'Flottigelée', b: [0, 1, 2, 3, 4, 5], c: '#c9a0ff', drop: 'gelee', night: 1, d: 'Flotte la nuit. Brille un peu. Ne pique pas.' },
 };
 const PET_NAMES = ['Gloubi', 'Bidule', 'Pompon', 'Choupette', 'Sergent Mou', 'Patate', 'Trucmuche', 'Zigouigoui', 'Biscotte', 'Nouille', 'Croquette', 'Moumoute', 'Gros Jean', 'Pétunia', 'Flan', 'Tartiflette', 'Cornichon', 'Bulot', 'Kiwi', 'Raclette', 'Capitaine Pouet', 'Mochi', 'Saucisse', 'Brioche'];
@@ -351,8 +364,8 @@ const HATS = [
   ['bonnet', 'Bonnet à pompon', 'cap'], ['champi', 'Chapeau-champignon', 'cap'], ['poulpe', 'Poulpe affectueux', 'cap'], ['viking', 'Casque viking', 'cap'], ['lunettes', 'Lunettes 3D', 'cap'],
   ['banane', 'Banane', 'Récolter du bananium'], ['cone', 'Cône de chantier', '50 constructions'], ['helice', 'Casquette à hélice', '2 000 coups d’outil'],
   ['noeud', 'Gros nœud', '100 caresses'], ['pirate', 'Chapeau de pirate', '40 poissons'], ['poisson', 'Tête de poisson', 'Pêcher le Roi Glouglou'],
-  ['canard', 'Canard sur la tête', '50 canards ramassés'], ['chef', 'Toque de chef', '10 plats mangés'], ['couronne', 'Couronne', 'Stade 5'],
-  ['fleur', 'Couronne de fleurs', 'Stade 7'], ['canardroi', 'Couronne du Canard', '8 statues de canard'], ['aureole', 'Auréole', 'Stade 10'], ['fete', 'Chapeau de fête', 'Lancer la fusée'],
+  ['canard', 'Étoile filante', '50 étoiles ramassées'], ['chef', 'Toque de chef', '10 plats mangés'], ['couronne', 'Couronne', 'Stade 5'],
+  ['fleur', 'Couronne de fleurs', 'Stade 7'], ['canardroi', 'Couronne ancienne', '8 statues anciennes'], ['aureole', 'Auréole', 'Stade 10'], ['fete', 'Chapeau de fête', 'Lancer la fusée'],
 ];
 const SUITS = [
   ['orange', 'Orange Aurore', '#f0a030', 'start'], ['teal', 'Bleu-vert', '#2fb7a8', 'start'], ['blanc', 'Blanc NASA', '#e8e8f0', 'start'],
@@ -371,15 +384,15 @@ const TROPHIES = [
   ['pet100', 'Câlins à volonté', '100 caresses', () => cnt('pet') >= 100, { hat: 'noeud' }],
   ['gold', 'Ça brille !', 'Croiser une créature dorée', () => cnt('goldseen') >= 1],
   ['tame3', 'Ménagerie', 'Adopter 3 créatures', () => cnt('tame') >= 3],
-  ['zoo', 'Zoologiste', 'Rencontrer les 7 espèces', () => nMobs() >= 7],
+  ['zoo', 'Zoologiste', 'Rencontrer toutes les espèces', () => nMobs() >= Object.keys(MOBS).length],
   ['fish10', 'Patience de pêcheur', '10 poissons', () => cnt('fish') >= 10],
   ['fish40', 'Vieux loup de mer', '40 poissons', () => cnt('fish') >= 40, { hat: 'pirate' }],
   ['fishall', 'Encyclopédie aquatique', 'Toutes les espèces de poissons', () => nFish() >= FISH.length],
   ['king', 'Sa Majesté Glouglou', 'Pêcher le Roi Glouglou', () => !!G.fish.glouglou, { hat: 'poisson' }],
   ['cap1', 'Colis surprise', 'Ouvrir une capsule', () => cnt('cap') >= 1],
   ['cap25', 'Fouineur·se de l’espace', '25 capsules', () => cnt('cap') >= 25, { suit: 'camo' }],
-  ['mono8', 'Grand prêtre du Canard', '8 statues de canard', () => cnt('mono') >= 8, { hat: 'canardroi' }],
-  ['ducks50', 'Pluie de canards', '50 canards ramassés', () => cnt('ducks') >= 50, { hat: 'canard' }],
+  ['mono8', 'Gardien·ne des statues', '8 statues anciennes', () => cnt('mono') >= 8, { hat: 'canardroi' }],
+  ['ducks50', 'Pluie d’étoiles', '50 étoiles ramassées', () => cnt('ducks') >= 50, { hat: 'canard' }],
   ['eat10', 'Gourmet de l’espace', '10 plats mangés', () => cnt('eat') >= 10, { hat: 'chef' }],
   ['bana', 'Ça glisse', 'Récolter du bananium', () => cnt('got_bananium') >= 1, { hat: 'banane' }],
   ['exp25', 'Promeneur·se', 'Explorer 25 % de la planète', () => explored() >= .25],
@@ -425,7 +438,7 @@ const INTRO = [
 ];
 const SAY_IDLE = [
   'J’ai léché un cristal. Ne fais pas ça.', 'Tu crois que les rochers ont des sentiments ?', 'J’ai nommé ce caillou Gérard.', 'Ma combinaison sent la soupe. Je ne sais pas pourquoi.',
-  'Si on trouve un canard, on l’appelle Capitaine.', 'Je me demande si on peut faire des crêpes avec de la gelée.', 'On est les premiers humains ici. Fais une tête sérieuse.',
+  'Si on trouve une bestiole perdue, on l’appelle Capitaine.', 'Je me demande si on peut faire des crêpes avec de la gelée.', 'On est les premiers humains ici. Fais une tête sérieuse.',
   'Mon casque a une rayure. Je vois tout en deux.', 'J’ai l’impression que les machines nous regardent.', 'Pause pipi ? Non ? D’accord.', 'J’ai compté les étoiles. J’en suis à quatre.',
   'Tu as vu ce rocher ? Il a une tête de patate.', 'Si on rentre un jour, je raconte que j’ai tout fait toute seule. Ou tout seul.', '♪ Lalalaaa… ♪', 'Hé. Hé. Hé. Rien. Je voulais juste dire hé.',
   'Ma grand-mère disait : une planète par jour éloigne le médecin.', 'J’ai faim. J’ai toujours faim. C’est l’espace.', 'Je crois que j’ai marché dans de la gelée.',
@@ -446,7 +459,7 @@ const ENDING = [
   ['{me}', 'On a vraiment fait tout ça ?'],
   ['{p}', 'Avec quelques milliers de coups de multi-outil. Et une bonne dose de bêtises.'],
   ['{me}', 'On reste ?'],
-  ['{p}', 'Évidemment qu’on reste. Il y a encore des poissons à pêcher et des canards à caresser.'],
+  ['{p}', 'Évidemment qu’on reste. Il y a encore des poissons à pêcher et des Blobos à caresser.'],
   ['', '★ Merci d’avoir joué à Nérys ★  La planète continue de vivre : tu peux continuer aussi longtemps que tu veux.'],
 ];
 

@@ -17,7 +17,7 @@ function keyLabel(code) { const v = PHYS.includes(code) && KMAP && KMAP.get && K
 try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { KMAP = m; keysHelp(); }).catch(() => { }); } catch (e) { }
 function keysHelp() {
   const K = keyLabel, el = $('#keysTxt'); if (!el) return;
-  el.innerHTML = `<span><b>${K('KeyW')}${K('KeyA')}${K('KeyS')}${K('KeyD')}</b> bouger</span><span><b>Clic G</b> casser / récolter</span><span><b>Clic D</b> poser / utiliser</span><span><b>E</b> agir</span><span><b>${K('KeyQ')}</b> inventaire</span><span><b>1-5</b> barre rapide</span><span><b>C</b> défricher</span><span><b>Tab</b> journal</span><span><b>Échap</b> pause</span>${G && G.mp ? `<span><b>Entrée</b> chat</span>` : `<span><b>${K('KeyF')}</b> reste / suis</span><span><b>${K('KeyG')}</b> changer de perso</span>`}<span><b>M</b> carte</span>`;
+  el.innerHTML = `<span><b>${K('KeyW')}${K('KeyA')}${K('KeyS')}${K('KeyD')}</b> bouger</span><span><b>Clic G</b> casser / récolter</span><span><b>Clic D</b> poser / utiliser</span><span><b>E</b> agir</span><span><b>${K('KeyQ')}</b> inventaire</span><span><b>1-5</b> barre rapide</span><span><b>C</b> défricher</span><span><b>R</b> tourner</span><span><b>Tab</b> journal</span><span><b>Échap</b> pause</span>${G && G.mp ? `<span><b>Entrée</b> chat</span>` : `<span><b>${K('KeyF')}</b> reste / suis</span><span><b>${K('KeyG')}</b> changer de perso</span>`}<span><b>M</b> carte</span>`;
 }
 
 /* ---------------- écran titre : une vraie base qui vit en fond ---------------- */
@@ -124,6 +124,8 @@ function begin(intro, off) {
   document.body.classList.toggle('mp', !!G.mp);
   CHUNKS.clear(); fit(); applyCfg(); renderMap(true); hud(true); keysHelp(); hotbar(true); lastTile = -1; BUILD = null;
   if (G.said && G.said.invmig === 1) { G.said.invmig = 2; setTimeout(() => toast('Nouvel inventaire !', 'u_bag', 'Ce qui ne rentrait pas est rangé dans des caisses près de l’épave', 'gold'), 1500); }
+  SIT = null; SAY = null;
+  if (G.said && G.said.cables > 0) { const n = G.said.cables; G.said.cables = -1; setTimeout(() => toast('Nouveau : les câbles !', 'i_cable', 'Les machines doivent être reliées à l’énergie. ' + n + ' câbles ont été posés pour toi.', 'gold'), 2200); }
   const f = $('#fade'); f.style.transition = 'none'; f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => { f.style.transition = 'opacity 1s'; f.classList.remove('on'); }));
   if (intro) {
     CFG.intro = true; saveCfg();
@@ -165,6 +167,7 @@ function flatAt(wx, wy) {
   const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
   for (const dy of [0, 1]) { const i = tI(tx, ty + dy), b = G.bl[i]; if (b && BLD[b.id].wall) return { k: 'flr', i }; }
   const i = tI(tx, ty); if (G.fl[i]) return { k: 'flr', i };
+  if (isCable(i)) return { k: 'cab', i };
   return null;
 }
 function tpos(t) {
@@ -177,6 +180,7 @@ function tvalid(t) {
   if (t.k === 'bld') return !!G.bl[t.i];
   if (t.k === 'obj') return !!W.o[t.i];
   if (t.k === 'flr') return !!(G.fl[t.i] || G.bl[t.i]);
+  if (t.k === 'cab') return isCable(t.i);
   return true;
 }
 function treach(t) { const [x, y] = tpos(t), r = t.k === 'fish' ? 34 : t.k === 'obj' && W.o[t.i] === 23 ? 44 : 30; return Math.hypot(wrapD(x - G.x), wrapD(y - (G.y - 4))) < r; }
@@ -186,10 +190,10 @@ function doAct(t, ex) { if (!tvalid(t)) return; faceTo(t); if (t.k === 'obj' && 
 function brkDur(t) {
   if (t.k === 'obj') return mineTime(t.i);
   const pt = toolTier('pick');
-  return t.k === 'flr' ? .25 / (1 + .25 * pt) : 1.5 / (1 + .25 * pt);
+  return t.k === 'flr' || t.k === 'cab' ? .25 / (1 + .25 * pt) : 1.5 / (1 + .25 * pt);
 }
 function canBreak(t) {
-  if (t.k === 'flr') return true;
+  if (t.k === 'flr' || t.k === 'cab') return true;
   if (t.k === 'obj') return mineable(t.i);
   if (t.k !== 'bld') return false;
   const b = G.bl[t.i]; return !!b && !(b.b >= 1) && !(b.id === 'jardin' && cropReady(b));
@@ -203,10 +207,10 @@ function mineStart(t, ex) {
   if (!treach(t)) { if (!PC) MOVE = { t }; return; }
   faceTo(t); startBrk(t, ex);
 }
-function toolIco(kind) { let best = null, tr = 0; for (const s of G.items) { const it = s && ITEMS[s.k]; if (it && it.tool === kind && it.tier > tr) { tr = it.tier; best = 'i_' + s.k; } } return best; }
+function toolIco(kind) { const h = held(), it = h && ITEMS[h.k]; return it && it.tool && (!kind || it.tool === kind) ? 'i_' + h.k : null; }
 function brkSwing(t) {
   if (!PC) faceTo(t);
-  G.swing = .18;
+  G.swing = .18; G.swingN = (G.swingN || 0) + 1; G.swingAt = t.i != null ? t.i : -1;
   if (t.k === 'obj') { G.swingIco = toolIco(OBJ[W.o[t.i]].tool); mineSwing(t.i); }
   else { G.swingIco = toolIco('pick'); const [x, y] = tpos(t); SHAKE[t.i] = .2; SFX.hit('rock'); chips(x, y - 6, '#c9bfe0'); vib(5); }
 }
@@ -216,7 +220,7 @@ function tooFar(wx, wy) { if (performance.now() - farT < 900) return; farT = per
 function primaryLabel(t) {
   if (!t) return '';
   if (t.k === 'bld') { const b = G.bl[t.i]; return b.b >= 1 ? 'Collecter' : b.id === 'jardin' && cropReady(b) ? 'Récolter' : 'Casser'; }
-  if (t.k === 'flr') return 'Casser';
+  if (t.k === 'flr' || t.k === 'cab') return 'Casser';
   if (t.k === 'obj') { const d = OBJ[W.o[t.i]]; if (!d) return ''; if (d.special && d.special !== 'meteor') return targetLabel(t); if (!toolOk(d)) return 'Il faut ' + TOOLN[d.tool] + (d.mt > 1 ? ' ' + TIERN[d.mt] : ''); return 'Casser'; }
   return targetLabel(t);
 }
@@ -229,29 +233,42 @@ function primary(t) {
     if (b.id === 'jardin' && cropReady(b)) { doAct(t); return; }
     startBrk(t); return;
   }
-  if (t.k === 'flr') { startBrk(t); return; }
+  if (t.k === 'flr' || t.k === 'cab') { startBrk(t); return; }
   doAct(t, {});
 }
 function breakTarget(t) {
   if (!tvalid(t)) return;
   if (t.k === 'obj') { breakObj(t.i); return; }
+  if (t.k === 'cab') { removeCable(t.i); vib(10); return; }
   const i = t.i, tx = i % WW, ty = i / WW | 0;
   if (t.k === 'flr' && G.bl[i] && BLD[G.bl[i].id].wall) pickup(tx, ty);
   else if (!pickup(tx, ty)) SFX.bad();
   vib(15);
 }
 
-function paintable() { if (!BUILD) return false; const d = BUILD.id && BLD[BUILD.id]; return !!(BUILD.pick || BUILD.clear || (d && (d.floor || d.wall))); }
+function paintable() { if (!BUILD) return false; const d = BUILD.id && BLD[BUILD.id]; return !!(BUILD.pick || BUILD.clear || BUILD.cable || (d && (d.floor || d.wall))); }
 /* ---------------- souris (PC) : le curseur est caché, on agit sur ce qui est DEVANT le personnage ---------------- */
 let RDOWN = false, lastPaint = '', clearT = 0;
 /* clic maintenu : le regard reste fixe, on peut marcher de côté pour poser ou casser toute une rangée */
 function dirLock() { return PC && STATE === 'play' && (LDOWN || RDOWN); }
-const flatHeld = () => BUILD && BUILD.id && (BLD[BUILD.id].floor || BLD[BUILD.id].wall);
+const flatHeld = () => BUILD && (BUILD.cable || (BUILD.id && (BLD[BUILD.id].floor || BLD[BUILD.id].wall)));
+/* ce que tu tiens en main décide du mode : construction, câble, pousse d'arbre, pelle (défricher) */
 function syncBuild() {
-  if (BUILD && BUILD.clear) return;
+  const h = held(), k = h && h.k;
+  if (k === 'pelle') { if (!BUILD || !BUILD.clear || !BUILD.tool) { BUILD = { clear: true, tool: true }; buildBar(); } return; }
+  if (BUILD && BUILD.clear && !BUILD.tool) return;
+  if (k === 'cable') { if (!BUILD || !BUILD.cable) { BUILD = { cable: true, cur: null }; buildBar(); } return; }
+  if (k === 'pousse') { if (!BUILD || !BUILD.plant) { BUILD = { plant: true, cur: null }; buildBar(); } return; }
   const id = heldBld();
-  if (id) { if (!BUILD || BUILD.id !== id) { BUILD = { id, cur: null }; buildBar(); } }
+  if (id) { if (!BUILD || BUILD.id !== id) { BUILD = { id, cur: null, rot: BUILD && BUILD.id === id ? BUILD.rot : 0 }; buildBar(); } }
   else if (BUILD) { BUILD = null; buildBar(); }
+}
+/* touche C / bouton ⛏ : prend la pelle si tu l'as dans la barre rapide, sinon mode défrichage */
+function toggleClear() {
+  if (BUILD && BUILD.clear) { if (BUILD.tool) { const j = G.items.slice(0, HOTN).findIndex(s => !s || ITEMS[s.k].tool !== 'shovel'); selectHot(j < 0 ? (G.sel + 1) % HOTN : j); } BUILD = null; buildBar(); return; }
+  const j = G.items.slice(0, HOTN).findIndex(s => s && s.k === 'pelle');
+  if (j >= 0) { selectHot(j); syncBuild(); return; }
+  BUILD = { clear: true }; buildBar();
 }
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
@@ -260,22 +277,22 @@ cv.addEventListener('pointerdown', e => {
   if (blocking()) return;
   if (e.button === 2) {                                  // ---- clic droit : poser / utiliser / manger
     RDOWN = true; lastPaint = '';
-    if (BUILD && BUILD.clear) { BUILD = null; buildBar(); SFX.tab(); return; }
-    if (BUILD && BUILD.id) { const [tx, ty] = buildCursor(); lastPaint = tx + ',' + ty; buildAt(tx, ty); return; }
+    if (BUILD && BUILD.clear && !BUILD.tool) { BUILD = null; buildBar(); SFX.tab(); return; }
+    if (BUILD && (BUILD.id || BUILD.cable || BUILD.plant)) { const [tx, ty] = buildCursor(); lastPaint = tx + ',' + ty; buildAt(tx, ty); return; }
     if (TGT && !(TGT.k === 'obj' && mineable(TGT.i))) { doAct(TGT); return; }
     const h = held(); if (h && ITEMS[h.k].food) eat(h.k);
     return;
   }
   if (e.button !== 0) return;                            // ---- clic gauche : casser / récolter (maintenir pour continuer)
   LDOWN = true; clearT = 0; mholdT = .3;
-  if (BUILD && BUILD.clear) return;
+  if (BUILD && BUILD.clear) { const [tx, ty] = buildCursor(); BUILD.mode = G.clr[tI(tx, ty)] && !W.o[tI(tx, ty)] ? 'un' : ''; return; }
   if (TGT) primary(TGT);
 });
 addEventListener('pointerup', e => { if (e.pointerType && e.pointerType !== 'mouse') return; LDOWN = false; RDOWN = false; BRK = null; MHOLD = null; });
 function pcHold(dt) {
   if (RDOWN && flatHeld()) { const [tx, ty] = buildCursor(), k = tx + ',' + ty; if (k !== lastPaint) { lastPaint = k; buildAt(tx, ty); } }
   if (!LDOWN) return;
-  if (BUILD && BUILD.clear) { clearT -= dt; if (clearT <= 0) { clearT = .22; buildAt(...buildCursor()); } return; }
+  if (BUILD && BUILD.clear) { clearT -= dt; if (clearT <= 0) { clearT = .18; buildAt(...buildCursor()); } return; }
   const t = TGT; if (!t) { BRK = null; return; }
   if (BRK && sameT(BRK.t, t)) return;
   if (!canBreak(t)) { BRK = null; return; }
@@ -299,7 +316,7 @@ cv.addEventListener('wheel', e => {
 function touchDown(e) {
   if (blocking()) return;
   const [wx, wy] = screenWorld(e.clientX, e.clientY);
-  if (BUILD) { if (paintable()) { paint = e.pointerId; cv.setPointerCapture(e.pointerId); } tapWorld(e.clientX, e.clientY); return; }
+  if (BUILD) { if (BUILD.clear) { const [tx, ty] = screenTile(e.clientX, e.clientY), i = tI(tx, ty); BUILD.mode = G.clr[i] && !W.o[i] ? 'un' : ''; } if (paintable()) { paint = e.pointerId; cv.setPointerCapture(e.pointerId); } tapWorld(e.clientX, e.clientY); return; }
   const t = targetAt(wx, wy), f = t ? null : flatAt(wx, wy), bt = t && t.k === 'bld' ? t : f;
   LP = { x: e.clientX, y: e.clientY, t0: performance.now(), tap: t, brk: bt, moved: false, done: false };
   if (t && t.k === 'obj' && mineable(t.i)) { LP.done = true; MOVE = null; doAct(t, { auto: true }); return; }
@@ -380,7 +397,8 @@ bA.addEventListener('pointerdown', e => { e.preventDefault(); audio(); bA.classL
 const upA = () => { holdA = null; bA.classList.remove('down'); };
 bA.addEventListener('pointerup', upA); bA.addEventListener('pointercancel', upA); bA.addEventListener('pointerleave', upA);
 const playOk = () => STATE === 'play' && !DLG.on && !FISH_ST;
-$('#bBuild').addEventListener('pointerdown', e => { e.preventDefault(); if (!playOk() || blocking()) return; SFX.ui(); BUILD = BUILD && BUILD.clear ? null : { clear: true }; buildBar(); });
+$('#bBuild').addEventListener('pointerdown', e => { e.preventDefault(); if (!playOk() || blocking()) return; SFX.ui(); toggleClear(); });
+$('#bRot').addEventListener('pointerdown', e => { e.preventDefault(); if (playOk() && !UI.modal) rotate(); });
 $('#bMenu').addEventListener('click', () => { if (!playOk()) return; UI.modal === 'inv' ? closeModal() : openInv(); });
 $('#bJournal').addEventListener('click', () => { if (!playOk()) return; SFX.ui(); UI.modal === 'menu' ? closeModal() : openMenu(); });
 $('#bPause').addEventListener('click', () => { if (STATE !== 'play') return; SFX.ui(); UI.modal === 'pause' ? closeModal() : (closeModal(), openPause()); });
@@ -412,7 +430,8 @@ addEventListener('keydown', e => {
   if (c === 'Enter' || c === 'NumpadEnter') { if (DLG.on) dlgNext(); else if (G.mp && !blocking()) { e.preventDefault(); openChat(); } return; }
   if (ch === 'm') { MAPO ? closeMap() : (!blocking() && openMap()); return; }
   if (blocking()) return;
-  if (ch === 'c') { BUILD = BUILD && BUILD.clear ? null : { clear: true }; buildBar(); }
+  if (ch === 'c') toggleClear();
+  else if (ch === 'r') rotate();
   else if (ch === 'f') partnerToggle();
   else if (ch === 'g') switchChar();
   else if (c === 'Equal' || c === 'NumpadAdd' || c === 'Minus' || c === 'NumpadSubtract') { const out = c === 'Minus' || c === 'NumpadSubtract'; CFG.zoom = clamp(Math.round(CFG.zoom * (out ? 1 / 1.12 : 1.12) * 100) / 100, .6, 1.8); fit(); saveCfg(); }
@@ -430,7 +449,8 @@ function back() {
   if (UI.modal) { closeModal(); return true; }
   if (MAPO) { closeMap(); return true; }
   if (DLG.on) { dlgSkip(); return true; }
-  if (BUILD) { BUILD = null; buildBar(); return true; }
+  if (BUILD && !BUILD.tool && !heldBld() && !BUILD.cable && !BUILD.plant) { BUILD = null; buildBar(); return true; }
+  if (SIT) { standUp(); return true; }
   if (STATE === 'play') { openPause(); return true; }
   if ($('#pick').classList.contains('on')) { $('#pickBack').click(); return true; }
   return false;
@@ -445,7 +465,8 @@ function loop(t) {
     if (STATE === 'play' && G) {
       const [kx, ky] = keyVec(), ix = JOY.x || kx, iy = JOY.y || ky, manual = !!(ix || iy);
       if (manual) MOVE = null;
-      if (blocking()) G.mv = false;
+      if (SIT && (manual || !G.bl[SIT.i])) standUp();
+      if (blocking() || SIT) G.mv = false;
       else if (manual) playerMove(dt, ix, iy);
       else if (MOVE) followMove(dt);
       else G.mv = false;
@@ -453,7 +474,9 @@ function loop(t) {
       gameTick(dt); partnerUpdate(dt); mobsUpdate(dt); dropsUpdate(dt); partsUpdate(dt); dlgUpdate(dt); fishUpdate(dt);
       if (G.mp) MP.update(dt);
       syncBuild();
-      TGT = blocking() || (BUILD && BUILD.clear) ? null : findTarget(); HOVT = null;
+      TGT = blocking() || (BUILD && (BUILD.clear || BUILD.cable || BUILD.plant)) ? null : findTarget(); HOVT = null;
+      if (SAY) { SAY.t -= dt; if (SAY.t <= 0) SAY = null; }
+      { const rb = $('#bRot'), on = !!rotTarget() && !blocking(); if (rb.classList.contains('on') !== on) rb.classList.toggle('on', on); }
       cv.style.cursor = blocking() ? 'default' : 'none';
       if (PC && !blocking()) pcHold(dt);
       if (holdA !== null) { holdT -= dt; if (holdT <= 0) { holdT = .26; press(true, holdA === 'k' ? 'k' : 'a'); } }
@@ -512,7 +535,7 @@ try {
   genArt(); if (bar) bar.style.width = '60%';
   await loadOverrides(); if (bar) bar.style.width = '80%';
   try { await document.fonts.load('8px PS'); } catch (e) { }
-  [['#bBuild', 'u_pick'], ['#bMenu', 'u_bag'], ['#bMap', 'u_map'], ['#bSave', 'u_star'], ['#bJournal', 'u_book'], ['#bSwap', 'u_swap']].forEach(([s, k]) => { $(s).innerHTML = ic(k, 26); });
+  [['#bRot', 'u_rot'], ['#bBuild', 'u_pick'], ['#bMenu', 'u_bag'], ['#bMap', 'u_map'], ['#bSave', 'u_star'], ['#bJournal', 'u_book'], ['#bSwap', 'u_swap']].forEach(([s, k]) => { $(s).innerHTML = ic(k, 26); });
   applyCfg(); toTitle(); keysHelp(); if (bar) bar.style.width = '100%';
   requestAnimationFrame(loop);
   setTimeout(() => { const s = $('#splash'); s.classList.add('out'); setTimeout(() => s.remove(), 700); }, Math.max(400, 2400 - (performance.now() - T0)));

@@ -408,3 +408,10 @@ body.pc .mbox.invB { width: min(94vw, 880px); height: auto; }
   .rlist { max-height: 52vh; } .rcp { padding: 3px 5px; } .rcp .ic { width: 22px !important; height: 22px !important; }
   .ipane h3 { margin: 0 0 3px; font-size: 8px; } .idet { margin-top: 6px; padding: 5px; } .idet.hint0 { display: none; }
 }
+
+/* bouton tourner un meuble (visible seulement quand un meuble tournable est devant toi) */
+#bRot { display: none; right: calc(112px * var(--bs) + 14px + 56px * var(--bs) + 12px + var(--sr)); bottom: calc(64px * var(--bs) + 30px + var(--sb)); background: var(--mint); }
+#bRot.on { display: grid; }
+#bRot img { width: 60% !important; height: 60% !important; image-rendering: pixelated; }
+body.lefty #bRot { right: auto; left: calc(112px * var(--bs) + 14px + 56px * var(--bs) + 12px + var(--sl)); }
+body.pc #bRot.on { bottom: calc(48px + var(--sb)); right: 110px; width: 38px; height: 38px; opacity: 1; }

@@ -8,7 +8,7 @@
      est partagé ; le sac, les tenues et la collection sont à chacun.
    ========================================================== */
 const PROTO = 2, MP_PORT = 25570, SERVER_URL = 'https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/nerys-serveur/Nerys-Serveur.zip';
-const MP = { ws: null, on: false, host: false, id: 0, players: {}, info: null, addr: '', name: '', snap: null, acc: 0, pAcc: 0, meAcc: 0, tAcc: 0, me: { msg: '', msgT: 0 } };
+const MP = { ws: null, on: false, host: false, id: 0, players: {}, info: null, addr: '', name: '', snap: null, acc: 0, pAcc: 0, meAcc: 0, tAcc: 0, me: { msg: '', msgT: 0 }, ev: [], mbAcc: 0 };
 const MAPF = ['od', 'bl', 'fl', 'rg', 'clr', 'tok'], DELTAF = ['sci', 'coins'], REPF = ['stage', 'res', 'pets', 'orders', 'shop', 'met', 'tpN', 'launched'];
 const PERS = ['items', 'sel', 'hats', 'suits', 'hat', 'suit', 'helmet', 'fish', 'mobs', 'cnt', 'tro', 'disc', 'buffs', 'tips', 'said', 'x', 'y', 'dir', 'pt', 'looks'];
 const mpUrl = a => { a = String(a || '').trim().replace(/^wss?:\/\//i, '').replace(/\/+$/, ''); if (!/:\d+$/.test(a)) a += ':' + MP_PORT; return 'ws://' + a; };
@@ -131,8 +131,9 @@ function mpApply(p) {
       const v = p.m[f][k];
       if (v === null) { delete G[f][k]; delete S.m[f][k]; } else { G[f][k] = v; S.m[f][k] = JSON.stringify(v); }
       if (f === 'od') W.o[k] = v === null ? W.o0[k] : v;
-      if (f === 'bl') { rc = true; if (v && v.ore) W.o[k] = 0; }
-      if (f === 'fl') rc = true;
+      if (f === 'bl') { rc = true; if (v) W.o[k] = 0; else if (G.od[k] === undefined) W.o[k] = W.o0[k]; }
+      if (f === 'fl') { rc = true; if (v && W.o[k] && OBJ[W.o[k]].solid) W.o[k] = 0; }
+      if (f === 'tok') { rc = true; if (v) W.o[k] = 0; }
     }
   }
   if (p.d) for (const f in p.d) {
@@ -161,10 +162,10 @@ MP.start = function (m, who) {
   else { G.x = (W.spawn.x + ri(-3, 3)) * TS + 8; G.y = (W.spawn.y + ri(2, 4)) * TS + 8; }
   G.who = who; if (G.looks && G.looks[who]) { G.hat = G.looks[who].hat || G.hat; G.suit = G.looks[who].suit || G.suit; }
   G.mp = true; G.pm = 'off';
-  for (const i in G.od) W.o[i] = G.od[i];
-  for (const i in G.bl) if (G.bl[i].ore) W.o[i] = 0;
+  applyWorld();
   if (me && me.fogS) fogUnpack(me.fogS);
   initRuntime();
+  if (MP.host && !Object.keys(G.tok).length && Object.keys(G.bl).some(k => pwNode(+k))) autoCable(); // ancien monde : on relie les machines
   for (const p of m.players || []) MP.players[p.id] = { ...p, tx: p.x, ty: p.y };
   MP.snap = mpSnap();
   closeModal(); begin(false);
@@ -188,26 +189,66 @@ MP.update = function (dt) {
   if (!MP.on) return;
   for (const id in MP.players) { const p = MP.players[id], k = Math.min(1, dt * 10), ox = p.x, oy = p.y; p.x += wrapD(p.tx - p.x) * k; p.y += wrapD(p.ty - p.y) * k; p.x = (p.x + WP) % WP; p.y = (p.y + HP) % HP; p.step = (p.step || 0) + Math.hypot(p.x - ox, p.y - oy); if (p.msgT > 0) p.msgT -= dt; if (p.j > 0) p.j -= dt; }
   if (MP.me.msgT > 0) MP.me.msgT -= dt;
-  MP.pAcc += dt; if (MP.pAcc >= .1) { MP.pAcc = 0; MP.send({ t: 'p', x: Math.round(G.x), y: Math.round(G.y), dir: G.dir, mv: G.mv ? 1 : 0, who: G.who, hat: G.hat, suit: G.suit, hm: G.helmet ? 1 : 0, j: G.jump > 0 ? +G.jump.toFixed(2) : 0 }); }
+  for (const id in MP.players) { const p = MP.players[id]; if (p.swing > 0) p.swing -= dt; }
+  MP.pAcc += dt; if (MP.pAcc >= .1) {
+    MP.pAcc = 0;
+    const m = { t: 'p', x: Math.round(G.x), y: Math.round(G.y), dir: G.dir, mv: G.mv ? 1 : 0, who: G.who, hat: G.hat, suit: G.suit, hm: G.helmet ? 1 : 0, j: G.jump > 0 ? +G.jump.toFixed(2) : 0, sn: G.swingN || 0, si: G.swingIco || '', bi: G.swingAt == null ? -1 : G.swingAt, st: SIT ? (SIT.lie ? 2 : 1) : 0 };
+    if (MP.ev.length) { m.ev = MP.ev.slice(0, 40); MP.ev = MP.ev.slice(40); }
+    // l'hôte envoie les créatures (id, espèce, doré, x, y, sens, bouge, amour, saut)
+    if (MP.host && (MP.mbAcc = (MP.mbAcc + 1) % 2) === 0) m.mb = MOBL.map(o => [o.id, o.sp, o.gold ? 1 : 0, Math.round(o.x), Math.round(o.y), o.face, o.mv ? 1 : 0, o.love, o.hop > 0 ? 1 : 0]);
+    MP.send(m);
+  }
   MP.acc += dt; if (MP.acc >= .25) { MP.acc = 0; const p = mpDiff(); if (p) MP.send({ t: 'sync', p }); }
   if (MP.host) { MP.tAcc += dt; if (MP.tAcc >= 2) { MP.tAcc = 0; MP.send({ t: 'sync', p: { r: { tm: G.tm } } }); MP.send({ t: 'tick' }); } }
   MP.meAcc += dt; if (MP.meAcc >= 10) { MP.meAcc = 0; MP.saveMe(); }
 };
 MP.recv = function (m) {
   switch (m.t) {
-    case 'p': { const p = MP.players[m.id]; if (p) { p.tx = m.x; p.ty = m.y; p.dir = m.dir; p.mv = m.mv; p.who = m.who; p.hat = m.hat; p.suit = m.suit; p.hm = m.hm; if (m.j) p.j = m.j; } break; }
+    case 'p': {
+      const p = MP.players[m.id];
+      if (p) {
+        p.tx = m.x; p.ty = m.y; p.dir = m.dir; p.mv = m.mv; p.who = m.who; p.hat = m.hat; p.suit = m.suit; p.hm = m.hm; if (m.j) p.j = m.j; p.sit = m.st || 0;
+        if (m.sn != null && m.sn !== p.sn) { if (p.sn != null) { p.swing = .18; p.si = m.si; const bi = +m.bi; if (bi >= 0 && bi < WW * WH) { SHAKE[bi] = .22; const [x, y] = tileCenter(bi); const o = OBJ[W.o[bi]]; chips(x, y - 6, o && o.it ? ITEMS[o.it].c : '#c9bfe0'); } } p.sn = m.sn; }
+      }
+      if (Array.isArray(m.ev)) MP.evs(m.ev);
+      if (Array.isArray(m.mb) && !MP.host) MP.mobs(m.mb);
+      break;
+    }
     case 'sync': mpApply(m.p); break;
     case 'join': MP.players[m.p.id] = { ...m.p, tx: m.p.x, ty: m.p.y }; chatLine('', m.p.name + ' a rejoint la planète', 'sys'); SFX.pop(); break;
     case 'leave': { const p = MP.players[m.id]; if (p) chatLine('', p.name + ' est parti·e', 'sys'); delete MP.players[m.id]; break; }
     case 'host': if (m.id === MP.id && !MP.host) { MP.becomeHost(m.wt); chatLine('', 'Ton jeu fait maintenant tourner les machines du serveur.', 'sys'); } else if (m.id !== MP.id) MP.host = false; break;
     case 'chat': { const p = MP.players[m.id]; chatLine(m.name, m.m); if (p) { p.msg = m.m; p.msgT = 6; } SFX.type(); break; }
-    case 'op': if (MP.host && m.o && m.o.k === 'take') { const b = G.bl[m.o.i]; if (b) b.b = Math.max(0, (b.b || 0) - (+m.o.n || 0)); } break;
+    case 'op': if (MP.host && m.o) {
+      if (m.o.k === 'take') { const b = G.bl[m.o.i]; if (b) b.b = Math.max(0, (b.b || 0) - (+m.o.n || 0)); }
+      else if (m.o.k === 'pet') { const o = MOBL.find(x => x.id === m.o.id); if (o) { o.love = Math.min(5, o.love + 1); o.hop = .35; o.vx = o.vy = 0; o.t = 1.5; if (o.cd <= 0 && Math.random() < .4) { o.cd = 5; drop(o.x, o.y - 6, MOBS[o.sp].drop, o.gold ? 3 : 1); } } }
+      else if (m.o.k === 'rmmob') MOBL = MOBL.filter(x => x.id !== m.o.id);
+    } break;
     case 'kick': MP.leave(); toTitle(); modal('Déconnecté', `<p class="desc">${esc(m.msg || 'Le serveur t’a déconnecté.')}</p><button class="btn wide" data-a="close">OK</button>`, {}, { cls: 'small' }); break;
   }
 };
+/* objets au sol des autres joueurs */
+MP.evs = function (L) {
+  for (const v of L) {
+    if (!v || typeof v !== 'object') continue;
+    if (v.e === 'd' && ITEMS[v.k] && v.n > 0) DROPS.push({ id: v.id, x: +v.x, y: +v.y, k: v.k, n: Math.min(999, +v.n), z: +v.z || 6, vz: +v.vz || 0, vx: +v.vx || 0, vy: +v.vy || 0, t: 0, wait: Math.max(.9, +v.w || 0) });
+    else if (v.e === 'pk') DROPS = DROPS.filter(d => d.id !== v.id);
+  }
+};
+/* créatures envoyées par l'hôte : on garde les mêmes objets pour des déplacements fluides */
+MP.mobs = function (L) {
+  const old = new Map(MOBL.map(o => [o.id, o])), out = [];
+  for (const r of L) {
+    if (!Array.isArray(r)) continue; const [id, sp, gold, x, y, face, mv, love, hop] = r; if (!MOBS[sp]) continue;
+    let o = old.get(id);
+    if (!o) o = { id, sp, gold: !!gold, x, y, t: 0, vx: 0, vy: 0, love: love || 0, cd: 0, at: Math.random() * 9, face: face || 1, seen: false };
+    o.tx = x; o.ty = y; o.face = face || 1; o.mv = !!mv; o.love = love || 0; if (hop && !(o.hop > 0)) o.hop = .35; out.push(o);
+  }
+  MOBL = out;
+};
 MP.leave = function () {
   if (MP.on) { try { MP.saveMe(); } catch (e) { } }
-  MP.on = false; MP.host = false; MP.players = {};
+  MP.on = false; MP.host = false; MP.players = {}; MP.ev = [];
   const ws = MP.ws; MP.ws = null; if (ws) { ws.onclose = null; setTimeout(() => { try { ws.close(); } catch (e) { } }, 150); }
   document.body.classList.remove('mp'); $('#chatLog').innerHTML = '';
 };

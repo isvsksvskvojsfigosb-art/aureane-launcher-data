@@ -27,6 +27,7 @@ function partsUpdate(dt) {
   PARTS = PARTS.filter(p => p.life > 0);
   for (const d of DRONES) d.t += dt * .7; DRONES = DRONES.filter(d => d.t < 1);
   for (const k in SHAKE) { SHAKE[k] -= dt; if (SHAKE[k] <= 0) delete SHAKE[k]; }
+  for (const k in BSHAKE) { BSHAKE[k] -= dt; if (BSHAKE[k] <= 0) delete BSHAKE[k]; }
   if (CAMSH > 0) CAMSH = Math.max(0, CAMSH - dt);
   if (G.jump > 0) G.jump -= dt;
   if (G.swing > 0) G.swing -= dt;
@@ -53,7 +54,13 @@ function S2(id, [a, b, l]) {
 const isWall = (tx, ty) => { const b = G.bl[tI(tx, ty)]; return b && BLD[b.id].wall; };
 function drawWall(tx, ty, id) {
   const X = tx * TS, Y = ty * TS, [top, face] = BLD[id].pal, n = isWall(tx, ty - 1), s = isWall(tx, ty + 1), w = isWall(tx - 1, ty), e = isWall(tx + 1, ty);
-  const glass = id === 'w_verre'; if (glass) ctx.globalAlpha = .75;
+  const glass = id === 'w_verre', win = id === 'w_fenetre' || id === 'w_fenbois';
+  if (glass) { // verre : on voit à travers
+    ctx.globalAlpha = .38; R(X, Y - 8, 16, s ? 24 : 16, top); if (!s) R(X, Y + 8, 16, 8, face); ctx.globalAlpha = 1;
+    R(X + 3, Y - 6, 1, 5, 'rgba(255,255,255,.8)'); R(X + 5, Y - 6, 1, 2, 'rgba(255,255,255,.6)'); if (!s) R(X + 10, Y + 9, 1, 4, 'rgba(255,255,255,.55)');
+    const ed = 'rgba(80,150,190,.9)'; if (!n) R(X, Y - 8, 16, 1, ed); if (!w) R(X, Y - 8, 1, 24, ed); if (!e) R(X + 15, Y - 8, 1, 24, ed); if (!s) R(X, Y + 15, 16, 1, ed);
+    return;
+  }
   R(X, Y - 8, 16, s ? 24 : 16, top);
   for (let k = 0; k < 6; k++) { const hx = hash2(tx * 7 + k, ty, 3) * 14 | 0, hy = hash2(tx, ty * 7 + k, 4) * 14 | 0; R(X + 1 + hx, Y - 7 + hy, 1, 1, shd(top, id === 'w_haie' ? -.2 : .15)); }
   if (!s) {
@@ -61,13 +68,29 @@ function drawWall(tx, ty, id) {
     if (id === 'w_brique') { for (let r = 0; r < 2; r++) { R(X, Y + 11 + r * 4, 16, 1, shd(face, -.3)); R(X + (r ? 3 : 10), Y + 8 + r * 4, 1, 3, shd(face, -.3)); } }
     else if (id === 'w_bois') { R(X + 5, Y + 8, 1, 8, shd(face, -.3)); R(X + 11, Y + 8, 1, 8, shd(face, -.3)); }
     else if (id === 'w_bonbon') { for (let k = 0; k < 4; k++) R(X + k * 4, Y + 9 + (k % 2) * 3, 2, 2, '#ffffff'); }
+    else if (win) { ctx.globalAlpha = .45; R(X + 3, Y + 9, 10, 5, '#bff4ff'); ctx.globalAlpha = 1; R(X + 7, Y + 9, 1, 5, face === '#8a5a34' ? '#5a3a20' : '#4a5068'); R(X + 4, Y + 10, 1, 2, '#ffffff'); }
     R(X, Y + 15, 16, 1, OL);
   }
   if (!n) R(X, Y - 8, 16, 1, OL); else R(X, Y - 8, 16, 1, shd(top, -.1));
   if (!w) R(X, Y - 8, 1, s ? 24 : 24, OL);
   if (!e) R(X + 15, Y - 8, 1, s ? 24 : 24, OL);
   if (!n) R(X + 1, Y - 7, 14, 1, shd(top, .3));
-  if (glass) { R(X + 3, Y - 5, 1, 6, '#ffffff'); ctx.globalAlpha = 1; }
+  if (win) { ctx.globalAlpha = .5; R(X + 3, Y - 5, 10, 8, '#bff4ff'); ctx.globalAlpha = 1; R(X + 2, Y - 6, 12, 1, shd(top, -.3)); R(X + 2, Y + 3, 12, 1, shd(top, -.3)); R(X + 7, Y - 5, 2, 8, shd(top, -.15)); R(X + 4, Y - 4, 1, 3, '#ffffff'); }
+}
+/* câble posé au sol : il se raccorde aux câbles et aux machines voisines */
+function drawCable(tx, ty, X, Y, hidden) {
+  const c = (dx, dy) => { const j = tI(tx + dx, ty + dy); return isCable(j) || pwNode(j); };
+  const n = c(0, -1), s = c(0, 1), w = c(-1, 0), e = c(1, 0);
+  if (hidden) ctx.globalAlpha = .45;
+  const seg = (x, y, ww, hh) => { R(x - 1, y - 1, ww + 2, hh + 2, '#3a1d10'); };
+  const fill = (x, y, ww, hh) => { R(x, y, ww, hh, '#d07030'); };
+  const parts = [];
+  if (n) parts.push([X + 7, Y, 2, 9]); if (s) parts.push([X + 7, Y + 7, 2, 9]); if (w) parts.push([X, Y + 7, 9, 2]); if (e) parts.push([X + 7, Y + 7, 9, 2]);
+  if (!parts.length) parts.push([X + 4, Y + 7, 8, 2]);
+  for (const p of parts) seg(...p); for (const p of parts) fill(...p);
+  R(X + 6, Y + 6, 4, 4, '#3a1d10'); R(X + 7, Y + 7, 2, 2, '#ffa257');
+  for (const p of parts) if (p[2] > p[3]) R(p[0] + 1, p[1], p[2] - 2, 1, '#ffb070'); else R(p[0], p[1] + 1, 1, p[3] - 2, '#ffb070');
+  ctx.globalAlpha = 1;
 }
 const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
 
@@ -106,13 +129,15 @@ function draw(t, dt) {
     if (k === 1 || k === 2) { const h = (tx * 7 + ty * 13 + Math.floor(tt * 1.5 + hash2(tx, ty, 5) * 9)) % 11; if (h === 0) { R(X + (hash2(tx, ty, 8) * 12 | 0), Y + (hash2(tx, ty, 9) * 12 | 0), 3, 1, 'rgba(255,255,255,.7)'); } }
     else if (k === 3 && (tx * 5 + ty * 3 + Math.floor(tt * 2)) % 13 === 0) { R(X + 6, Y + 6 + (tt * 4 % 4 | 0), 2, 2, '#ffd23f'); }
     const fl = G.fl[i]; if (fl) ctx.drawImage(floorTile(fl), X, Y);
+    if (G.tok[i] === 1 && (!fl || (BUILD && BUILD.cable)) && !G.bl[i]) drawCable(tx, ty, X, Y, !!fl);
+    if (BUILD && BUILD.clear && G.clr[i]) { ctx.globalAlpha = .28; R(X, Y, 16, 16, '#ffb040'); ctx.globalAlpha = .55; for (let k = 0; k < 16; k += 4) R(X + k, Y + ((k + tx * 3 + ty) & 15), 2, 1, '#ff8a2a'); ctx.globalAlpha = 1; }
     const o = W.o[i]; if (o) { if (o === 23) { if (i === spawnI) RL.push([Y + 16, 9, X, Y]); } else RL.push([Y + 13, 1, i, X, Y]); }
     const b = G.bl[i]; if (b && !BLD[b.id].floor) RL.push([Y + (BLD[b.id].solid === 0 ? 6 : 15), BLD[b.id].wall ? 3 : 2, i, X, Y]);
   }
   for (const m of MOBL) RL.push([oy(m.y), 4, m]);
   for (const m of PETL) RL.push([oy(m.y), 4, m]);
   for (const d of DROPS) RL.push([oy(d.y), 7, d]);
-  if (!G.mp) RL.push([oy(P.y), 6]); RL.push([G.y, 5]);
+  if (!G.mp) RL.push([oy(P.y), 6]); RL.push([SIT ? (SIT.i / WW | 0) * TS + (G.dir === 'u' ? 5 : 17) : G.y, 5]);
   if (G.mp) for (const id in MP.players) { const p = MP.players[id]; RL.push([oy(p.y), 8, p]); }
   RL.sort((a, b) => a[0] - b[0]);
   for (const e of RL) {
@@ -123,8 +148,8 @@ function draw(t, dt) {
       case 4: drawMob(e[2], ox(e[2].x), oy(e[2].y), t); break;
       case 5: drawPlayer(G.x, G.y, t); break;
       case 6: drawPartner(ox(P.x), oy(P.y), t); break;
-      case 8: { const p = e[2], X = ox(p.x), Y = oy(p.y); drawAstroAt(p.who || 'm', p.suit || 'orange', p.dir || 'd', astroFrame(p.mv, p.step || 0), X, Y - (p.j > 0 ? Math.sin(p.j / .6 * Math.PI) * 14 : 0), p.hat, t, p.hm !== 0); label(p.name || '?', X, Y - 27, '#ffd23f'); if (p.msg && p.msgT > 0) drawBubble(X, Y - 38, p.msg); break; }
-      case 7: { const d = e[2], X = ox(d.x), Y = oy(d.y), a = ART[d.k === 'duck' ? 'duck' : 'i_' + d.k]; R(X - 3, Y - 1, 6, 2, 'rgba(0,0,0,.25)'); ctx.drawImage(a, Math.round(X - a.width / 2), Math.round(Y - a.height - d.z + Math.sin(t / 200 + d.x) * (d.z ? 0 : 1))); break; }
+      case 8: { const p = e[2], X = ox(p.x), Y = oy(p.y); if (p.swing > 0) drawSwing(X, Y, p.dir || 'd', p.swing, p.si); drawAstroAt(p.who || 'm', p.suit || 'orange', p.dir || 'd', p.sit ? 0 : astroFrame(p.mv, p.step || 0), X, Y - (p.j > 0 ? Math.sin(p.j / .6 * Math.PI) * 14 : 0), p.hat, t, p.hm !== 0, p.sit || 0); label(p.name || '?', X, Y - 27, '#ffd23f'); if (p.msg && p.msgT > 0) drawBubble(X, Y - 38, p.msg); break; }
+      case 7: { const d = e[2], X = ox(d.x), Y = oy(d.y), a = ART[d.k === 'duck' ? 'starfall' : 'i_' + d.k]; if (!a) break; R(X - 3, Y - 1, 6, 2, 'rgba(0,0,0,.25)'); ctx.drawImage(a, Math.round(X - a.width / 2), Math.round(Y - a.height - d.z + Math.sin(t / 200 + d.x) * (d.z ? 0 : 1))); break; }
       case 9: { const a = ART.wreck; ctx.drawImage(a, e[2] + 8 - 26, e[3] + 16 - 40); const bl = Math.sin(t / 300) > 0; R(e[2] + 8 - 26 + 28, e[3] + 16 - 40 + 1, 2, 1, bl ? '#ff4d6d' : '#7a2a3a'); break; }
     }
   }
@@ -138,6 +163,7 @@ function draw(t, dt) {
   if (BUILD) drawGhost(t);
   if (BRK && !(BRK.delay > 0) && !BRK.done) drawBreak(BRK, ox, oy);
   if (G.mp && MP.me && MP.me.msgT > 0) drawBubble(G.x, G.y - 30, MP.me.msg);
+  else if (SAY) drawBubble(G.x, G.y - 30, SAY.txt);
   /* particules */
   ctx.font = '8px PS, monospace'; ctx.textAlign = 'center';
   for (const p of PARTS) {
@@ -172,24 +198,18 @@ function drawObj(i, X, Y) {
 }
 function drawBld(i, X, Y, t) {
   const b = G.bl[i], d = BLD[b.id];
-  let key = 'b_' + b.id; if (b.id === 'arbre') key = treeGrown(b) ? 'b_arbre' : 'b_arbre0';
+  let key = 'b_' + b.id; if (b.id === 'arbre') { const p = (now() - b.t) / (d.grow * 1000); key = p >= 1 ? 'b_arbre' : p >= .5 ? 'b_arbre1' : 'b_arbre0'; }
+  const rot = b.rot || 0; if (rot && ROT4[b.id] && ART[key + '_r' + rot]) key += '_r' + rot;
   const a = ART[key]; if (!a) return;
-  const on = !d.pw || d.pw > 0 || AG.eff > 0.05;
+  const ef = effOf(i), on = !d.pw || d.pw > 0 || ef > 0.05;
   let bob = 0; if ((b.id === 'foreuse' || b.id === 'foreuse2') && on) bob = Math.round(Math.sin(t / 60 + i) * .6);
   if ((d.tf && !d.grow) && on) bob = Math.sin(t / 400 + i) > .7 ? -1 : 0;
-  const x = X + 8 - (a.width >> 1), y = Y + 16 - a.height + bob;
+  const sk = BSHAKE[i] > 0 ? Math.round(Math.sin(BSHAKE[i] * 50) * 1.2) : 0;
+  const x = X + 8 - (a.width >> 1) + sk, y = Y + 16 - a.height + bob;
   if (d.solid !== 0) R(X + 1, Y + 13, 14, 3, 'rgba(0,0,0,.2)');
-  ctx.drawImage(a, x, y);
-  // yeux qui suivent le joueur
-  if (d.eyes) {
-    const blink = ((t / 100 + i * 37) % 70) < 1.4;
-    for (const [ex, ey] of d.eyes) {
-      const px = x + ex, py = y + ey;
-      if (blink) { R(px - 2, py - 1, 4, 2, shd('#9aa3c0', -.4)); continue; }
-      const dx = wrapD(G.x - px), dy = wrapD(G.y - 8 - py), l = Math.hypot(dx, dy) || 1;
-      R(px - 1 + Math.round(dx / l), py - 1 + Math.round(dy / l * .9), 2, 2, OL);
-    }
-  }
+  if (rot % 2 === 1 && !ROT4[b.id]) { ctx.save(); ctx.translate(x + a.width, y); ctx.scale(-1, 1); ctx.drawImage(a, 0, 0); ctx.restore(); }
+  else ctx.drawImage(a, x, y);
+  if (b.off) { ctx.globalAlpha = .4; ctx.drawImage(a, x, y); ctx.globalAlpha = 1; }
   if (b.id === 'eolienne') { const cx2 = x + 8, cy2 = y + 7, ang = t / (on ? 180 : 900) + i; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); for (let k = 0; k < 3; k++) { const aa = ang + k * 2.094; ctx.moveTo(cx2, cy2); ctx.lineTo(cx2 + Math.cos(aa) * 8, cy2 + Math.sin(aa) * 8); } ctx.stroke(); R(cx2 - 1, cy2 - 1, 2, 2, '#9aa3c0'); }
   if (b.id === 'roue') ctx.drawImage(ART['roue_b' + (Math.floor(t / 90) % 4)], x + 3, y + 7);
   if (b.id === 'jardin' && b.crop) { const p = (now() - b.crop.t0) / (b.crop.d * 1000), c = ART[p >= 1 ? 'crop_' + b.crop.k : p > .5 ? 'crop_1' : 'crop_0']; ctx.drawImage(c, X, Y + 16 - c.height - 3); if (p >= 1 && Math.sin(t / 200) > 0) R(X + 14, Y - 2, 2, 2, '#ffffff'); }
@@ -203,7 +223,8 @@ function drawBld(i, X, Y, t) {
     R(X + 2, by - 1, 12, 12, '#fff8ec'); R(X + 2, by - 1, 12, 1, OL); R(X + 2, by + 10, 12, 1, OL); R(X + 1, by, 1, 10, OL); R(X + 14, by, 1, 10, OL); R(X + 7, by + 11, 2, 2, '#fff8ec');
     ctx.drawImage(ic, X + 3, by, 10, 10);
   }
-  if (d.pw < 0 && AG.eff < .99 && Math.sin(t / 300 + i) > .3) { R(x + a.width - 3, y - 4, 3, 5, '#ff4d6d'); }
+  if (d.pw < 0 && ef < .99 && Math.sin(t / 300 + i) > .3) { if (ef < .05) ctx.drawImage(ART.u_plug, X + 4, y - 11, 8, 8); else R(x + a.width - 3, y - 4, 3, 5, '#ff4d6d'); }
+  if (d.bat) { const p = (b.e || 0) / batCap(b); R(X + 4, Y + 13, 8, 2, '#1d1530'); R(X + 4, Y + 13, Math.round(8 * p), 2, p > .15 ? '#7ce86a' : '#ff4d6d'); }
 }
 function mobFrame(m, t) { return m.mv ? Math.floor(m.at * 8) % 4 : (Math.floor(m.at * 2) % 2) * (m.sp === 'blobo' ? 1 : 0); }
 function drawMob(m, x, y, t) {
@@ -219,17 +240,27 @@ function drawMob(m, x, y, t) {
   if (m.pet != null && near) label(m.name, x, y - 19 + oy2, '#ffd23f');
 }
 function astroFrame(mv, step) { return mv ? [1, 0, 3, 0][Math.floor(step / 7) % 4] : 0; }
-function drawAstroAt(who, suit, dir, fr, x, y, hat, t, helm = G.helmet) {
+/* sit : 1 = assis (on cache les jambes), 2 = allongé (sprite couché) */
+function drawAstroAt(who, suit, dir, fr, x, y, hat, t, helm = G.helmet, sit = 0) {
   x = Math.round(x); y = Math.round(y);
-  R(x - 5, y - 1, 10, 3, 'rgba(0,0,0,.25)');
-  const a = astro(who, suitColor(suit, t), dir, fr, helm); ctx.drawImage(a, x - 8, y - 22);
-  if (hat && hat !== 'none' && ART['h_' + hat]) { const bob = fr === 1 || fr === 3 ? 1 : 0; ctx.drawImage(ART['h_' + hat], x - 8 + (dir === 'l' ? -1 : dir === 'r' ? 1 : 0), y - 22 - 8 + bob + (helm ? 0 : 2)); }
+  const a = astro(who, suitColor(suit, t), dir, fr, helm), H = hat && hat !== 'none' && ART['h_' + hat];
+  if (sit === 2) {
+    ctx.save(); ctx.translate(x, y - 6); ctx.rotate(-Math.PI / 2); ctx.drawImage(a, -11, -8); ctx.restore(); return;
+  }
+  const cut = sit === 1 ? 5 : 0;
+  if (!cut) R(x - 5, y - 1, 10, 3, 'rgba(0,0,0,.25)');
+  ctx.drawImage(a, 0, 0, a.width, a.height - cut, x - 8, y - 22 + cut, a.width, a.height - cut);
+  if (H) { const bob = fr === 1 || fr === 3 ? 1 : 0; ctx.drawImage(H, x - 8 + (dir === 'l' ? -1 : dir === 'r' ? 1 : 0), y - 22 - 8 + bob + (helm ? 0 : 2) + cut); }
   if (suit === 'arcenciel') ASTRO.forEach((v, k) => { if (k.startsWith(who + '#')) ASTRO.delete(k); });
+}
+function drawSwing(x, y, dir, sw, ico) {
+  const f = DIRS[dir] || DIRS.d, k = sw / .18, ic = ART[ico]; if (!ic) return false;
+  ctx.save(); ctx.translate(Math.round(x + f[0] * 7 + (dir === 'd' || dir === 'u' ? 6 : 0)), Math.round(y - 8 + f[1] * 4)); ctx.rotate((1 - k) * 2 - 1); ctx.drawImage(ic, -7, -12, 12, 12); ctx.restore(); return true;
 }
 function drawPlayer(x, y, t) {
   let jy = 0; if (G.jump > 0) jy = -Math.sin(G.jump / .6 * Math.PI) * 14;
-  if (G.swing > 0) { const f = DIRS[G.dir], k = G.swing / .18, ic = ART[G.swingIco]; if (ic) { ctx.save(); ctx.translate(Math.round(x + f[0] * 7 + (G.dir === 'd' || G.dir === 'u' ? 6 : 0)), Math.round(y - 8 + f[1] * 4)); ctx.rotate((1 - k) * 2 - 1); ctx.drawImage(ic, -7, -12, 12, 12); ctx.restore(); } else { const l = Math.sin(k * Math.PI) * 2; x += f[0] * l; y += f[1] * l; } }
-  drawAstroAt(G.who, G.suit, G.dir, astroFrame(G.mv, G.step || 0), x, y + jy, G.hat, t);
+  if (G.swing > 0 && !drawSwing(x, y, G.dir, G.swing, G.swingIco)) { const f = DIRS[G.dir], l = Math.sin(G.swing / .18 * Math.PI) * 2; x += f[0] * l; y += f[1] * l; }
+  drawAstroAt(G.who, G.suit, G.dir, SIT ? 0 : astroFrame(G.mv, G.step || 0), x, y + jy, G.hat, t, G.helmet, SIT ? (SIT.lie ? 2 : 1) : 0);
 }
 function drawPartner(x, y, t) {
   const w = G.who === 'm' ? 'f' : 'm', L = (G.looks && G.looks[w]) || {};
@@ -272,13 +303,15 @@ function buildCursor() {
 }
 function drawGhost(t) {
   const [tx, ty] = buildCursor(), X = tx * TS, Y = ty * TS;
-  if (BUILD.clear) { const o = W.o[tI(tx, ty)], ok = o && !OBJ[o].special; ctx.strokeStyle = ok ? '#ffb040' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, 15, 15); if (ok && Math.sin(t / 150) > 0) ctx.drawImage(ART.u_pick, X + 3, Y - 12, 10, 10); return; }
+  if (BUILD.clear) { const o = W.o[tI(tx, ty)], ok = !OBJ[o] || !OBJ[o].special; ctx.strokeStyle = ok ? '#ffb040' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, 15, 15); if (ok && Math.sin(t / 150) > 0) ctx.drawImage(ART.u_pick, X + 3, Y - 12, 10, 10); return; }
   if (BUILD.pick) { const ok = G.bl[tI(tx, ty)] || G.fl[tI(tx, ty)]; ctx.strokeStyle = ok ? '#ff4d6d' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, 15, 15); if (ok && Math.sin(t / 150) > 0) R(X + 6, Y - 6, 4, 4, '#ff4d6d'); return; }
-  const id = BUILD.id, d = BLD[id], err = placeErr(id, tx, ty);
+  if (BUILD.cable) { const err = cableErr(tx, ty); drawCable(tx, ty, X, Y, true); ctx.strokeStyle = err ? '#ff4d6d' : '#7cff9a'; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, 15, 15); return; }
+  if (BUILD.plant) { const err = plantErr(tx, ty), a = ART.sapling; ctx.globalAlpha = .65; ctx.drawImage(a, X + 8 - (a.width >> 1), Y + 17 - a.height); ctx.globalAlpha = 1; ctx.strokeStyle = err ? '#ff4d6d' : '#7cff9a'; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, 15, 15); return; }
+  const id = BUILD.id, d = BLD[id], err = placeErr(id, tx, ty), rot = BUILD.rot || 0;
   ctx.globalAlpha = .65 + Math.sin(t / 200) * .1;
   if (d.floor) ctx.drawImage(floorTile(id), X, Y);
   else if (d.wall) { const [top, face] = d.pal; R(X, Y - 8, 16, 16, top); R(X, Y + 8, 16, 8, face); }
-  else { const a = ART['b_' + (id === 'arbre' ? 'arbre0' : id)]; if (a) ctx.drawImage(a, X + 8 - (a.width >> 1), Y + 16 - a.height); }
+  else { const k = 'b_' + (id === 'arbre' ? 'arbre0' : id), a = ART[ROT4[id] && rot ? k + '_r' + rot : k] || ART[k]; if (a) { const ax = X + 8 - (a.width >> 1), ay = Y + 16 - a.height; if (rot % 2 && !ROT4[id]) { ctx.save(); ctx.translate(ax + a.width, ay); ctx.scale(-1, 1); ctx.drawImage(a, 0, 0); ctx.restore(); } else ctx.drawImage(a, ax, ay); } }
   ctx.globalAlpha = 1;
   ctx.strokeStyle = err ? '#ff4d6d' : '#7cff9a'; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, 15, 15);
   if (id === 'ruche') { ctx.strokeStyle = 'rgba(255,210,63,.5)'; ctx.beginPath(); ctx.arc(X + 8, Y + 8, BLD.ruche.rad * TS, 0, 6.283); ctx.stroke(); }
@@ -296,8 +329,8 @@ function nightFx(t, ox, oy) {
   lamp(G.x, G.y - 10, 56, 1); lamp(ox(P.x), oy(P.y) - 10, 40, .9);
   for (const i of AG.lights) {
     const b = G.bl[i]; if (!b) continue; const d = BLD[b.id], x = ox((i % WW) * TS + 8), y = oy((i / WW | 0) * TS + 4);
-    if (d.light) lamp(x, y, d.light, 1, b.id === 'disco' ? null : 'rgba(255,200,120,.35)');
-    else if (!d.pw || d.pw > 0 || AG.eff > 0) lamp(x, y, d.tf ? 30 : 24, .85, d.tf ? 'rgba(140,255,230,.18)' : null);
+    if (d.light) { if (!b.off) lamp(x, y, d.light, 1, b.id === 'disco' ? null : 'rgba(255,200,120,.35)'); }
+    else if (!d.pw || d.pw > 0 || effOf(i) > 0) lamp(x, y, d.tf ? 30 : 24, .85, d.tf ? 'rgba(140,255,230,.18)' : null);
     if (b.id === 'disco') for (let k = 0; k < 5; k++) { const aa = t / 600 + k * 1.256; glows.push([x - camX + Math.cos(aa) * 30, y - camY + Math.sin(aa) * 18, 16, ['rgba(255,80,160,.5)', 'rgba(80,180,255,.5)', 'rgba(255,220,60,.5)', 'rgba(120,255,140,.5)', 'rgba(190,120,255,.5)'][k]]); }
   }
   for (const m of MOBL) if (m.sp === 'meduse' || m.gold) lamp(ox(m.x), oy(m.y) - 12, 22, .7, m.gold ? 'rgba(255,220,80,.4)' : 'rgba(200,160,255,.4)');

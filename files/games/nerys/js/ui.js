@@ -148,7 +148,7 @@ TABV.coll = () => {
   else if (UI.coll === 'fish') b = `<h3>${nFish()} / ${FISH.length} espèces · ${cnt('fish')} prises</h3><div class="cgrid">${FISH.map(f => { const n = G.fish[f.id]; return `<div class="cc ${n ? '' : 'unk'}">${n ? ic('fi_' + f.id, 40) : '<div class="q">?</div>'}<b>${n ? f.n : '???'}</b><small>${f.b >= 0 ? BIOMES[f.b].n : 'Partout'}${f.r < 6 ? ' · très rare' : f.r < 16 ? ' · rare' : ''}${f.st ? ' · stade ' + f.st : ''}</small>${n ? `<small>Pêché ${n}×</small>` : ''}</div>`; }).join('')}</div>`;
   else if (UI.coll === 'tro') { const d = TROPHIES.filter(t => G.tro[t[0]]).length; b = `<h3>${d} / ${TROPHIES.length} trophées</h3><div class="tgrid">${TROPHIES.map(([id, n, desc, , rw]) => `<div class="tr ${G.tro[id] ? 'ok' : ''}">${ic(G.tro[id] ? 'u_trophy' : 'u_lock', 22)}<div><b>${n}</b><small>${desc}${rw ? ' · récompense : ' + (rw.hat ? 'chapeau' : '') + (rw.hat && rw.suit ? ' + ' : '') + (rw.suit ? 'combinaison' : '') : ''}</small></div></div>`).join('')}</div>`; }
   else b = `<div class="kv"><span>Planète explorée</span><b>${(explored() * 100).toFixed(1).replace('.', ',')} %</b></div>${bar(explored())}
-    <div class="kv"><span>Capsules de fret ouvertes</span><b>${cnt('cap')} / ${W.caps.length}</b></div><div class="kv"><span>Statues de canard</span><b>${cnt('mono')} / 8</b></div>
+    <div class="kv"><span>Capsules de fret ouvertes</span><b>${cnt('cap')} / ${W.caps.length}</b></div><div class="kv"><span>Statues anciennes</span><b>${cnt('mono')} / 8</b></div>
     <div class="kv"><span>Distance parcourue</span><b>${(cnt('walk') / 1000).toFixed(2).replace('.', ',')} km</b></div><div class="kv"><span>Jours sur Nérys</span><b>${dayN()}</b></div>
     <div class="kv"><span>Coups de multi-outil</span><b>${fmt(cnt('hits'))}</b></div><div class="kv"><span>Constructions posées</span><b>${fmt(cnt('build'))}</b></div><div class="kv"><span>Caresses</span><b>${fmt(cnt('pet'))}</b></div><div class="kv"><span>Commandes livrées</span><b>${cnt('order')}</b></div>`;
   return `<div class="tabs">${sub}</div>${b}`;
@@ -205,7 +205,7 @@ function importSave() {
     go: () => { let s = ''; try { s = decodeURIComponent(escape(atob($('#impT').value.trim()))); } catch (e) { } if (!s || !loadFrom(s)) { toast('Code invalide', 'u_x', '', 'bad'); return; } save(); closeModal(); toast('Sauvegarde chargée !', 'u_star', ''); }
   }, { cls: 'small' });
 }
-function credits() { modal('Crédits', `<div class="cred"><b>NÉRYS</b><small>Une planète un peu bizarre</small><p>Aureane Studio</p><p>Développement & graphismes générés<br>naiffie</p><p>Personnages d’origine<br>naiffie & Léa Meyer</p><p>Police : Press Start 2P</p><p>Aucun canard n’a été maltraité.</p></div><button class="btn wide" data-a="back">‹ Retour</button>`, { back: () => openMenu('opt') }, { cls: 'small' }); }
+function credits() { modal('Crédits', `<div class="cred"><b>NÉRYS</b><small>Une planète un peu bizarre</small><p>Aureane Studio</p><p>Développement & graphismes générés<br>naiffie</p><p>Personnages d’origine<br>naiffie & Léa Meyer</p><p>Police : Press Start 2P</p><p>Aucun Blobo n’a été maltraité.</p></div><button class="btn wide" data-a="back">‹ Retour</button>`, { back: () => openMenu('opt') }, { cls: 'small' }); }
 
 /* ================= PALETTE DE CONSTRUCTION ================= */
 function openBuild() {
@@ -218,7 +218,7 @@ function openBuild() {
       const tags = [d.pw > 0 ? `<em class="pw">+${d.pw}⚡</em>` : d.pw < 0 ? `<em class="pw no">${d.pw}⚡</em>` : '', d.tf ? Object.entries(d.tf).map(([k, v]) => `<em>${ic(STATN[k][1], 12)}+${fmt(v)}/s</em>`).join('') : '', d.ch ? `<em>♥ ${d.ch}</em>` : '', nb(id) ? `<em class="nb">×${nb(id)}</em>` : ''].join('');
       return `<button class="bc ${un ? '' : 'lock'} ${aff ? '' : 'poor'}" data-a="pick:${id}">${spr}<b>${d.n}</b><div class="tags">${tags}</div><div class="costs">${un ? (d.shop ? `<span class="cost">reste ${G.tok[id] || 0}</span>` : costHTML(d.c)) : `<small>${ic('u_lock', 12)} ${d.r ? RESI[d.r].n : ''}</small>`}</div></button>`;
     }).join('');
-    modal('Construire', `<div class="tabs">${chips}</div><div class="row2 pickb"><button class="btn sm" data-a="clear">${ic('u_pick', 16)} Défricher (buissons, rochers…)</button><button class="btn sm" data-a="pickup">${ic('u_hammer', 16)} Ramasser / déplacer</button></div><div class="bgrid">${cards || '<p class="hint">Rien ici pour l’instant.</p>'}</div><p class="hint">${UI.bcat === 'deco' ? 'La déco augmente le confort de la base, et le confort booste la terraformation (jusqu’à +50 %).' : UI.bcat === 'terra' ? 'Ces machines font monter les 4 jauges de la planète, même quand le jeu est fermé.' : UI.bcat === 'energie' ? 'Si la consommation dépasse la production, toutes les machines ralentissent.' : (PC ? 'Choisis, puis clique sur le sol pour poser. Clic droit ou Échap pour arrêter.' : 'Choisis, puis touche le sol pour viser et touche encore (ou A) pour poser.')}</p>`, BUILDA, { id: 'build', cls: 'big', icon: 'u_hammer', r });
+    modal('Construire', `<div class="tabs">${chips}</div><div class="row2 pickb"><button class="btn sm" data-a="clear">${ic('u_pick', 16)} Défricher (buissons, rochers…)</button><button class="btn sm" data-a="pickup">${ic('u_hammer', 16)} Ramasser / déplacer</button></div><div class="bgrid">${cards || '<p class="hint">Rien ici pour l’instant.</p>'}</div><p class="hint">${UI.bcat === 'deco' ? 'La déco augmente le confort de la base, et le confort booste la terraformation (jusqu’à +50 %).' : UI.bcat === 'terra' ? 'Ces machines font monter les 4 jauges de la planète, même quand le jeu est fermé.' : UI.bcat === 'energie' ? 'Relie tout avec des câbles. Sans batterie, le surplus est perdu.' : (PC ? 'Choisis, puis clique sur le sol pour poser. Clic droit ou Échap pour arrêter.' : 'Choisis, puis touche le sol pour viser et touche encore (ou A) pour poser.')}</p>`, BUILDA, { id: 'build', cls: 'big', icon: 'u_hammer', r });
   };
   r();
 }
@@ -235,15 +235,18 @@ function startBuild(id) { BUILD = { id }; SFX.tab(); buildBar(); }
 function startBuild() { }
 function buildBar() {
   const b = $('#buildBar');
-  if (!BUILD || !BUILD.clear) { b.classList.remove('on'); document.body.classList.toggle('building', !!BUILD); return; }
+  if (!BUILD || !(BUILD.clear || BUILD.cable)) { b.classList.remove('on'); document.body.classList.toggle('building', !!BUILD); return; }
   document.body.classList.add('building'); b.classList.add('on');
-  b.innerHTML = `<div class="bi">${ic('u_pick', 26)}<div><b>Défricher</b><small>${PC ? 'Clic gauche (maintenir) sur ce qui est devant toi' : 'Touche ou glisse'} : buissons, rochers, plantes… disparaissent pour de bon.</small></div></div><span class="berr" id="berr"></span><button class="btn sm" data-b="exit">✕ Fini</button>`;
+  if (BUILD.cable) { b.innerHTML = `<div class="bi">${ic('i_cable', 26)}<div><b>Câbles</b><small>${PC ? 'Clic droit (maintenir) en marchant' : 'Touche ou glisse sur le sol'} : relie les machines aux panneaux, éoliennes et batteries. Un sol posé par-dessus les cache.</small></div></div><span class="berr" id="berr"></span>`; return; }
+  b.innerHTML = `<div class="bi">${ic(BUILD.tool ? 'i_pelle' : 'u_pick', 26)}<div><b>Défricher</b><small>${PC ? 'Clic gauche (maintenir) devant toi' : 'Touche ou glisse'} : la zone devient orange, plus rien n’y repousse. Repasse sur une case orange pour l’annuler.</small></div></div><span class="berr" id="berr"></span>${BUILD.tool ? '' : '<button class="btn sm" data-b="exit">✕ Fini</button>'}`;
 }$('#buildBar').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b) return; SFX.tab(); if (b.dataset.b === 'exit') { BUILD = null; buildBar(); } else { BUILD = null; buildBar(); openBuild(); } });
 function buildAt(tx, ty) {
   if (!BUILD) return;
   const e = $('#berr'), showErr = m => { if (e && m) { e.textContent = m; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); } };
   if (BUILD.pick) { if (!pickup(tx, ty)) { SFX.bad(); showErr('Rien à ramasser ici'); } return; }
-  if (BUILD.clear) { const m = clearAt(tx, ty); if (m) { if (!paint) SFX.bad(); showErr(m); } return; }
+  if (BUILD.clear) { const m = clearAt(tx, ty, BUILD.mode); if (m) { if (!paint) SFX.bad(); showErr(m); } return; }
+  if (BUILD.cable) { const m = placeCable(tx, ty); if (m && !(paint && m === 'Déjà un câble')) showErr(m); return; }
+  if (BUILD.plant) { const m = plantTree(tx, ty); if (m) showErr(m); return; }
   const err = place(BUILD.id, tx, ty);
   if (err) showErr(err);
   else buildBar();
@@ -256,9 +259,22 @@ function openBuildingPanel(i) {
   const r = () => {
     const b = G.bl[i]; if (!b) { closeModal(); return; }
     const d = BLD[b.id]; let body = `<p class="desc">${d.d || ''}</p>`;
-    const pw = d.pw ? `<div class="kv"><span>${ic('u_bolt', 16)} Électricité</span><b class="${d.pw < 0 && AG.eff < 1 ? 'no' : ''}">${d.pw > 0 ? '+' + d.pw + (d.solar ? (daylight() > .3 ? ' (jour)' : ' (nuit : 0)') : '') : d.pw + (AG.eff < 1 ? ' · réseau à ' + Math.round(AG.eff * 100) + ' %' : ' · OK')}</b></div>` : '';
+    const net = NETS[NETOF[i]], ef = effOf(i);
+    let pw = d.pw ? `<div class="kv"><span>${ic('u_bolt', 16)} Électricité</span><b class="${d.pw < 0 && ef < 1 ? 'no' : ''}">${d.pw > 0 ? '+' + d.pw + (d.solar ? (daylight() > .3 ? ' (jour)' : ' (nuit : 0)') : '') : d.pw + (ef < 1 ? ' · ' + Math.round(ef * 100) + ' %' : ' · OK')}</b></div>` : '';
+    if (net && (d.pw || d.bat)) {
+      pw += `<div class="kv"><span>${ic('i_cable', 16)} Réseau</span><b>${fmt(net.prod)} produit · ${fmt(net.cons)} utilisé</b></div>`;
+      if (net.cap) pw += `<div class="kv"><span>${ic('i_batterie', 16)} Batteries du réseau</span><b>${fmt(net.e)} / ${fmt(net.cap)} ⚡</b></div>${bar(net.e / net.cap, 'var(--sun)')}`;
+      if (d.pw < 0 && net.prod <= 0 && !net.cap) pw += '<p class="no">Pas reliée à l’énergie : pose des câbles jusqu’à un panneau solaire, une éolienne ou une batterie.</p>';
+      else if (d.pw > 0 && !net.cons && !net.cap) pw += '<p class="hint">Rien n’est branché : l’électricité produite est perdue. Relie des machines ou une batterie avec des câbles.</p>';
+      else if (!net.cap && net.prod > net.cons) pw += '<p class="hint">Le surplus est perdu : une batterie sur ce réseau le garderait pour la nuit.</p>';
+    }
+    if (d.bat) {
+      const lv = b.lv || 1, nx = BATUP[lv + 1];
+      body += `<div class="kv"><span>${ic('i_batterie', 16)} Charge</span><b>${fmt(b.e || 0)} / ${fmt(batCap(b))} ⚡</b></div>${bar((b.e || 0) / batCap(b), 'var(--sun)')}<div class="kv"><span>Niveau</span><b>${lv} / ${BATCAP.length - 1}</b></div>`;
+      body += nx ? `<div class="kv"><span>Amélioration → ${fmt(BATCAP[lv + 1])} ⚡</span><b>${costHTML(nx)}</b></div><button class="btn pri wide ${canPay(nx) ? '' : 'off'}" data-a="upg">Améliorer la batterie</button>` : '<p class="good">Niveau maximum !</p>';
+    }
     if (d.st) body += `<div class="craftp">${recipeRows(b.id)}</div>`;
-    if (d.tf) body += Object.entries(d.tf).map(([k, v]) => `<div class="kv"><span>${ic(STATN[k][1], 16)} ${STATN[k][0]}</span><b>+${fmt(v * (d.grow ? 1 : AG.eff) * AG.mult * (1 + comfortBonus()))}/s</b></div>`).join('');
+    if (d.tf) body += Object.entries(d.tf).map(([k, v]) => `<div class="kv"><span>${ic(STATN[k][1], 16)} ${STATN[k][0]}</span><b>+${fmt(v * (d.grow ? 1 : effOf(i)) * AG.mult * (1 + comfortBonus()))}/s</b></div>`).join('');
     if (b.id === 'arbre') { const p = (now() - b.t) / (d.grow * 1000); body += p < 1 ? `<div class="kv"><span>Croissance</span><b>${Math.floor(p * 100)} % · ${fmtT((1 - p) * d.grow)}</b></div>${bar(p)}` : '<p class="good">Il est grand ! Il produit de la biomasse.</p>'; }
     if (b.ore || b.id === 'niche') {
       const it = bufItem(b);
@@ -267,7 +283,7 @@ function openBuildingPanel(i) {
       if (it) body += `<div class="kv"><span>${ic('i_' + it, 16)} Stock</span><b>${Math.floor(b.b || 0)} / ${d.buf || 20}</b></div>${bar((b.b || 0) / (d.buf || 20))}<button class="btn pri wide" data-a="col">Collecter</button>`;
       if (nb('ruche')) body += '<p class="hint">Si une ruche à drones est à moins de 14 cases, c’est collecté tout seul.</p>';
     }
-    if (d.sci) body += `<div class="kv"><span>${ic('u_sci', 16)} Science</span><b>+${fmt(d.sci * AG.eff)}/s</b></div>`;
+    if (d.sci) body += `<div class="kv"><span>${ic('u_sci', 16)} Science</span><b>+${fmt(d.sci * ef)}/s</b></div>`;
     if (d.slots) body += `<div class="kv"><span>${ic('u_bag', 16)} Sac</span><b>+${d.slots} emplacements (total : ${AG.slots})</b></div>`;
     if (d.ch) body += `<div class="kv"><span>${ic('u_heart', 16)} Confort</span><b>+${d.ch} (base : ${AG.comfort})</b></div>`;
     if (b.id === 'jardin') body += gardenUI(b);
@@ -282,6 +298,7 @@ function openBuildingPanel(i) {
 function PANELA(i) {
   return {
     col: () => { collect(i); refresh(); },
+    upg: () => { upgradeBat(i); refresh(); },
     pick: () => { const [tx, ty] = [i % WW, i / WW | 0]; closeModal(); pickup(tx, ty); },
     craft: a => { const [k, n] = a.split(','); craftN(+k, n === 'max' ? 999 : +n); refresh(); },
     plant: k => { if (inv('graine') < 1) { toast('Il faut 1 graine', 'i_graine', 'Les plantes en donnent parfois', 'bad'); SFX.bad(); return; } take('graine', 1); plantCrop(i, k); SFX.ok(); refresh(); },
@@ -302,11 +319,12 @@ function gardenUI(b) {
   return `<div class="kv"><span>${ic('i_' + b.crop.k, 16)} ${ITEMS[b.crop.k].n}</span><b>${fmtT((1 - p) * b.crop.d)}</b></div>${bar(p)}${inv('engrais') ? `<button class="btn sm" data-a="fert">Engrais (−50 % du temps restant)</button>` : ''}`;
 }
 function tpUI(i) {
+  UI.tpFrom = i;
   const L = Object.keys(G.bl).filter(k => G.bl[k].id === 'tp' && +k !== i);
   return `<h3>Destinations</h3><button class="btn wide" data-a="home">${ic('u_home', 16)} Épave (maison)</button>${L.map(k => `<button class="btn wide" data-a="tp:${k}">${ic('b_tp', 16)} ${esc(G.bl[k].n)} · ${BIOMES[W.b[k]].n}</button>`).join('')}${L.length ? '' : '<p class="hint">Construis un autre téléporteur ailleurs pour voyager.</p>'}`;
 }
 function teleport(j, free) {
-  if (!free && AG.eff < .05 && AG.cons > 0) { toast('Pas assez d’électricité', 'u_bolt', '', 'bad'); SFX.bad(); return; }
+  if (!free && G.bl[UI.tpFrom] && effOf(UI.tpFrom) < .05) { toast('Pas assez d’électricité', 'u_bolt', '', 'bad'); SFX.bad(); return; }
   closeModal(); SFX.boing();
   fadeOut(() => {
     if (j < 0) { G.x = W.spawn.x * TS + 8; G.y = (W.spawn.y + 2) * TS + 8; } else { G.x = (j % WW) * TS + 8; G.y = (j / WW | 0) * TS + 22; }
@@ -430,11 +448,11 @@ function hud(force) {
   $('#hStats').innerHTML = Object.entries(STATN).map(([k, [n, i]]) => `<span class="${sp.lag === k ? 'lag' : ''}">${ic(i, 14)}${fc(G.st[k])}</span>`).join('');
   $('#hCoins').innerHTML = ic('u_coin', 16) + fmt(G.coins);
   $('#hSci').innerHTML = ic('u_sci', 16) + fmt(G.sci);
-  $('#hPow').innerHTML = ic('u_bolt', 16) + fmt(AG.prod) + '/' + fmt(AG.cons); $('#hPow').classList.toggle('warn', AG.eff < 1);
+  $('#hPow').innerHTML = ic('u_bolt', 16) + fmt(AG.prod) + '/' + fmt(AG.cons) + (AG.cap ? ' ' + ic('i_batterie', 14) + Math.round(AG.e / AG.cap * 100) + '%' : ''); $('#hPow').classList.toggle('warn', AG.eff < .99);
   $('#hClock').textContent = clockTxt();
-  const al = BUILD && BUILD.id ? 'Poser' : targetLabel(TGT), A = $('#bAL'); if (A.textContent !== al) A.textContent = al;
+  const al = BUILD && (BUILD.id || BUILD.cable) ? 'Poser' : BUILD && BUILD.plant ? 'Planter' : BUILD && BUILD.clear ? 'Défricher' : targetLabel(TGT), A = $('#bAL'); if (A.textContent !== al) A.textContent = al;
   { const k = $('#act'); let h = '';
-    if (BUILD && BUILD.clear) h = 'Défrichage';
+    if (BUILD && BUILD.clear) h = 'Défrichage'; else if (BUILD && BUILD.cable) h = 'Câble · ' + inv('cable'); else if (BUILD && BUILD.plant) h = 'Planter un arbre · ' + inv('pousse');
     else if (TGT && (TGT.k === 'obj' || TGT.k === 'bld' || TGT.k === 'flr')) {
       if (TGT.k === 'obj') { const d = OBJ[W.o[TGT.i]]; h = d ? (toolOk(d) ? d.n : d.n + ' · il faut ' + TOOLN[d.tool] + (d.mt > 1 ? ' ' + TIERN[d.mt] : '')) : ''; }
       else { const b = G.bl[TGT.i], fid = !b && G.fl[TGT.i]; h = b ? BLD[b.id].n : fid && BLD[fid] ? BLD[fid].n : ''; }

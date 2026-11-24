@@ -62,7 +62,7 @@ function playerGrid() {
 function detailHTML() {
   const s = INV.sel && getS(INV.sel);
   if (!s) return '';
-  const it = ITEMS[s.k], src = s.k[0] === '@' ? 'Construction : place-la dans la barre rapide pour la poser.' : it.tool ? `Outil ${it.tool === 'rod' ? '' : TIERN[it.tier]} : ${it.tool === 'pick' ? 'roche et minerais' : it.tool === 'axe' ? 'bois, champignons, cactus' : 'pêche'}${it.tool !== 'rod' && toolBonus(it.tool) ? ' · +' + [0, 0, 0, 1, 2, 4][it.tier] + ' de récolte' : ''}. Il sert tout seul, n’importe où dans l’inventaire.` : it.food ? it.food.d : itemSource(s.k);
+  const it = ITEMS[s.k], src = s.k[0] === '@' ? 'Construction : place-la dans la barre rapide pour la poser.' : it.tool ? `Outil ${it.tool === 'rod' ? '' : TIERN[it.tier]} : ${it.tool === 'pick' ? 'roche et minerais' : it.tool === 'axe' ? 'bois, champignons, cactus, plantes' : it.tool === 'shovel' ? 'défricher : plus rien ne repousse là où tu passes' : 'pêche'}${it.tool !== 'rod' && toolBonus(it.tool) ? ' · +' + [0, 0, 0, 1, 2, 4][it.tier] + ' de récolte' : ''}. Prends-le en main (barre rapide) pour t’en servir.` : it.food ? it.food.d : itemSource(s.k);
   return `<div class="idet">${ic('i_' + s.k, 30)}<div class="tx"><b>${it.n} <small>×${s.n}</small></b><small>${esc(src || '')}</small></div>${it.food ? `<button class="btn sm pri" data-a="eat">Manger</button>` : ''}<button class="btn sm" data-a="toss1">Jeter 1</button>${s.n > 1 ? `<button class="btn sm" data-a="tossall">Jeter tout</button>` : ''}</div>`;
 }
 /* --- fabrication --- */
@@ -112,7 +112,7 @@ function craftN(i, n) {
   const r = RECIPES[i]; let d = 0;
   if (r.st !== 'main' && !(INV.mode === 'st' && INV.st === r.st)) { toast('Ça se fabrique à : ' + STATIONS[r.st], 'i_@' + r.st, '', 'bad'); SFX.bad(); return 0; }
   for (; d < n; d++) { if (!canPay(r.i)) break; pay(r.i); const a = add(r.o, r.n, d > 0); if (a < r.n) throwItem(r.o, r.n - a); }
-  if (d) { inc('craft', d); SFX.ok(); vib(10); if (ITEMS[r.o].tool) toast(ITEMS[r.o].n + ' fabriquée !', 'i_' + r.o, 'Elle sert toute seule, garde-la dans ton inventaire'); }
+  if (d) { inc('craft', d); SFX.ok(); vib(10); if (ITEMS[r.o].tool) toast(ITEMS[r.o].n + ' fabriquée !', 'i_' + r.o, 'Mets-la dans ta barre rapide et prends-la en main pour t’en servir'); }
   else SFX.bad();
   if (UI.modal === 'inv') renderInv();
   return d;

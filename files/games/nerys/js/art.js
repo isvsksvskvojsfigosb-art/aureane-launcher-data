@@ -114,6 +114,7 @@ function genItems() {
   I('baton', d => { d.ln(3, 11, 11, 3, '#8a5a34'); d.ln(4, 11, 12, 3, '#c98b5a'); d.p(7, 6, '#5fd068'); d.p(8, 6, '#5fd068'); });
   PK('pioche', '#9aa3c0'); PK('pioche_cu', '#e08a3c'); PK('pioche_cr', '#4fe3e0'); PK('pioche_ba', '#fff04a');
   AX('hache', '#9aa3c0'); AX('hache_cu', '#e08a3c'); AX('hache_cr', '#4fe3e0');
+  I('pelle', d => { d.ln(3, 12, 9, 6, '#8a5a34'); d.ln(4, 12, 10, 6, '#c98b5a'); d.poly([[8, 5], [11, 1], [13, 3], [9, 7]], '#c9cfe6'); d.p(11, 2, '#ffffff'); d.r(2, 11, 3, 2, '#4a5068'); });
   I('canne', d => { d.ln(2, 12, 11, 2, '#c98b5a'); d.ln(11, 2, 12, 9, '#e8e8f0'); d.ball(12, 10, 1.5, 1.5, '#ff4d6d'); d.r(3, 10, 2, 2, '#4a5068'); });
 }
 
@@ -144,6 +145,8 @@ function genUI() {
   U('swap', d => { d.r(2, 3, 8, 2, '#5ab8ff'); d.poly([[9, 1], [13, 4], [9, 7]], '#5ab8ff'); d.r(4, 9, 8, 2, '#ff6f91'); d.poly([[5, 7], [1, 10], [5, 13]], '#ff6f91'); });
   U('flag', d => { d.r(3, 1, 2, 12, '#9a6a40'); d.poly([[5, 1], [12, 3.5], [5, 6.5]], '#ff4d6d'); d.r(1, 12, 7, 2, '#7a5a3a'); });
   U('steps', d => { d.el(4, 9, 2, 3, '#f2e6c8'); d.p(3, 5, '#f2e6c8'); d.p(5, 5, '#f2e6c8'); d.el(10, 5, 2, 3, '#f2e6c8'); d.p(9, 1, '#f2e6c8'); d.p(11, 1, '#f2e6c8'); });
+  U('rot', d => { d.el(7, 7, 5, 5, '#f2e6c8'); d.el(7, 7, 3, 3, 'rgba(0,0,0,0)'); d.x.clearRect(4, 4, 7, 7); d.x.clearRect(9, 0, 5, 6); d.poly([[8, 1], [13, 3], [9, 6]], '#f2e6c8'); d.r(2, 6, 2, 3, '#f2e6c8'); d.r(10, 6, 2, 3, '#f2e6c8'); d.r(5, 11, 5, 2, '#f2e6c8'); d.r(3, 9, 2, 2, '#f2e6c8'); d.r(10, 9, 2, 2, '#f2e6c8'); });
+  U('plug', d => { d.box(4, 1, 6, 7, '#ffe050'); d.r(5, 0, 1, 2, '#9aa3c0'); d.r(8, 0, 1, 2, '#9aa3c0'); d.r(6, 8, 2, 4, '#1d1530'); d.ln(1, 12, 12, 1, '#ff4d6d'); d.ln(2, 12, 13, 1, '#ff4d6d'); });
   U('x', d => { d.ln(3, 3, 10, 10, '#ff4d6d'); d.ln(4, 3, 11, 10, '#ff4d6d'); d.ln(10, 3, 3, 10, '#ff4d6d'); d.ln(11, 3, 4, 10, '#ff4d6d'); });
 }
 
@@ -171,8 +174,8 @@ function genObjects() {
   SP('bananium', 16, 16, d => { d.ball(8, 12, 6.5, 3.5, '#3f2f37'); d.poly([[3, 8], [6, 12], [12, 12], [13, 9], [9, 10], [6, 7], [5, 4]], '#fff04a'); d.ln(5, 7, 9, 11, '#c0b020'); d.p(5, 3, '#5a3a20'); });
   SP('cactus', 16, 18, d => { d.box(6, 4, 4, 13, '#5fbf6a'); d.box(2, 7, 3, 5, '#5fbf6a'); d.box(11, 5, 3, 6, '#5fbf6a'); d.el(8, 4, 2.5, 2, '#ff9ccf'); d.p(7, 8, '#ffffff'); d.p(8, 12, '#ffffff'); });
   SP('capsule', 16, 16, d => { d.box(2, 5, 12, 10, '#e8e8f0'); d.r(2, 9, 12, 2, '#ff6f91'); d.box(5, 2, 6, 4, '#9aa3c0'); d.p(4, 7, '#ffffff'); d.r(12, 6, 1, 2, '#ffd23f'); d.r(7, 12, 2, 2, '#4a5068'); });
-  SP('monolith', 16, 28, d => { d.box(2, 20, 12, 7, '#7a6a9a'); d.ball(8, 14, 5, 5, '#c9b8ff'); d.ball(9, 7, 3.5, 3.5, '#c9b8ff'); d.r(12, 7, 3, 2, '#ffb84a'); d.p(9, 6, '#1d1530'); d.r(4, 22, 8, 1, '#5fffe0'); });
-  SP('mono_done', 16, 28, d => { d.box(2, 20, 12, 7, '#7a6a9a'); d.ball(8, 14, 5, 5, '#ffd23f'); d.ball(9, 7, 3.5, 3.5, '#ffd23f'); d.r(12, 7, 3, 2, '#ff8a2a'); d.p(9, 6, '#1d1530'); d.r(4, 22, 8, 1, '#ffd23f'); });
+  const mono = (k, c, g) => SP(k, 16, 28, d => { d.box(2, 21, 12, 6, '#7a6a9a'); d.box(4, 4, 8, 17, c); d.poly([[4, 4], [8, 0], [12, 4]], c); d.r(5, 5, 1, 14, shd(c, .3)); d.r(6, 8, 4, 1, g); d.r(7, 7, 2, 3, g); d.r(6, 13, 4, 1, g); d.p(7, 15, g); d.p(8, 16, g); d.r(4, 23, 8, 1, g); });
+  mono('monolith', '#9a8ac0', '#5fffe0'); mono('mono_done', '#c9a020', '#fff6a0');
   SP('meteor', 16, 14, d => { d.el(8, 11, 7, 3, '#2a2030'); d.ball(8, 8, 5, 4.5, '#6a4a5a'); d.r(6, 6, 2, 2, '#ff8a2a'); d.p(10, 9, '#ffd23f'); d.p(5, 9, '#ff4d6d'); });
   ['#ffd23f', '#ff6fae', '#8fd0ff', '#ffffff'].forEach((c, k) => SP('flower_' + k, 16, 14, d => { d.r(8, 6, 1, 7, '#3a9a3a'); d.el(6, 10, 2, 1, '#5fd068'); d.ball(8, 5, 3, 3, c); d.p(8, 5, k === 0 ? '#ff8a2a' : '#ffd23f'); }));
   SP('tree', 24, 32, d => { d.box(10, 18, 5, 13, '#a06a3a'); d.ball(12, 12, 10, 9, '#4fbf5a'); d.ball(8, 9, 5, 5, '#6fd86a'); d.ball(16, 14, 4, 4, '#3fa04a'); [[7, 13], [15, 8], [12, 16]].forEach(([x, y]) => d.ball(x, y, 1.5, 1.5, '#bff0ff')); });
@@ -185,7 +188,8 @@ function genObjects() {
     d.r(18, 27, 6, 6, '#3a3448'); d.r(19, 28, 4, 4, '#ffd23f'); d.p(20, 29, '#ffffff');
     d.ln(10, 16, 14, 30, '#7d86a3'); d.r(28, 2, 2, 7, '#7d86a3'); d.r(27, 1, 4, 2, '#ff4d6d');
   });
-  SP('duck', 12, 11, d => { d.ball(5, 7, 4, 3, '#ffd23f'); d.ball(7, 4, 2.5, 2.5, '#ffd23f'); d.r(9, 4, 2, 2, '#ff8a2a'); d.p(7, 3, '#1d1530'); });
+  SP('starfall', 12, 12, d => { const p = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 2.2 : 5.5; p.push([6 + Math.cos(a) * r, 6.5 + Math.sin(a) * r]); } d.poly(p, '#ffd23f'); d.p(5, 5, '#fff6c0'); });
+  SP('sapling', 16, 16, d => { d.r(7, 8, 2, 7, '#8a5a34'); d.ball(5, 8, 3, 2.5, '#6fd86a'); d.ball(11, 7, 3, 2.5, '#5fd068'); d.ball(8, 4, 3, 3, '#8fe87a'); d.p(7, 3, '#d8ffd0'); });
   SP('zorg', 36, 28, d => {
     d.el(18, 25, 14, 3, 'rgba(0,0,0,.25)');
     d.ball(18, 15, 13, 8, '#ff9ccf'); d.el(18, 15, 13, 2, '#e07aae'); d.box(30, 11, 5, 3, '#ff9ccf'); d.r(33, 9, 2, 3, '#ff9ccf');
@@ -202,48 +206,50 @@ function genBuildings() {
   const feet = (d, h, c = '#4a5068') => { d.r(3, h - 3, 3, 2, c); d.r(10, h - 3, 3, 2, c); };
   const eyes = (d, id) => (BLD[id].eyes || []).forEach(([x, y]) => d.eyeW(x, y));
   // ---- base
-  B('etabli', 16, d => { d.r(2, 9, 2, 6, '#8a5a34'); d.r(12, 9, 2, 6, '#8a5a34'); d.box(1, 5, 14, 5, '#c98b5a'); d.r(1, 5, 14, 1, '#e8b88a'); d.box(10, 2, 4, 3, '#9aa3c0'); d.r(3, 3, 5, 1, '#7d86a3'); d.r(6, 2, 1, 3, '#c98b5a'); eyes(d, 'etabli'); });
+  B('etabli', 16, d => { d.r(2, 9, 2, 6, '#8a5a34'); d.r(12, 9, 2, 6, '#8a5a34'); d.box(1, 5, 14, 5, '#c98b5a'); d.r(1, 5, 14, 1, '#e8b88a'); d.box(10, 2, 4, 3, '#9aa3c0'); d.r(3, 3, 5, 1, '#7d86a3'); d.r(6, 2, 1, 3, '#c98b5a'); });
   B('caisse', 16, d => { d.box(2, 3, 12, 12, '#c98b5a'); d.ln(3, 4, 12, 13, '#8a5a34'); d.ln(12, 4, 3, 13, '#8a5a34'); d.r(2, 3, 12, 2, '#e0a46c'); d.r(2, 13, 12, 2, '#a06a3a'); });
   B('jardin', 12, d => { d.box(1, 3, 14, 8, '#b07a4a'); d.r(2, 3, 12, 3, '#5a3a2a'); d.p(4, 4, '#7a5a3a'); d.p(10, 4, '#7a5a3a'); d.r(1, 7, 14, 1, '#8a5a34'); });
-  B('labo', 22, d => { feet(d, 22); d.box(2, 8, 12, 12, '#e8ecf8'); d.r(3, 14, 10, 4, '#5ab8ff'); d.r(4, 15, 3, 1, '#bff0ff'); d.r(6, 2, 4, 6, '#bff0ff'); d.el(8, 6, 3, 2, '#b78cff'); d.p(7, 1, '#d8b8ff'); eyes(d, 'labo'); });
-  B('fonderie', 24, d => { d.box(1, 6, 14, 17, '#c0604a'); for (let y = 8; y < 22; y += 3) d.r(2, y, 12, 1, '#94443a'); d.box(4, 15, 8, 6, '#2a1a20'); d.r(5, 16, 6, 4, '#ff8a2a'); d.r(6, 17, 4, 2, '#ffd23f'); d.box(11, 0, 3, 6, '#7d86a3'); eyes(d, 'fonderie'); });
-  B('cuisine', 20, d => { d.box(1, 6, 14, 13, '#e8ecf8'); d.r(3, 12, 10, 5, '#9aa3c0'); d.r(4, 13, 8, 1, '#c9cfe6'); d.box(4, 2, 8, 4, '#ff6f91'); d.r(3, 2, 10, 1, '#c0406a'); d.ln(6, 0, 6, 1, '#ffffff'); d.ln(9, 0, 10, 1, '#ffffff'); eyes(d, 'cuisine'); });
-  B('atelier', 22, d => { feet(d, 22); d.box(1, 5, 14, 15, '#7d86a3'); d.r(2, 12, 12, 1, '#ffd23f'); d.r(2, 13, 12, 1, '#1d1530'); d.ball(11, 5, 3, 3, '#c9cfe6'); d.p(11, 5, '#4a5068'); d.ln(3, 4, 7, 1, '#ff8a2a'); d.r(7, 1, 2, 2, '#ff8a2a'); eyes(d, 'atelier'); });
+  B('labo', 22, d => { feet(d, 22); d.box(2, 8, 12, 12, '#e8ecf8'); d.r(3, 14, 10, 4, '#5ab8ff'); d.r(4, 15, 3, 1, '#bff0ff'); d.r(6, 2, 4, 6, '#bff0ff'); d.el(8, 6, 3, 2, '#b78cff'); d.p(7, 1, '#d8b8ff'); });
+  B('fonderie', 24, d => { d.box(1, 6, 14, 17, '#c0604a'); for (let y = 8; y < 22; y += 3) d.r(2, y, 12, 1, '#94443a'); d.box(4, 15, 8, 6, '#2a1a20'); d.r(5, 16, 6, 4, '#ff8a2a'); d.r(6, 17, 4, 2, '#ffd23f'); d.box(11, 0, 3, 6, '#7d86a3'); });
+  B('cuisine', 20, d => { d.box(1, 6, 14, 13, '#e8ecf8'); d.r(3, 12, 10, 5, '#9aa3c0'); d.r(4, 13, 8, 1, '#c9cfe6'); d.box(4, 2, 8, 4, '#ff6f91'); d.r(3, 2, 10, 1, '#c0406a'); d.ln(6, 0, 6, 1, '#ffffff'); d.ln(9, 0, 10, 1, '#ffffff'); });
+  B('atelier', 22, d => { feet(d, 22); d.box(1, 5, 14, 15, '#7d86a3'); d.r(2, 12, 12, 1, '#ffd23f'); d.r(2, 13, 12, 1, '#1d1530'); d.ball(11, 5, 3, 3, '#c9cfe6'); d.p(11, 5, '#4a5068'); d.ln(3, 4, 7, 1, '#ff8a2a'); d.r(7, 1, 2, 2, '#ff8a2a'); });
   const drill = (id, c, h) => B(id, h, d => { d.ln(2, h - 2, 6, 3, '#4a5068'); d.ln(14, h - 2, 10, 3, '#4a5068'); d.box(4, 4, 8, 10, c); d.r(5, 5, 6, 1, shd(c, .4)); d.poly([[6, 14], [10, 14], [8, h - 1]], '#c9cfe6'); d.ln(7, 15, 9, 17, '#7d86a3'); d.r(6, 1, 4, 3, '#4a5068'); eyes(d, id); });
   drill('foreuse', '#ffb040', 24); drill('foreuse2', '#e8483a', 26);
   B('niche', 18, d => { d.box(2, 8, 12, 9, '#e0a46c'); d.poly([[1, 9], [8, 2], [15, 9]], '#ff6f91'); d.r(1, 8, 14, 1, '#c0406a'); d.el(8, 13, 2.5, 3.5, '#2a1a20'); d.r(5, 16, 6, 1, '#2a1a20'); });
-  B('ruche', 24, d => { d.box(2, 8, 12, 14, '#ffd23f'); for (let y = 10; y < 21; y += 3) d.r(2, y, 12, 1, '#c9a020'); d.el(8, 7, 6, 3, '#ffe066'); d.r(6, 16, 4, 3, '#2a1a20'); d.r(7, 1, 2, 5, '#9aa3c0'); d.p(7, 0, '#ff4d6d'); eyes(d, 'ruche'); });
+  B('ruche', 24, d => { d.box(2, 8, 12, 14, '#ffd23f'); for (let y = 10; y < 21; y += 3) d.r(2, y, 12, 1, '#c9a020'); d.el(8, 7, 6, 3, '#ffe066'); d.r(6, 16, 4, 3, '#2a1a20'); d.r(7, 1, 2, 5, '#9aa3c0'); d.p(7, 0, '#ff4d6d'); });
   B('silo', 30, d => { d.box(2, 6, 12, 23, '#c9cfe6'); d.el(8, 6, 6, 3, '#e8ecf8'); for (let y = 10; y < 28; y += 4) d.r(3, y, 10, 1, '#9aa3c0'); d.r(5, 12, 2, 12, '#ff6f91'); d.ln(12, 4, 12, 28, '#7d86a3'); });
   B('radar', 26, d => { d.r(7, 12, 2, 12, '#7d86a3'); d.box(4, 22, 8, 3, '#4a5068'); d.el(8, 8, 7, 5, '#e8ecf8'); d.el(8, 8, 5, 3, '#c9cfe6'); d.ln(8, 8, 12, 2, '#4a5068'); d.p(12, 2, '#ff4d6d'); });
   B('tp', 12, d => { d.el(8, 7, 7, 4, '#4a5068'); d.el(8, 6, 6, 3, '#b78cff'); d.el(8, 6, 4, 2, '#e0d0ff'); d.p(8, 6, '#ffffff'); });
   B('piste', 12, d => { d.box(0, 2, 16, 9, '#5a5470'); d.r(1, 3, 14, 1, '#ffd23f'); d.r(1, 9, 14, 1, '#ffd23f'); d.r(5, 4, 1, 5, '#ffffff'); d.r(10, 4, 1, 5, '#ffffff'); d.r(5, 6, 6, 1, '#ffffff'); });
-  B('superlabo', 26, d => { feet(d, 26); d.box(1, 9, 14, 15, '#e8ecf8'); d.r(2, 15, 12, 6, '#b78cff'); d.r(3, 16, 4, 1, '#e0d0ff'); d.ball(8, 6, 4, 4, '#bff0ff'); d.el(8, 7, 3, 2, '#7ce86a'); d.r(13, 0, 1, 9, '#7d86a3'); d.p(13, 0, '#ff4d6d'); eyes(d, 'superlabo'); });
+  B('superlabo', 26, d => { feet(d, 26); d.box(1, 9, 14, 15, '#e8ecf8'); d.r(2, 15, 12, 6, '#b78cff'); d.r(3, 16, 4, 1, '#e0d0ff'); d.ball(8, 6, 4, 4, '#bff0ff'); d.el(8, 7, 3, 2, '#7ce86a'); d.r(13, 0, 1, 9, '#7d86a3'); d.p(13, 0, '#ff4d6d'); });
   B('fusee', 44, d => { d.poly([[8, 0], [13, 10], [13, 34], [3, 34], [3, 10]], '#e8ecf8'); d.poly([[8, 0], [13, 10], [3, 10]], '#ff4d6d'); d.ball(8, 17, 3, 3, '#5ab8ff'); d.p(7, 16, '#ffffff'); d.poly([[3, 26], [0, 38], [3, 36]], '#ff4d6d'); d.poly([[13, 26], [16, 38], [13, 36]], '#ff4d6d'); d.r(5, 34, 6, 3, '#4a5068'); d.r(3, 24, 10, 2, '#ffd23f'); d.r(5, 37, 6, 6, '#ff8a2a'); d.r(6, 38, 4, 3, '#ffd23f'); }, 17);
   // ---- énergie
   B('solaire', 14, d => { d.r(7, 9, 2, 4, '#7d86a3'); d.poly([[0, 8], [3, 1], [16, 1], [13, 8]], '#2a4a9a'); for (let x = 3; x < 15; x += 3) d.ln(x, 2, x - 2, 7, '#5ab8ff'); d.r(1, 4, 14, 1, '#5ab8ff'); d.p(4, 2, '#ffffff'); });
+  B('accu', 18, d => { feet(d, 18); d.box(2, 3, 12, 12, '#ffe066'); d.r(5, 1, 2, 2, '#9aa3c0'); d.r(9, 1, 2, 2, '#9aa3c0'); d.r(3, 6, 10, 1, '#c0a020'); d.r(4, 8, 8, 5, '#2a2440'); d.poly([[8, 8], [6, 11], [8, 11], [7, 13], [10, 10], [8, 10]], '#7ce86a'); });
   B('eolienne', 30, d => { d.poly([[7, 8], [9, 8], [10, 29], [6, 29]], '#e8ecf8'); d.r(6, 28, 4, 2, '#9aa3c0'); d.ball(8, 7, 2, 2, '#c9cfe6'); });
   B('roue', 20, d => { d.el(8, 10, 7.5, 8.5, '#c98b5a'); d.el(8, 10, 6, 7, '#5a3a2a'); d.r(3, 18, 10, 2, '#8a5a34'); });
-  B('generateur', 20, d => { feet(d, 20); d.box(1, 6, 14, 12, '#ffd23f'); d.r(2, 12, 12, 1, '#1d1530'); for (let x = 3; x < 13; x += 3) d.r(x, 13, 2, 3, '#c9a020'); d.box(11, 1, 3, 5, '#7d86a3'); eyes(d, 'generateur'); });
+  B('generateur', 20, d => { feet(d, 20); d.box(1, 6, 14, 12, '#ffd23f'); d.r(2, 12, 12, 1, '#1d1530'); for (let x = 3; x < 13; x += 3) d.r(x, 13, 2, 3, '#c9a020'); d.box(11, 1, 3, 5, '#7d86a3'); });
   B('geo', 22, d => { d.el(8, 19, 7, 3, '#ff6a2a'); d.box(2, 8, 12, 11, '#7d86a3'); d.box(4, 2, 3, 7, '#c9cfe6'); d.box(9, 4, 3, 5, '#c9cfe6'); d.r(3, 12, 10, 2, '#ff8a2a'); });
-  B('reacteur', 26, d => { d.box(1, 16, 14, 9, '#4a5068'); d.ball(8, 12, 7, 7, '#bff0ff'); d.ball(8, 13, 4, 4, '#fff04a'); d.poly([[5, 12], [7, 15], [11, 15], [11, 13], [9, 14], [7, 11]], '#ffe070'); eyes(d, 'reacteur'); });
+  B('reacteur', 26, d => { d.box(1, 16, 14, 9, '#4a5068'); d.ball(8, 12, 7, 7, '#bff0ff'); d.ball(8, 13, 4, 4, '#fff04a'); d.poly([[5, 12], [7, 15], [11, 15], [11, 13], [9, 14], [7, 11]], '#ffe070'); });
   // ---- terraformation
-  B('souffleur', 18, d => { d.box(3, 9, 10, 8, '#ff6fae'); d.r(3, 9, 10, 1, '#ffb0d0'); d.box(6, 4, 4, 5, '#c9cfe6'); d.ball(4, 3, 2, 2, '#bff0ff'); d.ball(11, 2, 1.5, 1.5, '#bff0ff'); eyes(d, 'souffleur'); });
-  B('radiateur', 18, d => { feet(d, 18); for (let x = 2; x < 14; x += 3) d.box(x, 4, 3, 11, '#ff5a3a'); d.r(2, 9, 12, 1, '#c03a2a'); eyes(d, 'radiateur'); });
-  B('fonte', 20, d => { feet(d, 20); d.box(2, 7, 12, 11, '#5ab8ff'); d.box(4, 1, 8, 6, '#bff0ff'); d.r(5, 2, 3, 1, '#ffffff'); d.r(3, 14, 10, 2, '#2a6ab0'); eyes(d, 'fonte'); });
-  B('semeur', 20, d => { d.poly([[2, 18], [8, 2], [14, 18]], '#9a6ae0'); d.r(2, 17, 12, 2, '#6a3ab0'); d.p(8, 5, '#d8b8ff'); d.p(6, 13, '#2a1a40'); d.p(10, 13, '#2a1a40'); eyes(d, 'semeur'); });
-  B('pompe', 22, d => { feet(d, 22); d.box(3, 5, 10, 15, '#4fd0e0'); d.r(4, 6, 2, 12, '#bff6ff'); d.box(1, 2, 14, 4, '#7d86a3'); d.r(7, 0, 2, 2, '#c9cfe6'); eyes(d, 'pompe'); });
-  B('grillepain', 22, d => { d.box(1, 7, 14, 14, '#c9cfe6'); d.r(3, 8, 4, 1, '#1d1530'); d.r(9, 8, 4, 1, '#1d1530'); d.box(3, 3, 4, 5, '#e0a050'); d.box(9, 1, 4, 7, '#e0a050'); d.r(14, 13, 2, 2, '#ff4d6d'); eyes(d, 'grillepain'); });
-  B('nuage', 22, d => { feet(d, 22); d.box(3, 12, 10, 8, '#5a98e0'); d.r(7, 9, 2, 3, '#7d86a3'); d.ball(5, 6, 3.5, 3, '#ffffff'); d.ball(10, 5, 4, 3.5, '#ffffff'); d.ball(8, 7, 3, 2.5, '#e8f4ff'); eyes(d, 'nuage'); });
-  B('lichen', 22, d => { d.box(1, 5, 14, 16, '#bff0ff'); d.r(2, 12, 12, 8, '#5fbf6a'); d.ball(5, 12, 2, 2, '#8fe07a'); d.ball(10, 11, 2.5, 2.5, '#8fe07a'); d.r(1, 4, 14, 2, '#7d86a3'); d.r(3, 7, 1, 4, '#ffffff'); eyes(d, 'lichen'); });
-  B('poumon', 28, d => { d.box(2, 22, 12, 5, '#7d86a3'); d.r(7, 16, 2, 6, '#c9cfe6'); d.ball(5, 10, 4.5, 7, '#ff8ab0'); d.ball(11, 10, 4.5, 7, '#ff8ab0'); d.ln(8, 4, 8, 15, '#c0406a'); eyes(d, 'poumon'); });
-  B('soleil', 26, d => { d.box(4, 19, 8, 6, '#7d86a3'); d.r(7, 14, 2, 5, '#c9cfe6'); for (let a = 0; a < 8; a++) d.ln(8, 8, 8 + Math.round(Math.cos(a * .785) * 7), 8 + Math.round(Math.sin(a * .785) * 7), '#ffb040'); d.ball(8, 8, 5, 5, '#ffe050'); eyes(d, 'soleil'); });
-  B('pluie', 28, d => { d.box(3, 20, 10, 7, '#5a98e0'); d.ball(5, 7, 4, 3.5, '#c9d8ff'); d.ball(11, 6, 4.5, 4, '#c9d8ff'); d.ball(8, 9, 4, 3, '#a8bce8'); for (let x = 3; x < 14; x += 3) d.r(x, 13 + (x % 2) * 2, 1, 3, '#5ab8ff'); eyes(d, 'pluie'); });
-  B('coeur', 28, d => { d.box(3, 22, 10, 5, '#a06a3a'); d.r(7, 16, 2, 6, '#3a9a3a'); d.ball(5, 10, 4, 4, '#5fd068'); d.ball(11, 10, 4, 4, '#5fd068'); d.poly([[1, 11], [15, 11], [8, 19]], '#5fd068'); d.ball(5, 9, 1.5, 1.5, '#ff6fae'); eyes(d, 'coeur'); });
-  B('megao', 34, d => { d.box(6, 20, 4, 13, '#8a5a34'); d.ball(8, 12, 7.5, 10, '#7de0e0'); d.ball(6, 8, 3, 4, '#bff6ff'); [[4, 14], [11, 6], [10, 16]].forEach(([x, y]) => d.ball(x, y, 1.5, 1.5, '#ffffff')); eyes(d, 'megao'); });
-  B('megah', 30, d => { d.box(2, 24, 12, 5, '#4a5068'); d.ball(8, 13, 7, 9, '#ff6a2a'); d.ball(7, 11, 4, 5, '#ffb040'); d.ln(1, 4, 1, 24, '#7d86a3'); d.ln(14, 4, 14, 24, '#7d86a3'); d.r(1, 4, 14, 1, '#7d86a3'); eyes(d, 'megah'); });
-  B('megaw', 30, d => { d.box(4, 24, 8, 5, '#4a5068'); d.r(7, 18, 2, 6, '#7d86a3'); d.poly([[2, 6], [12, 2], [14, 8], [6, 14]], '#bff0ff'); d.ball(8, 12, 5, 5, '#5ab8ff'); d.ball(7, 11, 2, 2, '#bff6ff'); eyes(d, 'megaw'); });
-  B('megab', 32, d => { d.box(5, 16, 6, 15, '#efe2cf'); d.ball(8, 11, 7.5, 9, '#b78cff'); d.el(8, 18, 7, 2, '#7a4ac0'); [[5, 6], [11, 8], [7, 13]].forEach(([x, y]) => d.ball(x, y, 1.6, 1.4, '#f0e0ff')); eyes(d, 'megab'); });
+  B('souffleur', 18, d => { d.box(3, 9, 10, 8, '#ff6fae'); d.r(3, 9, 10, 1, '#ffb0d0'); d.box(6, 4, 4, 5, '#c9cfe6'); d.ball(4, 3, 2, 2, '#bff0ff'); d.ball(11, 2, 1.5, 1.5, '#bff0ff'); });
+  B('radiateur', 18, d => { feet(d, 18); for (let x = 2; x < 14; x += 3) d.box(x, 4, 3, 11, '#ff5a3a'); d.r(2, 9, 12, 1, '#c03a2a'); });
+  B('fonte', 20, d => { feet(d, 20); d.box(2, 7, 12, 11, '#5ab8ff'); d.box(4, 1, 8, 6, '#bff0ff'); d.r(5, 2, 3, 1, '#ffffff'); d.r(3, 14, 10, 2, '#2a6ab0'); });
+  B('semeur', 20, d => { d.poly([[2, 18], [8, 2], [14, 18]], '#9a6ae0'); d.r(2, 17, 12, 2, '#6a3ab0'); d.p(8, 5, '#d8b8ff'); d.p(6, 13, '#2a1a40'); d.p(10, 13, '#2a1a40'); });
+  B('pompe', 22, d => { feet(d, 22); d.box(3, 5, 10, 15, '#4fd0e0'); d.r(4, 6, 2, 12, '#bff6ff'); d.box(1, 2, 14, 4, '#7d86a3'); d.r(7, 0, 2, 2, '#c9cfe6'); });
+  B('grillepain', 22, d => { d.box(1, 7, 14, 14, '#c9cfe6'); d.r(3, 8, 4, 1, '#1d1530'); d.r(9, 8, 4, 1, '#1d1530'); d.box(3, 3, 4, 5, '#e0a050'); d.box(9, 1, 4, 7, '#e0a050'); d.r(14, 13, 2, 2, '#ff4d6d'); });
+  B('nuage', 22, d => { feet(d, 22); d.box(3, 12, 10, 8, '#5a98e0'); d.r(7, 9, 2, 3, '#7d86a3'); d.ball(5, 6, 3.5, 3, '#ffffff'); d.ball(10, 5, 4, 3.5, '#ffffff'); d.ball(8, 7, 3, 2.5, '#e8f4ff'); });
+  B('lichen', 22, d => { d.box(1, 5, 14, 16, '#bff0ff'); d.r(2, 12, 12, 8, '#5fbf6a'); d.ball(5, 12, 2, 2, '#8fe07a'); d.ball(10, 11, 2.5, 2.5, '#8fe07a'); d.r(1, 4, 14, 2, '#7d86a3'); d.r(3, 7, 1, 4, '#ffffff'); });
+  B('poumon', 28, d => { d.box(2, 22, 12, 5, '#7d86a3'); d.r(7, 16, 2, 6, '#c9cfe6'); d.ball(5, 10, 4.5, 7, '#ff8ab0'); d.ball(11, 10, 4.5, 7, '#ff8ab0'); d.ln(8, 4, 8, 15, '#c0406a'); });
+  B('soleil', 26, d => { d.box(4, 19, 8, 6, '#7d86a3'); d.r(7, 14, 2, 5, '#c9cfe6'); for (let a = 0; a < 8; a++) d.ln(8, 8, 8 + Math.round(Math.cos(a * .785) * 7), 8 + Math.round(Math.sin(a * .785) * 7), '#ffb040'); d.ball(8, 8, 5, 5, '#ffe050'); });
+  B('pluie', 28, d => { d.box(3, 20, 10, 7, '#5a98e0'); d.ball(5, 7, 4, 3.5, '#c9d8ff'); d.ball(11, 6, 4.5, 4, '#c9d8ff'); d.ball(8, 9, 4, 3, '#a8bce8'); for (let x = 3; x < 14; x += 3) d.r(x, 13 + (x % 2) * 2, 1, 3, '#5ab8ff'); });
+  B('coeur', 28, d => { d.box(3, 22, 10, 5, '#a06a3a'); d.r(7, 16, 2, 6, '#3a9a3a'); d.ball(5, 10, 4, 4, '#5fd068'); d.ball(11, 10, 4, 4, '#5fd068'); d.poly([[1, 11], [15, 11], [8, 19]], '#5fd068'); d.ball(5, 9, 1.5, 1.5, '#ff6fae'); });
+  B('megao', 34, d => { d.box(6, 20, 4, 13, '#8a5a34'); d.ball(8, 12, 7.5, 10, '#7de0e0'); d.ball(6, 8, 3, 4, '#bff6ff'); [[4, 14], [11, 6], [10, 16]].forEach(([x, y]) => d.ball(x, y, 1.5, 1.5, '#ffffff')); });
+  B('megah', 30, d => { d.box(2, 24, 12, 5, '#4a5068'); d.ball(8, 13, 7, 9, '#ff6a2a'); d.ball(7, 11, 4, 5, '#ffb040'); d.ln(1, 4, 1, 24, '#7d86a3'); d.ln(14, 4, 14, 24, '#7d86a3'); d.r(1, 4, 14, 1, '#7d86a3'); });
+  B('megaw', 30, d => { d.box(4, 24, 8, 5, '#4a5068'); d.r(7, 18, 2, 6, '#7d86a3'); d.poly([[2, 6], [12, 2], [14, 8], [6, 14]], '#bff0ff'); d.ball(8, 12, 5, 5, '#5ab8ff'); d.ball(7, 11, 2, 2, '#bff6ff'); });
+  B('megab', 32, d => { d.box(5, 16, 6, 15, '#efe2cf'); d.ball(8, 11, 7.5, 9, '#b78cff'); d.el(8, 18, 7, 2, '#7a4ac0'); [[5, 6], [11, 8], [7, 13]].forEach(([x, y]) => d.ball(x, y, 1.6, 1.4, '#f0e0ff')); });
   B('arbre0', 16, d => { d.r(7, 8, 2, 7, '#8a5a34'); d.ball(5, 7, 3, 2.5, '#6fd86a'); d.ball(11, 6, 3, 2.5, '#5fd068'); d.ball(8, 4, 2.5, 2.5, '#8fe87a'); });
+  B('arbre1', 22, d => { d.box(7, 12, 3, 9, '#a06a3a'); d.ball(8, 9, 5.5, 6, '#4fbf5a'); d.ball(6, 7, 3, 3, '#6fd86a'); d.ball(10, 11, 2, 2, '#3fa04a'); });
   B('arbre', 30, d => { d.box(6, 17, 4, 12, '#a06a3a'); d.ball(8, 11, 7.5, 9, '#4fbf5a'); d.ball(5, 8, 4, 4, '#6fd86a'); d.ball(11, 13, 3, 3, '#3fa04a'); d.ball(9, 6, 1.5, 1.5, '#ff6fae'); d.ball(4, 13, 1.5, 1.5, '#ffd23f'); });
   // ---- déco
   const D2 = (id, h, fn) => B(id, h, fn);
@@ -260,7 +266,7 @@ function genBuildings() {
   D2('lit', 16, d => { d.box(1, 1, 14, 4, '#c98b5a'); d.box(1, 4, 14, 10, '#ffffff'); d.box(1, 8, 14, 6, '#5ab8ff'); d.r(1, 8, 14, 1, '#8ccaf4'); d.box(3, 5, 5, 3, '#f2f0f8'); d.r(1, 13, 2, 2, '#8a5a34'); d.r(13, 13, 2, 2, '#8a5a34'); });
   D2('tele', 16, d => { d.box(1, 3, 14, 10, '#c98b5a'); d.box(2, 4, 10, 8, '#2a3a5a'); d.r(3, 5, 3, 1, '#8fd0ff'); d.ball(13.5, 6, 1, 1, '#ffd23f'); d.p(13, 9, '#ff4d6d'); d.ln(5, 0, 7, 3, '#9aa3c0'); d.ln(11, 0, 9, 3, '#9aa3c0'); d.r(3, 13, 2, 2, '#5a3a2a'); d.r(11, 13, 2, 2, '#5a3a2a'); });
   D2('lavalampe', 18, d => { d.poly([[5, 3], [11, 3], [12, 13], [4, 13]], '#ff6fae'); d.ball(8, 6, 2, 2, '#ffd23f'); d.ball(7, 11, 2, 1.5, '#ffd23f'); d.box(4, 13, 8, 4, '#9aa3c0'); d.box(6, 1, 4, 2, '#9aa3c0'); });
-  D2('frigo', 24, d => { d.box(2, 1, 12, 22, '#e8ecf8'); d.r(2, 8, 12, 1, '#9aa3c0'); d.r(11, 3, 1, 4, '#9aa3c0'); d.r(11, 10, 1, 6, '#9aa3c0'); d.eye(5, 4, 0, 1); d.eye(8, 4, 0, 1); d.ball(6, 14, 1.5, 1.5, '#ff6f91'); d.r(4, 18, 4, 2, '#ffd23f'); });
+  D2('frigo', 24, d => { d.box(2, 1, 12, 22, '#e8ecf8'); d.r(2, 8, 12, 1, '#9aa3c0'); d.r(11, 3, 1, 4, '#9aa3c0'); d.r(11, 10, 1, 6, '#9aa3c0'); d.r(4, 3, 4, 2, '#bff0ff'); d.ball(6, 14, 1.5, 1.5, '#ff6f91'); d.r(4, 18, 4, 2, '#ffd23f'); });
   D2('aquarium', 16, d => { d.box(1, 3, 14, 10, '#5ab8ff'); d.r(2, 4, 12, 2, '#bff0ff'); d.ball(5, 9, 2, 1.2, '#ff8a2a'); d.ball(10, 7, 1.5, 1, '#ffd23f'); d.r(9, 10, 1, 2, '#5fd068'); d.r(1, 12, 14, 3, '#4a5068'); });
   D2('arcade', 24, d => { d.box(2, 1, 12, 22, '#9a6aff'); d.box(3, 4, 10, 7, '#1d1530'); d.r(4, 5, 2, 2, '#7ce86a'); d.r(8, 7, 3, 2, '#ff4d6d'); d.r(2, 12, 12, 3, '#6a3ab0'); d.ball(5, 13, 1, 1, '#ff4d6d'); d.p(9, 13, '#ffd23f'); d.p(11, 13, '#5ab8ff'); d.r(3, 1, 10, 2, '#ffd23f'); });
   D2('trampoline', 10, d => { d.el(8, 4, 7.5, 3, '#4a5068'); d.el(8, 4, 6, 2, '#2a3a5a'); d.r(1, 5, 2, 4, '#9aa3c0'); d.r(13, 5, 2, 4, '#9aa3c0'); d.r(7, 6, 2, 3, '#9aa3c0'); });
@@ -269,7 +275,7 @@ function genBuildings() {
   D2('bonhomme', 22, d => { d.ball(8, 16, 6, 5, '#ffffff'); d.ball(8, 8, 4.5, 4, '#ffffff'); d.r(5, 1, 6, 4, '#1d1530'); d.r(4, 4, 8, 1, '#1d1530'); d.p(7, 7, '#1d1530'); d.p(10, 7, '#1d1530'); d.r(9, 9, 3, 1, '#ff8a2a'); d.r(4, 12, 8, 1, '#ff4d6d'); });
   D2('disco', 26, d => { d.r(8, 0, 1, 8, '#9aa3c0'); d.ball(8, 14, 7, 7, '#c9cfe6'); for (let y = 8; y < 21; y += 2) for (let x = 2; x < 15; x += 2) if ((x + y) % 4 === 0) d.p(x, y, '#ffffff'); d.p(5, 10, '#ff6fae'); d.p(11, 15, '#5ab8ff'); d.p(7, 18, '#ffd23f'); });
   D2('fontaine', 20, d => { d.el(8, 15, 7.5, 4, '#9aa3c0'); d.el(8, 14, 6, 2.5, '#5ab8ff'); d.r(7, 5, 2, 9, '#c9cfe6'); d.el(8, 5, 4, 1.5, '#9aa3c0'); d.ln(4, 6, 2, 12, '#bff0ff'); d.ln(12, 6, 14, 12, '#bff0ff'); d.r(7, 0, 2, 4, '#bff0ff'); });
-  D2('statue', 26, d => { d.box(2, 18, 12, 7, '#9aa3c0'); d.ball(8, 12, 5.5, 4.5, '#ffd23f'); d.ball(10, 5, 3.5, 3.5, '#ffd23f'); d.r(13, 5, 3, 2, '#ff8a2a'); d.p(10, 4, '#1d1530'); d.r(4, 20, 8, 1, '#ffffff'); });
+  D2('statue', 26, d => { d.box(2, 18, 12, 7, '#9aa3c0'); d.r(7, 11, 2, 7, '#c9a020'); const p = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 2.8 : 6.5; p.push([8 + Math.cos(a) * r, 7.5 + Math.sin(a) * r]); } d.poly(p, '#ffd23f'); d.p(6, 5, '#fff6c0'); d.r(4, 20, 8, 1, '#ffffff'); });
   D2('toilettes', 20, d => { d.box(3, 1, 10, 7, '#ffd23f'); d.el(8, 12, 6, 4, '#ffd23f'); d.el(8, 11, 4, 2.5, '#fff6c0'); d.el(8, 11, 2.5, 1.5, '#5ab8ff'); d.box(5, 15, 6, 4, '#ffd23f'); d.r(11, 3, 2, 1, '#ffffff'); });
   D2('piano', 20, d => { d.box(1, 2, 14, 16, '#2a2440'); d.r(2, 9, 12, 3, '#ffffff'); for (let x = 3; x < 14; x += 2) d.p(x, 9, '#1d1530'); d.r(3, 4, 4, 1, '#5a5470'); d.r(2, 17, 2, 2, '#1d1530'); d.r(12, 17, 2, 2, '#1d1530'); });
   D2('jukebox', 24, d => { d.box(1, 6, 14, 17, '#ff6f91'); d.ball(8, 6, 7, 5, '#ff6f91'); d.ball(8, 7, 5, 3.5, '#ffd23f'); d.r(3, 13, 10, 4, '#2a2440'); for (let x = 4; x < 13; x += 2) d.p(x, 15, '#7ce86a'); d.r(3, 19, 10, 2, '#c0406a'); });
@@ -297,7 +303,6 @@ function genMobs() {
   M('cristaloup', (d, f) => { const l = f % 2; d.r(4 + l, 13, 2, 4, '#2fa8b0'); d.r(11 - l, 13, 2, 4, '#2fa8b0'); d.ball(8, 11, 6, 3.5, '#4fe3e0'); d.ball(13, 8, 3.5, 3, '#4fe3e0'); d.poly([[12, 6], [13, 2], [14, 6]], '#9ff6f2'); d.poly([[5, 9], [6, 4], [8, 8]], '#9ff6f2'); d.poly([[8, 8], [9, 5], [10, 8]], '#9ff6f2'); d.r(1, 9 - l, 3, 1, '#4fe3e0'); d.p(14, 8, '#1d1530'); d.p(16, 9, '#1d1530'); });
   M('pingou', (d, f) => { const w = f % 2; d.r(6 - w, 15, 2, 2, '#ff9a3a'); d.r(10 + w, 15, 2, 2, '#ff9a3a'); d.ball(9, 11, 6, 5.5, '#eef4ff'); d.ball(5, 8, 2.5, 2.5, '#ffffff'); d.ball(12, 8, 2.5, 2.5, '#ffffff'); d.ball(9, 10, 3.5, 3, '#2a3a5a'); d.p(8, 9, '#ffffff'); d.p(10, 9, '#ffffff'); d.r(8, 11, 2, 1, '#ff9a3a'); });
   M('lavachat', (d, f) => { const l = f % 2; d.r(4 + l, 14, 2, 3, '#3a2a30'); d.r(11 - l, 14, 2, 3, '#3a2a30'); d.ball(8, 12, 6, 3.5, '#4a3038'); d.ln(2, 11, 1, 6 + l, '#ff7a3a'); d.ball(13, 8, 3.5, 3.5, '#4a3038'); d.poly([[10, 6], [11, 3], [12, 6]], '#4a3038'); d.poly([[14, 6], [15, 3], [16, 6]], '#4a3038'); d.ln(5, 11, 9, 12, '#ff7a3a'); d.p(7, 13, '#ffd23f'); d.p(12, 8, '#ffd23f'); d.p(15, 8, '#ffd23f'); });
-  M('canardo', (d, f) => { const w = [0, 1, 0, -1][f]; d.r(6, 15, 2, 2, '#ff8a2a'); d.r(10, 15, 2, 2, '#ff8a2a'); d.ball(8, 12 + w * .3, 6, 4, '#ffd23f'); d.ball(11, 6, 3.5, 3.5, '#ffd23f'); d.r(14, 6, 3, 2, '#ff8a2a'); d.eye(11, 5, 1, 0); d.el(6, 11, 3, 1.6, '#e8b820'); });
   M('meduse', (d, f) => { for (let k = 0; k < 4; k++) { const x = 5 + k * 2.5 | 0; for (let y = 10; y < 17; y++) d.p(x + (Math.sin(y * .8 + f * 1.5 + k) > 0 ? 1 : 0), y, '#e0c8ff'); } d.ball(9, 7, 6.5, 5, '#c9a0ff'); d.el(9, 10, 6, 1.5, '#a07ae0'); d.p(7, 7, '#1d1530'); d.p(11, 7, '#1d1530'); d.p(5, 4, '#ffffff'); });
   // roue à Blobo : blobo qui court
   for (let f = 0; f < 4; f++) SP('roue_b' + f, 10, 8, d => { const sq = [0, 1, 0, -1][f]; d.ball(5, 5, 3.5 + sq * .4, 2.8 - sq * .3, '#7ce86a'); d.p(4, 4, '#1d1530'); d.p(6, 4, '#1d1530'); });
@@ -338,11 +343,11 @@ function genHats() {
   H('noeud', d => { d.poly([[8, 7], [2, 3], [2, 11]], '#ff4d6d'); d.poly([[8, 7], [14, 3], [14, 11]], '#ff4d6d'); d.ball(8, 7, 1.8, 1.8, '#c0304a'); });
   H('pirate', d => { d.poly([[1, 10], [3, 4], [8, 2], [13, 4], [15, 10]], '#2a2440'); d.ball(8, 6, 1.8, 1.6, '#ffffff'); d.r(1, 10, 14, 1, '#ffd23f'); });
   H('poisson', d => { d.ball(7, 7, 6, 4, '#ffd23f'); d.poly([[12, 7], [16, 3], [16, 11]], '#ff8a2a'); d.p(4, 6, '#1d1530'); d.el(5, 9, 2, 1, '#ffffff'); });
-  H('canard', d => { d.ball(7, 8, 4.5, 3, '#ffd23f'); d.ball(9, 4, 2.5, 2.5, '#ffd23f'); d.r(11, 4, 3, 2, '#ff8a2a'); d.p(9, 3, '#1d1530'); });
+  H('canard', d => { const p = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 2.2 : 5; p.push([8 + Math.cos(a) * r, 6 + Math.sin(a) * r]); } d.poly(p, '#ffd23f'); d.ln(2, 9, 5, 7, '#fff6a0'); d.ln(1, 7, 3, 6, '#fff6a0'); });
   H('chef', d => { d.box(4, 6, 8, 5, '#ffffff'); d.ball(5, 4, 3, 3, '#ffffff'); d.ball(11, 4, 3, 3, '#ffffff'); d.ball(8, 3, 3.5, 3, '#ffffff'); });
   H('couronne', d => { d.poly([[3, 11], [3, 4], [5.5, 7], [8, 2], [10.5, 7], [13, 4], [13, 11]], '#ffd23f'); d.p(8, 8, '#ff4d6d'); d.p(5, 9, '#5ab8ff'); d.p(11, 9, '#7ce86a'); });
   H('fleur', d => { for (let x = 2; x < 15; x += 3) { d.ball(x, 9, 1.8, 1.8, ['#ff6fae', '#ffd23f', '#8fd0ff', '#ffffff', '#ff8a2a'][(x / 3) | 0]); d.p(x, 9, '#ffd23f'); } d.r(2, 10, 12, 1, '#3a9a3a'); });
-  H('canardroi', d => { d.ball(7, 8, 4.5, 3, '#ffd23f'); d.ball(9, 5, 2.5, 2.5, '#ffd23f'); d.r(11, 5, 3, 2, '#ff8a2a'); d.p(9, 4, '#1d1530'); d.poly([[6, 3], [7, 0], [8, 2], [9, 0], [10, 2], [11, 0], [11, 3]], '#ff4d6d'); });
+  H('canardroi', d => { d.r(3, 6, 11, 4, '#c9a020'); d.poly([[3, 6], [4, 1], [6, 5], [8, 0], [10, 5], [12, 1], [13, 6]], '#ffd23f'); d.p(8, 7, '#5fffe0'); d.p(5, 7, '#ff4d6d'); d.p(11, 7, '#ff4d6d'); });
   H('aureole', d => { d.el(8, 3, 6, 2, '#fff6a0'); d.el(8, 3, 4, .8, 'rgba(0,0,0,0)'); d.x.clearRect(4, 3, 8, 1); });
   H('fete', d => { d.poly([[4, 11], [8, 0], [12, 11]], '#9a6aff'); d.p(6, 8, '#ffd23f'); d.p(9, 5, '#7ce86a'); d.p(8, 9, '#ff6fae'); d.ball(8, 1, 1.5, 1.5, '#ffd23f'); });
 }
@@ -441,7 +446,14 @@ function portrait(who, helmet, suit) {
 }
 
 /* ================= SURCHARGES PNG + GÉNÉRATION ================= */
-function genArt() { genItems(); genUI(); genObjects(); genBuildings(); genMobs(); genFish(); genHats(); genBldIcons(); }
+function genArt() { genItems(); genUI(); genObjects(); genBuildings(); genRot(); genMobs(); genFish(); genHats(); genBldIcons(); }
+/* r1 = tourné vers la droite, r2 = de dos, r3 = vers la gauche */
+function genRot() {
+  const tf = (src, k) => { const sw = k === 2 ? src.width : src.height, sh = k === 2 ? src.height : src.width, c = cnv(sw, sh), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+    if (k === 2) { x.translate(0, sh); x.scale(1, -1); } else if (k === 1) { x.translate(0, sh); x.rotate(-Math.PI / 2); } else { x.translate(sw, 0); x.rotate(Math.PI / 2); }
+    x.drawImage(src, 0, 0); return c; };
+  for (const id in ROT4) { const a = ART['b_' + id]; if (a) for (const k of [1, 2, 3]) ART['b_' + id + '_r' + k] = tf(a, k); }
+}
 /* icône carrée des constructions-objets (le sprite garde ses proportions) */
 function genBldIcons() {
   for (const k in ITEMS) {
