@@ -196,7 +196,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-24T19:05:02.956Z",
+  "updated": "2026-11-24T19:06:19.141Z",
   "games": [
     {
       "id": "nerys",
@@ -326,10 +326,10 @@
       ],
       "android": {
         "package": "com.aureanestudio.nerys",
-        "version": "2.4.5",
-        "url": "https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/nerys-android/Nerys-2.4.5.apk",
-        "size": 4773622,
-        "sha256": "f7a706a1a51f8e4e338c3d15ecf5050597ea46d6081c358b1fd2424ed160fe45"
+        "version": "2.5.0",
+        "url": "https://github.com/isvsksvskvojsfigosb-art/aureane-launcher-data/releases/download/nerys-android/Nerys-2.5.0.apk",
+        "size": 4760421,
+        "sha256": "7ac5959bb699c876ee820b39222145a733aeb5aa8c14b79a6ef88f0bfd520295"
       }
     }
   ],
