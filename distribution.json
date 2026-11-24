@@ -141,8 +141,8 @@
         {
           "path": "mods/aureane-cinematic-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-cinematic-2.0.0.jar",
-          "sha1": "ffc7ef7f408f3fd1dd069e10337e40f4f98811c3",
-          "size": 2147649
+          "sha1": "e58a223389e4ec2314d46759793761cd1095eb0b",
+          "size": 2148493
         },
         {
           "path": "mods/aureane-core-2.0.0.jar",
@@ -208,7 +208,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-24T21:44:04.274Z",
+  "updated": "2026-11-24T21:52:02.626Z",
   "games": [
     {
       "id": "nerys",
