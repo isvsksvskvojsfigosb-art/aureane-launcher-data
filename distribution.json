@@ -197,12 +197,18 @@
           "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/6qAuTtLR/fabric-api-0.141.6%2B1.21.11.jar",
           "sha1": "c98467cbbaf4d197377266795ae015f4130d65b6",
           "size": 2426039
+        },
+        {
+          "path": "mods/skinlayers3d-fabric-1.11.4-mc1.21.11.jar",
+          "url": "https://cdn.modrinth.com/data/zV5r3pPn/versions/DsBJ7HB2/skinlayers3d-fabric-1.11.4-mc1.21.11.jar",
+          "sha1": "38e389c21847593e447f3af341135ba0ca8829fc",
+          "size": 1914056
         }
       ],
       "order": 10
     }
   ],
-  "updated": "2026-11-24T21:13:05.644Z",
+  "updated": "2026-11-24T21:21:39.047Z",
   "games": [
     {
       "id": "nerys",
