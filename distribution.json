@@ -147,8 +147,8 @@
         {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
-          "sha1": "80df1bd4a0f529386055a2ce01ced470a01b578d",
-          "size": 2093110
+          "sha1": "f7f973fefd17a59166cff87f50e655657d16d706",
+          "size": 2138212
         },
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
@@ -159,8 +159,8 @@
         {
           "path": "mods/aureane-factions-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
-          "sha1": "29c9d368bf5f7d122e9f2dc39bba51c71f0bd8f3",
-          "size": 395534
+          "sha1": "e35fdd09922e156f3baafca4ce3fdd27350f981f",
+          "size": 397801
         },
         {
           "path": "mods/aureane-pass-2.0.0.jar",
@@ -177,8 +177,8 @@
         {
           "path": "mods/aureane-staff-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-staff-2.0.0.jar",
-          "sha1": "36175980977d2c4274179a6f4a53f3726d4baf1e",
-          "size": 264606
+          "sha1": "ffa1109abc910586263e1dfff540b4d96bda010c",
+          "size": 264651
         },
         {
           "path": "mods/aureane-tech-2.0.0.jar",
@@ -189,8 +189,8 @@
         {
           "path": "mods/aureane-world-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-world-2.0.0.jar",
-          "sha1": "d348808188522edc46b62cc6b1db025ab1f87890",
-          "size": 2235223
+          "sha1": "8856a69de9762f2fca02c5b1592dcb838635f172",
+          "size": 2235829
         },
         {
           "path": "mods/fabric-api-0.141.6+1.21.11.jar",
@@ -208,7 +208,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-27T23:12:28.887Z",
+  "updated": "2026-11-27T23:29:56.951Z",
   "games": [
     {
       "id": "nerys",
