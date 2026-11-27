@@ -159,8 +159,8 @@
         {
           "path": "mods/aureane-factions-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
-          "sha1": "7b2e61619ff6811fc84a15aa448e9c8f1bea9b43",
-          "size": 377283
+          "sha1": "1b8f5a4b47a2a7bf47c00c4e4c7fa5f9f0958756",
+          "size": 386122
         },
         {
           "path": "mods/aureane-pass-2.0.0.jar",
@@ -208,7 +208,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-27T20:20:24.609Z",
+  "updated": "2026-11-27T20:49:05.502Z",
   "games": [
     {
       "id": "nerys",
