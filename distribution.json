@@ -147,8 +147,8 @@
         {
           "path": "mods/aureane-core-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-core-2.0.0.jar",
-          "sha1": "f7f973fefd17a59166cff87f50e655657d16d706",
-          "size": 2138212
+          "sha1": "58d51cad92c8abc16a9cfcfb0db0d14205f916f8",
+          "size": 2157580
         },
         {
           "path": "mods/aureane-cosmetics-2.0.0.jar",
@@ -159,14 +159,14 @@
         {
           "path": "mods/aureane-factions-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-factions-2.0.0.jar",
-          "sha1": "e35fdd09922e156f3baafca4ce3fdd27350f981f",
-          "size": 397801
+          "sha1": "20a9399be0b70243d42e2c34e23c1b8b85ca9b4e",
+          "size": 401271
         },
         {
           "path": "mods/aureane-pass-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-pass-2.0.0.jar",
-          "sha1": "38194e235beafc6278b08bb991a322524be09091",
-          "size": 267926
+          "sha1": "b25b1f9e08d75ca29399f761d61a61a99f58ef85",
+          "size": 270114
         },
         {
           "path": "mods/aureane-perms-2.0.0.jar",
@@ -177,8 +177,8 @@
         {
           "path": "mods/aureane-staff-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-staff-2.0.0.jar",
-          "sha1": "ffa1109abc910586263e1dfff540b4d96bda010c",
-          "size": 264651
+          "sha1": "59b5dce3347688872843690109dde6b110411c5d",
+          "size": 265238
         },
         {
           "path": "mods/aureane-tech-2.0.0.jar",
@@ -189,8 +189,8 @@
         {
           "path": "mods/aureane-world-2.0.0.jar",
           "url": "https://raw.githubusercontent.com/isvsksvskvojsfigosb-art/aureane-launcher-data/main/files/aureane/mods/aureane-world-2.0.0.jar",
-          "sha1": "8856a69de9762f2fca02c5b1592dcb838635f172",
-          "size": 2235829
+          "sha1": "1c1c5e9184693cd862e285eee3f118eaf1b871cc",
+          "size": 2243786
         },
         {
           "path": "mods/fabric-api-0.141.6+1.21.11.jar",
@@ -208,7 +208,7 @@
       "order": 10
     }
   ],
-  "updated": "2026-11-27T23:29:56.951Z",
+  "updated": "2026-11-28T11:57:01.689Z",
   "games": [
     {
       "id": "nerys",
